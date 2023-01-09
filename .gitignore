@@ -43,3 +43,8 @@ solver.log
 db/ost.db
 
 batch/
+
+*.debug
+
+debian/ostmodules/
+debian/.debhelper/
