@@ -164,6 +164,22 @@ target_link_libraries(ostallsky PRIVATE
 )
 target_compile_definitions(ostallsky PRIVATE ALLSKY_MODULE)
 
+# sequencer module
+add_library(ostsequencer SHARED
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/sequencer/sequencer.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/sequencer/sequencer.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/sequencer/sequencer.qrc
+)
+target_link_libraries(ostsequencer PRIVATE
+    ostindimodule
+    Qt${QT_VERSION_MAJOR}::Core
+    Qt${QT_VERSION_MAJOR}::Concurrent
+    Qt${QT_VERSION_MAJOR}::Widgets
+    ${Boost_LOG_LIBRARY} ${Boost_LOG_SETUP_LIBRARY}
+    Threads::Threads
+    z
+)
+target_compile_definitions(ostsequencer PRIVATE INSPECTOR_MODULE)
 
 install(TARGETS ostallsky ostinspector ostguider ostindipanel ostfocuser
     RUNTIME DESTINATION "/usr/bin"
