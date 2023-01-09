@@ -1,21 +1,21 @@
-#include "inspector.h"
+#include "sequencer.h"
 #include <QPainter>
 
-InspectorModule *initialize(QString name,QString label,QString profile,QVariantMap availableModuleLibs)
+SequencerModule *initialize(QString name,QString label,QString profile,QVariantMap availableModuleLibs)
 {
-    InspectorModule *basemodule = new InspectorModule(name,label,profile,availableModuleLibs);
+    SequencerModule *basemodule = new SequencerModule(name,label,profile,availableModuleLibs);
     return basemodule;
 }
 
-InspectorModule::InspectorModule(QString name, QString label, QString profile,QVariantMap availableModuleLibs)
+SequencerModule::SequencerModule(QString name, QString label, QString profile,QVariantMap availableModuleLibs)
     : IndiModule(name,label,profile,availableModuleLibs)
 
 {
-    _moduletype="inspector";
+    _moduletype="sequencer";
 
-    loadPropertiesFromFile(":inspector.json");
+    loadPropertiesFromFile(":sequencer.json");
 
-    setOstProperty("moduleDescription","Inspector module",true);
+    setOstProperty("moduleDescription","Sequencer module",true);
     setOstProperty("moduleVersion",0.1,true);
     setOstProperty("moduleType",_moduletype,true);
 
@@ -58,11 +58,11 @@ InspectorModule::InspectorModule(QString name, QString label, QString profile,QV
 
 }
 
-InspectorModule::~InspectorModule()
+SequencerModule::~SequencerModule()
 {
 
 }
-void InspectorModule::OnMyExternalEvent(const QString &eventType, const QString  &eventModule, const QString  &eventKey, const QVariantMap &eventData)
+void SequencerModule::OnMyExternalEvent(const QString &eventType, const QString  &eventModule, const QString  &eventKey, const QVariantMap &eventData)
 {
         //BOOST_LOG_TRIVIAL(debug) << "OnMyExternalEvent - recv : " << getName().toStdString() << "-" << eventType.toStdString() << "-" << eventKey.toStdString();
     if (getName()==eventModule)
@@ -110,7 +110,7 @@ void InspectorModule::OnMyExternalEvent(const QString &eventType, const QString 
     }
 }
 
-void InspectorModule::newNumber(INumberVectorProperty *nvp)
+void SequencerModule::newNumber(INumberVectorProperty *nvp)
 {
     if (
             (QString(nvp->device) == _camera )
@@ -122,7 +122,7 @@ void InspectorModule::newNumber(INumberVectorProperty *nvp)
     }
 }
 
-void InspectorModule::newBLOB(IBLOB *bp)
+void SequencerModule::newBLOB(IBLOB *bp)
 {
 
     if (
@@ -144,7 +144,7 @@ void InspectorModule::newBLOB(IBLOB *bp)
         setOstElement("imagevalues","snr",_image->getStats().SNR,true);
         sendMessage("SMFindStars");
         _solver.ResetSolver(stats,_image->getImageBuffer());
-        connect(&_solver,&Solver::successSEP,this,&InspectorModule::OnSucessSEP);
+        connect(&_solver,&Solver::successSEP,this,&SequencerModule::OnSucessSEP);
         _solver.FindStars(_solver.stellarSolverProfiles[0]);
 
     }
@@ -153,7 +153,7 @@ void InspectorModule::newBLOB(IBLOB *bp)
 
 }
 
-void InspectorModule::newSwitch(ISwitchVectorProperty *svp)
+void SequencerModule::newSwitch(ISwitchVectorProperty *svp)
 {
     if (
             (QString(svp->device) == _camera)
@@ -179,7 +179,7 @@ void InspectorModule::newSwitch(ISwitchVectorProperty *svp)
 
 }
 
-void InspectorModule::Shoot()
+void SequencerModule::Shoot()
 {
     connectIndi();
     if (connectDevice(_camera)) {
@@ -193,7 +193,7 @@ void InspectorModule::Shoot()
     }
 }
 
-void InspectorModule::OnSucessSEP()
+void SequencerModule::OnSucessSEP()
 {
     setOstPropertyAttribute("actions","status",IPS_OK,true);
     setOstElement("imagevalues","imgHFR",_solver.HFRavg,false);
