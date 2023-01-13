@@ -166,8 +166,8 @@ target_compile_definitions(ostallsky PRIVATE ALLSKY_MODULE)
 
 
 install(TARGETS ostallsky ostinspector ostguider ostindipanel ostfocuser
-#    RUNTIME DESTINATION "/usr/bin"
-#    LIBRARY DESTINATION "/usr/bin"
+    RUNTIME DESTINATION "/usr/bin"
+    LIBRARY DESTINATION "/usr/lib/ost"
 )
 
 #get_cmake_property(_variableNames VARIABLES)
