@@ -16,7 +16,7 @@ Allsky::Allsky(QString name, QString label, QString profile,QVariantMap availabl
 
     loadPropertiesFromFile(":allsky.json");
 
-    setOstProperty("moduleDescription","Simple allsky camera module",true);
+    setOstProperty("moduleDescription","Simple allsky camera module ALZ",true);
     setOstProperty("moduleVersion",0.1,true);
     setOstProperty("moduleType",_moduletype,true);
 
