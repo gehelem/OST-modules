@@ -34,6 +34,7 @@ find_package(QT NAMES Qt5 COMPONENTS Gui Widgets Core Concurrent Network WebSock
 find_package(Qt5 REQUIRED COMPONENTS Gui Widgets Core Concurrent Network WebSockets Sql)
 find_package(StellarSolver REQUIRED)
 find_package(Boost COMPONENTS log log_setup REQUIRED)
+find_package(OSTSERVER REQUIRED)
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
@@ -47,6 +48,7 @@ include_directories(${Qt5_DIR})
 include_directories(${QT5Declarative_INCLUDE_LIBRARIES} )
 include_directories(${QT5Declarative_INCLUDE_DIRS} )
 include_directories(${STELLARSOLVER_INCLUDE_DIR})
+include_directories(${OST_INCLUDE_DIR})
 
 include(CMakeCommon)
 
