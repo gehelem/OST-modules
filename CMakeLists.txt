@@ -66,7 +66,7 @@ add_library(ostfocuser SHARED
     ${RCC_SOURCES}
 )
 target_link_libraries(ostfocuser PRIVATE
-    ostindimodule
+    libostindimodule.so
     Qt${QT_VERSION_MAJOR}::Core
     Qt${QT_VERSION_MAJOR}::Concurrent
     Qt${QT_VERSION_MAJOR}::Widgets
@@ -83,7 +83,7 @@ add_library(ostindipanel SHARED
     ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/indipanel/indipanel.cpp
 )
 target_link_libraries(ostindipanel PRIVATE
-    ostindimodule
+    libostindimodule.so
     Qt${QT_VERSION_MAJOR}::Core
     Qt${QT_VERSION_MAJOR}::Concurrent
     Qt${QT_VERSION_MAJOR}::Widgets
@@ -101,7 +101,7 @@ add_library(ostguider SHARED
     ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/guider/guider.qrc
 )
 target_link_libraries(ostguider PRIVATE
-    ostindimodule
+    libostindimodule.so
     Qt${QT_VERSION_MAJOR}::Core
     Qt${QT_VERSION_MAJOR}::Concurrent
     Qt${QT_VERSION_MAJOR}::Widgets
@@ -137,7 +137,7 @@ add_library(ostinspector SHARED
     ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/inspector/inspector.qrc
 )
 target_link_libraries(ostinspector PRIVATE
-    ostindimodule
+    libostindimodule.so
     Qt${QT_VERSION_MAJOR}::Core
     Qt${QT_VERSION_MAJOR}::Concurrent
     Qt${QT_VERSION_MAJOR}::Widgets
@@ -154,7 +154,7 @@ add_library(ostallsky SHARED
     ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/allsky/allsky.qrc
 )
 target_link_libraries(ostallsky PRIVATE
-    ostindimodule
+    libostindimodule.so
     Qt${QT_VERSION_MAJOR}::Core
     Qt${QT_VERSION_MAJOR}::Concurrent
     Qt${QT_VERSION_MAJOR}::Widgets
@@ -165,10 +165,9 @@ target_link_libraries(ostallsky PRIVATE
 target_compile_definitions(ostallsky PRIVATE ALLSKY_MODULE)
 
 
-
 install(TARGETS ostallsky ostinspector ostguider ostindipanel ostfocuser
-    RUNTIME DESTINATION "/usr/bin"
-    LIBRARY DESTINATION "/usr/bin"
+#    RUNTIME DESTINATION "/usr/bin"
+#    LIBRARY DESTINATION "/usr/bin"
 )
 
 #get_cmake_property(_variableNames VARIABLES)
@@ -176,3 +175,8 @@ install(TARGETS ostallsky ostinspector ostguider ostindipanel ostfocuser
 #foreach (_variableName ${_variableNames})
 #    message(STATUS "${_variableName}=${${_variableName}}")
 #endforeach()
+#message(STATUS "OST_FOUND=${OST_FOUND}")
+#message(STATUS "OST_LIBRARY=${OST_LIBRARY}")
+#message(STATUS "OST_INCLUDE_DIR=${OST_INCLUDE_DIR}")
+#message(STATUS "OST_LIBRARY_BASE=${OST_LIBRARY_BASE}")
+#message(STATUS "OST_LIBRARY_INDI=${OST_LIBRARY_INDI}")
