@@ -181,7 +181,7 @@ target_link_libraries(ostsequencer PRIVATE
 )
 target_compile_definitions(ostsequencer PRIVATE INSPECTOR_MODULE)
 
-install(TARGETS ostallsky ostinspector ostguider ostindipanel ostfocuser
+install(TARGETS ostallsky ostinspector ostguider ostindipanel ostfocuser ostsequencer
     RUNTIME DESTINATION "/usr/bin"
     LIBRARY DESTINATION "/usr/lib/ost"
 )
