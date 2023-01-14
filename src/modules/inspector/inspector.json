@@ -111,6 +111,7 @@
     "histogram": {
         "devcat": "Results",
         "rule":0,
+        "grid":[],
         "GDY":{
             "D":"i",
             "Y":"n"
