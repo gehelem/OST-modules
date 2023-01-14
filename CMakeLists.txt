@@ -66,7 +66,7 @@ add_library(ostfocuser SHARED
     ${RCC_SOURCES}
 )
 target_link_libraries(ostfocuser PRIVATE
-    libostindimodule.so
+    ${OST_LIBRARY_INDI}
     Qt${QT_VERSION_MAJOR}::Core
     Qt${QT_VERSION_MAJOR}::Concurrent
     Qt${QT_VERSION_MAJOR}::Widgets
@@ -83,7 +83,7 @@ add_library(ostindipanel SHARED
     ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/indipanel/indipanel.cpp
 )
 target_link_libraries(ostindipanel PRIVATE
-    libostindimodule.so
+    ${OST_LIBRARY_INDI}
     Qt${QT_VERSION_MAJOR}::Core
     Qt${QT_VERSION_MAJOR}::Concurrent
     Qt${QT_VERSION_MAJOR}::Widgets
@@ -101,7 +101,7 @@ add_library(ostguider SHARED
     ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/guider/guider.qrc
 )
 target_link_libraries(ostguider PRIVATE
-    libostindimodule.so
+    ${OST_LIBRARY_INDI}
     Qt${QT_VERSION_MAJOR}::Core
     Qt${QT_VERSION_MAJOR}::Concurrent
     Qt${QT_VERSION_MAJOR}::Widgets
@@ -137,7 +137,7 @@ add_library(ostinspector SHARED
     ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/inspector/inspector.qrc
 )
 target_link_libraries(ostinspector PRIVATE
-    libostindimodule.so
+    ${OST_LIBRARY_INDI}
     Qt${QT_VERSION_MAJOR}::Core
     Qt${QT_VERSION_MAJOR}::Concurrent
     Qt${QT_VERSION_MAJOR}::Widgets
@@ -154,7 +154,7 @@ add_library(ostallsky SHARED
     ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/allsky/allsky.qrc
 )
 target_link_libraries(ostallsky PRIVATE
-    libostindimodule.so
+    ${OST_LIBRARY_INDI}
     Qt${QT_VERSION_MAJOR}::Core
     Qt${QT_VERSION_MAJOR}::Concurrent
     Qt${QT_VERSION_MAJOR}::Widgets
@@ -171,7 +171,7 @@ add_library(ostsequencer SHARED
     ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/sequencer/sequencer.qrc
 )
 target_link_libraries(ostsequencer PRIVATE
-    ostindimodule
+    ${OST_LIBRARY_INDI}
     Qt${QT_VERSION_MAJOR}::Core
     Qt${QT_VERSION_MAJOR}::Concurrent
     Qt${QT_VERSION_MAJOR}::Widgets
