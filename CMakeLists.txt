@@ -196,3 +196,4 @@ install(TARGETS ostallsky ostinspector ostguider ostindipanel ostfocuser ostsequ
 #message(STATUS "OST_INCLUDE_DIR=${OST_INCLUDE_DIR}")
 #message(STATUS "OST_LIBRARY_BASE=${OST_LIBRARY_BASE}")
 #message(STATUS "OST_LIBRARY_INDI=${OST_LIBRARY_INDI}")
+
