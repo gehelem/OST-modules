@@ -4,6 +4,7 @@
         "group": "",
         "permission": 0,
         "propertyLabel": "Values",
+        "grid":[],
         "GDY":{
             "D":"focpos",
             "Y":"loopHFRavg"
