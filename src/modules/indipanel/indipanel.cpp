@@ -223,23 +223,28 @@ void IndiPanel::OnMyExternalEvent(const QString &eventType, const QString  &even
         QString prop = keyprop;
         QVariantMap ostprop = getOstProperty(keyprop);
         QString devcat = ostprop["devcat"].toString();
+        BOOST_LOG_TRIVIAL(debug) << "DEVCAT - recv : "  << devcat.toStdString();
         prop.replace(devcat,"");
-        foreach(const QString& keyelt, eventData[keyprop].toMap()["elements"].toMap().keys()) {
-            //BOOST_LOG_TRIVIAL(debug) << "OnMyExternalEvent - recv : " << getName().toStdString() << "-" << eventType.toStdString() << "-" << prop.toStdString() << "-" << keyelt.toStdString() << "-" << eventData[keyprop].toMap()["indi"].toInt();
-            //setOstElement(keyprop,keyelt,eventData[keyprop].toMap()["elements"].toMap()[keyelt].toMap()["value"],true);
-            if (eventData[keyprop].toMap()["indi"].toInt()==INDI_TEXT) {
-                BOOST_LOG_TRIVIAL(debug) << "INDI_TEXT";
-                sendModNewText(devcat,prop,keyelt,eventData[keyprop].toMap()["elements"].toMap()[keyelt].toMap()["value"].toString());
+        if (!(devcat=="Indi"))
+        {
+            foreach(const QString& keyelt, eventData[keyprop].toMap()["elements"].toMap().keys()) {
+                //BOOST_LOG_TRIVIAL(debug) << "OnMyExternalEvent - recv : " << getName().toStdString() << "-" << eventType.toStdString() << "-" << prop.toStdString() << "-" << keyelt.toStdString() << "-" << eventData[keyprop].toMap()["indi"].toInt();
+                //setOstElement(keyprop,keyelt,eventData[keyprop].toMap()["elements"].toMap()[keyelt].toMap()["value"],true);
+                if (eventData[keyprop].toMap()["indi"].toInt()==INDI_TEXT) {
+                    BOOST_LOG_TRIVIAL(debug) << "INDI_TEXT";
+                    sendModNewText(devcat,prop,keyelt,eventData[keyprop].toMap()["elements"].toMap()[keyelt].toMap()["value"].toString());
+                }
+                if (eventData[keyprop].toMap()["indi"].toInt()==INDI_NUMBER) {
+                    BOOST_LOG_TRIVIAL(debug) << "INDI_NUMBER";
+                    sendModNewNumber(devcat,prop,keyelt,eventData[keyprop].toMap()["elements"].toMap()[keyelt].toMap()["value"].toFloat());
+                }
+                if (eventData[keyprop].toMap()["indi"].toInt()==INDI_SWITCH) {
+                    BOOST_LOG_TRIVIAL(debug) << "INDI_SWITCH" << devcat.toStdString() << "-" << prop.toStdString() << "-" << keyelt.toStdString();
+                    if ( eventData[keyprop].toMap()["elements"].toMap()[keyelt].toMap()["value"].toBool()) sendModNewSwitch(devcat,prop,keyelt,ISS_ON);
+                    if (!eventData[keyprop].toMap()["elements"].toMap()[keyelt].toMap()["value"].toBool()) sendModNewSwitch(devcat,prop,keyelt,ISS_OFF);
+                }
             }
-            if (eventData[keyprop].toMap()["indi"].toInt()==INDI_NUMBER) {
-                BOOST_LOG_TRIVIAL(debug) << "INDI_NUMBER";
-                sendModNewNumber(devcat,prop,keyelt,eventData[keyprop].toMap()["elements"].toMap()[keyelt].toMap()["value"].toFloat());
-            }
-            if (eventData[keyprop].toMap()["indi"].toInt()==INDI_SWITCH) {
-                BOOST_LOG_TRIVIAL(debug) << "INDI_SWITCH" << devcat.toStdString() << "-" << prop.toStdString() << "-" << keyelt.toStdString();
-                if ( eventData[keyprop].toMap()["elements"].toMap()[keyelt].toMap()["value"].toBool()) sendModNewSwitch(devcat,prop,keyelt,ISS_ON);
-                if (!eventData[keyprop].toMap()["elements"].toMap()[keyelt].toMap()["value"].toBool()) sendModNewSwitch(devcat,prop,keyelt,ISS_OFF);
-            }
+
         }
 
     }
