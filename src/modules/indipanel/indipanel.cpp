@@ -212,8 +212,7 @@ void IndiPanel::newBLOB(IBLOB *bp)
 }
 void IndiPanel::newMessage     (INDI::BaseDevice *dp, int messageID)
 {
-    //setOstProperty("message",QString::fromStdString(dp->messageQueue(messageID)),true);
-    Q_UNUSED(dp)
+    sendMessage(dp->getDeviceName() + QString::fromStdString(dp->messageQueue(messageID)));
 }
 
 void IndiPanel::OnMyExternalEvent(const QString &eventType, const QString  &eventModule, const QString  &eventKey, const QVariantMap &eventData)
