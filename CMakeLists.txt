@@ -183,7 +183,7 @@ target_compile_definitions(ostsequencer PRIVATE INSPECTOR_MODULE)
 
 install(TARGETS ostallsky ostinspector ostguider ostindipanel ostfocuser ostsequencer
     RUNTIME DESTINATION "/usr/bin"
-    LIBRARY DESTINATION "/usr/lib/ost"
+    LIBRARY DESTINATION "/usr/lib"
 )
 
 #get_cmake_property(_variableNames VARIABLES)
