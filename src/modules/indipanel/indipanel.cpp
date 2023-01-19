@@ -10,7 +10,6 @@ IndiPanel::IndiPanel(QString name, QString label, QString profile,QVariantMap av
     : IndiModule(name,label,profile,availableModuleLibs)
 {
     setOstProperty("moduleDescription","Full indi control panel",true);
-    setOstProperty("moduleLabel","Indi control panel",true);
     setOstProperty("moduleName","indipanel",true);
     setOstProperty("moduleVersion",0.11,true);
 
