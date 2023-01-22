@@ -1,6 +1,6 @@
 #ifndef INDIPANEL_MODULE_h_
 #define INDIPANEL_MODULE_h_
-#include <indimodule.h>
+#include <ost/indimodule.h>
 
 
 #if defined(INDIPANEL_MODULE)
@@ -11,10 +11,10 @@
 
 class MODULE_INIT IndiPanel : public IndiModule
 {
-    Q_OBJECT
+        Q_OBJECT
 
     public:
-        IndiPanel(QString name,QString label,QString profile,QVariantMap availableModuleLibs);
+        IndiPanel(QString name, QString label, QString profile, QVariantMap availableModuleLibs);
         ~IndiPanel();
 
     public slots:
@@ -31,10 +31,11 @@ class MODULE_INIT IndiPanel : public IndiModule
         void newBLOB        (IBLOB *bp) override;
         void newSwitch      (ISwitchVectorProperty *svp) override;
         void newMessage     (INDI::BaseDevice *dp, int messageID) override;
-        void OnMyExternalEvent(const QString &eventType, const QString  &eventModule, const QString  &eventKey, const QVariantMap &eventData) override;
+        void OnMyExternalEvent(const QString &eventType, const QString  &eventModule, const QString  &eventKey,
+                               const QVariantMap &eventData) override;
 
 };
 
-extern "C" MODULE_INIT IndiPanel *initialize(QString name, QString label, QString profile,QVariantMap availableModuleLibs);
+extern "C" MODULE_INIT IndiPanel *initialize(QString name, QString label, QString profile, QVariantMap availableModuleLibs);
 
 #endif
