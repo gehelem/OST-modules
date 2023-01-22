@@ -1,4 +1,4 @@
-FIND_PATH(OST_INCLUDE_DIR indimodule.h)
+FIND_PATH(OST_INCLUDE_DIR ost/indimodule.h)
 FIND_LIBRARY(OST_LIBRARY_BASE NAMES libostbasemodule.so PATHS /usr/lib/ost)
 FIND_LIBRARY(OST_LIBRARY_INDI NAMES libostindimodule.so PATHS /usr/lib/ost)
 
