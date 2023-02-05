@@ -11,16 +11,14 @@ SequencerModule::SequencerModule(QString name, QString label, QString profile, Q
     : IndiModule(name, label, profile, availableModuleLibs)
 
 {
-    loadPropertiesFromFile(":sequencer.json");
+    loadOstPropertiesFromFile(":sequencer.json");
 
-    setModuleLabel(label);
     setModuleDescription("Sequencer module - work in progress");
     setModuleVersion("0.1");
-    setModuleType("sequencer");
 
 
     createOstElement("devices", "camera", "Camera", true);
-    setOstElement("devices", "camera",   _camera, false);
+    setOstElementValue("devices", "camera",   _camera, false);
 
     //saveAttributesToFile("inspector.json");
     _camera = getOstElementValue("devices", "camera").toString();
@@ -66,18 +64,18 @@ void SequencerModule::OnMyExternalEvent(const QString &eventType, const QString 
                                         const QVariantMap &eventData)
 {
     //BOOST_LOG_TRIVIAL(debug) << "OnMyExternalEvent - recv : " << getName().toStdString() << "-" << eventType.toStdString() << "-" << eventKey.toStdString();
-    if (getName() == eventModule)
+    if (getClassName() == eventModule)
     {
         foreach(const QString &keyprop, eventData.keys())
         {
             foreach(const QString &keyelt, eventData[keyprop].toMap()["elements"].toMap().keys())
             {
-                setOstElement(keyprop, keyelt, eventData[keyprop].toMap()["elements"].toMap()[keyelt].toMap()["value"], true);
+                setOstElementValue(keyprop, keyelt, eventData[keyprop].toMap()["elements"].toMap()[keyelt].toMap()["value"], true);
                 if (keyprop == "devices")
                 {
                     if (keyelt == "camera")
                     {
-                        if (setOstElement(keyprop, keyelt, eventData[keyprop].toMap()["elements"].toMap()[keyelt].toMap()["value"], false))
+                        if (setOstElementValue(keyprop, keyelt, eventData[keyprop].toMap()["elements"].toMap()[keyelt].toMap()["value"], false))
                         {
                             setOstPropertyAttribute(keyprop, "status", IPS_OK, true);
                             _camera = getOstElementValue("devices", "camera").toString();
@@ -89,7 +87,7 @@ void SequencerModule::OnMyExternalEvent(const QString &eventType, const QString 
                 {
                     if (keyelt == "exposure")
                     {
-                        if (setOstElement(keyprop, keyelt, eventData[keyprop].toMap()["elements"].toMap()[keyelt].toMap()["value"], false))
+                        if (setOstElementValue(keyprop, keyelt, eventData[keyprop].toMap()["elements"].toMap()[keyelt].toMap()["value"], false))
                         {
                             setOstPropertyAttribute(keyprop, "status", IPS_OK, true);
                             _exposure = getOstElementValue("parameters", "exposure").toFloat();
@@ -100,21 +98,21 @@ void SequencerModule::OnMyExternalEvent(const QString &eventType, const QString 
                 {
                     if (keyelt == "shoot")
                     {
-                        if (setOstElement(keyprop, keyelt, true, true))
+                        if (setOstElementValue(keyprop, keyelt, true, true))
                         {
                             Shoot();
                         }
                     }
                     if (keyelt == "loop")
                     {
-                        if (setOstElement(keyprop, keyelt, true, true))
+                        if (setOstElementValue(keyprop, keyelt, true, true))
                         {
                             //
                         }
                     }
                     if (keyelt == "abort")
                     {
-                        if (setOstElement(keyprop, keyelt, false, false))
+                        if (setOstElementValue(keyprop, keyelt, false, false))
                         {
                             emit Abort();
                             //
@@ -150,14 +148,14 @@ void SequencerModule::newBLOB(IBLOB *bp)
         _image = new fileio();
         _image->loadBlob(bp);
         stats = _image->getStats();
-        setOstElement("imagevalues", "width", _image->getStats().width, false);
-        setOstElement("imagevalues", "height", _image->getStats().height, false);
-        setOstElement("imagevalues", "min", _image->getStats().min[0], false);
-        setOstElement("imagevalues", "max", _image->getStats().max[0], false);
-        setOstElement("imagevalues", "mean", _image->getStats().mean[0], false);
-        setOstElement("imagevalues", "median", _image->getStats().median[0], false);
-        setOstElement("imagevalues", "stddev", _image->getStats().stddev[0], false);
-        setOstElement("imagevalues", "snr", _image->getStats().SNR, true);
+        setOstElementValue("imagevalues", "width", _image->getStats().width, false);
+        setOstElementValue("imagevalues", "height", _image->getStats().height, false);
+        setOstElementValue("imagevalues", "min", _image->getStats().min[0], false);
+        setOstElementValue("imagevalues", "max", _image->getStats().max[0], false);
+        setOstElementValue("imagevalues", "mean", _image->getStats().mean[0], false);
+        setOstElementValue("imagevalues", "median", _image->getStats().median[0], false);
+        setOstElementValue("imagevalues", "stddev", _image->getStats().stddev[0], false);
+        setOstElementValue("imagevalues", "snr", _image->getStats().SNR, true);
         sendMessage("SMFindStars");
         _solver.ResetSolver(stats, _image->getImageBuffer());
         connect(&_solver, &Solver::successSEP, this, &SequencerModule::OnSucessSEP);
@@ -215,8 +213,8 @@ void SequencerModule::Shoot()
 void SequencerModule::OnSucessSEP()
 {
     setOstPropertyAttribute("actions", "status", IPS_OK, true);
-    setOstElement("imagevalues", "imgHFR", _solver.HFRavg, false);
-    setOstElement("imagevalues", "starscount", _solver.stars.size(), true);
+    setOstElementValue("imagevalues", "imgHFR", _solver.HFRavg, false);
+    setOstElementValue("imagevalues", "starscount", _solver.stars.size(), true);
 
 
 
@@ -257,8 +255,8 @@ void SequencerModule::OnSucessSEP()
     for( int i = 1; i < his.size(); i++)
     {
         //qDebug() << "HIS " << i << "-"  << _image->getCumulativeFrequency(0)[i] << "-"  << _image->getHistogramIntensity(0)[i] << "-"  << _image->getHistogramFrequency(0)[i];
-        setOstElement("histogram", "i", i, false);
-        setOstElement("histogram", "n", his[i], false);
+        setOstElementValue("histogram", "i", i, false);
+        setOstElementValue("histogram", "n", his[i], false);
         pushOstElements("histogram");
     }
 
