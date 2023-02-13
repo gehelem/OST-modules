@@ -13,19 +13,20 @@ FocusModule::FocusModule(QString name, QString label, QString profile, QVariantM
 {
     Q_INIT_RESOURCE(focus);
 
-    loadPropertiesFromFile(":focus.json");
+    loadOstPropertiesFromFile(":focus.json");
+    setClassName(metaObject()->className());
 
-    setModuleLabel(label);
+    //setModuleLabel(label);
     setModuleDescription("Focus module with statemachines");
     setModuleVersion("0.1");
-    setModuleType("focus");
+    //setModuleType("focus");
 
     createOstElement("devices", "camera", "Camera", true);
     createOstElement("devices", "focuser", "Focuser", true);
     createOstElement("devices", "mount", "Mount", true);
-    setOstElement("devices", "camera",   _camera, false);
-    setOstElement("devices", "focuser",  _focuser, false);
-    setOstElement("devices", "mount",    _mount, true);
+    setOstElementValue("devices", "camera",   _camera, false);
+    setOstElementValue("devices", "focuser",  _focuser, false);
+    setOstElementValue("devices", "mount",    _mount, true);
     _startpos =          getOstElementValue("parameters", "startpos").toInt();
     _steps =             getOstElementValue("parameters", "steps").toInt();
     _iterations =        getOstElementValue("parameters", "iterations").toInt();
@@ -51,56 +52,58 @@ FocusModule::~FocusModule()
 void FocusModule::OnMyExternalEvent(const QString &eventType, const QString  &eventModule, const QString  &eventKey,
                                     const QVariantMap &eventData)
 {
-    //BOOST_LOG_TRIVIAL(debug) << "OnMyExternalEvent - recv : " << getName().toStdString() << "-" << eventType.toStdString() << "-" << eventKey.toStdString();
-    if (getName() == eventModule)
+    //BOOST_LOG_TRIVIAL(debug) << "OnMyExternalEvent FocusModule - recv : " << getModuleName().toStdString() << "-" <<
+    //                         eventType.toStdString() << "-" << eventKey.toStdString();
+    if (getModuleName() == eventModule)
     {
         foreach(const QString &keyprop, eventData.keys())
         {
             foreach(const QString &keyelt, eventData[keyprop].toMap()["elements"].toMap().keys())
             {
-                BOOST_LOG_TRIVIAL(debug) << "OnMyExternalEvent - recv : " << getName().toStdString() << "-" << eventType.toStdString() <<
-                                         "-" << keyprop.toStdString() << "-" << keyelt.toStdString();
+                //BOOST_LOG_TRIVIAL(debug) << "OnMyExternalEvent - recv : " << getModuleName().toStdString() << "-" << eventType.toStdString()
+                //                         <<
+                //                         "-" << keyprop.toStdString() << "-" << keyelt.toStdString();
                 QVariant val = eventData[keyprop].toMap()["elements"].toMap()[keyelt].toMap()["value"];
                 if (keyprop == "parameters")
                 {
                     if (keyelt == "startpos")
                     {
-                        if (setOstElement(keyprop, keyelt, val, true))
+                        if (setOstElementValue(keyprop, keyelt, val, true))
                         {
                             _startpos = val.toInt();
                         }
                     }
                     if (keyelt == "steps")
                     {
-                        if (setOstElement(keyprop, keyelt, val, true))
+                        if (setOstElementValue(keyprop, keyelt, val, true))
                         {
                             _steps = val.toInt();
                         }
                     }
                     if (keyelt == "iterations")
                     {
-                        if (setOstElement(keyprop, keyelt, val, true))
+                        if (setOstElementValue(keyprop, keyelt, val, true))
                         {
                             _iterations = val.toInt();
                         }
                     }
                     if (keyelt == "loopIterations")
                     {
-                        if (setOstElement(keyprop, keyelt, val, true))
+                        if (setOstElementValue(keyprop, keyelt, val, true))
                         {
                             _loopIterations = val.toInt();
                         }
                     }
                     if (keyelt == "exposure")
                     {
-                        if (setOstElement(keyprop, keyelt, val, true))
+                        if (setOstElementValue(keyprop, keyelt, val, true))
                         {
                             _exposure = val.toInt();
                         }
                     }
                     if (keyelt == "backlash")
                     {
-                        if (setOstElement(keyprop, keyelt, val, true))
+                        if (setOstElementValue(keyprop, keyelt, val, true))
                         {
                             _backlash = val.toInt();
                         }
@@ -111,7 +114,7 @@ void FocusModule::OnMyExternalEvent(const QString &eventType, const QString  &ev
                 {
                     if (keyelt == "coarse")
                     {
-                        if (setOstElement(keyprop, keyelt, false, false))
+                        if (setOstElementValue(keyprop, keyelt, false, false))
                         {
                             setOstPropertyAttribute(keyprop, "status", IPS_BUSY, true);
                             startCoarse();
@@ -119,7 +122,7 @@ void FocusModule::OnMyExternalEvent(const QString &eventType, const QString  &ev
                     }
                     if (keyelt == "abort")
                     {
-                        if (setOstElement(keyprop, keyelt, false, false))
+                        if (setOstElementValue(keyprop, keyelt, false, false))
                         {
                             setOstPropertyAttribute(keyprop, "status", IPS_OK, true);
                             emit abort();
@@ -127,7 +130,7 @@ void FocusModule::OnMyExternalEvent(const QString &eventType, const QString  &ev
                     }
                     if (keyelt == "loop")
                     {
-                        if (setOstElement(keyprop, keyelt, false, false))
+                        if (setOstElementValue(keyprop, keyelt, false, false))
                         {
                             setOstPropertyAttribute(keyprop, "status", IPS_OK, true);
                         }
@@ -138,7 +141,7 @@ void FocusModule::OnMyExternalEvent(const QString &eventType, const QString  &ev
                 {
                     if (keyelt == "camera")
                     {
-                        if (setOstElement(keyprop, keyelt, val, false))
+                        if (setOstElementValue(keyprop, keyelt, val, false))
                         {
                             setOstPropertyAttribute(keyprop, "status", IPS_OK, true);
                             _camera = val.toString();
@@ -146,7 +149,7 @@ void FocusModule::OnMyExternalEvent(const QString &eventType, const QString  &ev
                     }
                     if (keyelt == "focuser")
                     {
-                        if (setOstElement(keyprop, keyelt, val, false))
+                        if (setOstElementValue(keyprop, keyelt, val, false))
                         {
                             setOstPropertyAttribute(keyprop, "status", IPS_OK, true);
                             _focuser = val.toString();
@@ -174,7 +177,7 @@ void FocusModule::newNumber(INumberVectorProperty *nvp)
         &&  (QString(nvp->name)   == "ABS_FOCUS_POSITION")
     )
     {
-        setOstElement("values", "focpos", nvp->np[0].value, true);
+        setOstElementValue("values", "focpos", nvp->np[0].value, true);
 
         if (nvp->s == IPS_OK)
         {
@@ -204,7 +207,7 @@ void FocusModule::newBLOB(IBLOB *bp)
         setOstPropertyAttribute("image", "status", IPS_OK, true);
 
         QImage rawImage = _image->getRawQImage();
-        rawImage.save(_webroot + "/" + QString(bp->bvp->device) + ".jpeg", "JPG", 100);
+        rawImage.save( getWebroot() + "/" + QString(bp->bvp->device) + ".jpeg", "JPG", 100);
         setOstPropertyAttribute("image", "URL", QString(bp->bvp->device) + ".jpeg", true);
 
         if (_machine.isRunning())
@@ -448,7 +451,7 @@ void FocusModule::SMFindStars()
 
 void FocusModule::OnSucessSEP()
 {
-    setOstElement("values", "imgHFR", _solver.HFRavg, true);
+    setOstElementValue("values", "imgHFR", _solver.HFRavg, true);
     emit FindStarsDone();
 }
 
@@ -475,11 +478,11 @@ void FocusModule::SMCompute()
     qDebug() << "Compute " << _iteration << "/" << _iterations << "=" << _loopHFRavg << "bestpos/pos" << _bestpos << "/" <<
              _startpos + _iteration*_steps << "polfit=" << _bestposfit;
 
-    setOstElement("values", "loopHFRavg", _loopHFRavg, false);
-    setOstElement("values", "bestpos",   _bestpos, false);
-    setOstElement("values", "bestposfit", _bestposfit, false);
-    setOstElement("values", "focpos",    _startpos + _iteration * _steps, false);
-    setOstElement("values", "iteration", _iteration, true);
+    setOstElementValue("values", "loopHFRavg", _loopHFRavg, false);
+    setOstElementValue("values", "bestpos",   _bestpos, false);
+    setOstElementValue("values", "bestposfit", _bestposfit, false);
+    setOstElementValue("values", "focpos",    _startpos + _iteration * _steps, false);
+    setOstElementValue("values", "iteration", _iteration, true);
 
     pushOstElements("values");
 
@@ -545,7 +548,7 @@ void FocusModule::SMRequestExposureBest()
 void FocusModule::SMComputeResult()
 {
     sendMessage("SMComputeResult");
-    setOstElement("values", "imgHFR", _solver.HFRavg, true);
+    setOstElementValue("values", "imgHFR", _solver.HFRavg, true);
     // what should i do here ?
     emit ComputeResultDone();
 }
@@ -558,7 +561,7 @@ void FocusModule::SMInitLoopFrame()
     sendMessage("SMInitLoopFrame");
     _loopIteration = 0;
     _loopHFRavg = 99;
-    setOstElement("values", "loopHFRavg", _loopHFRavg, true);
+    setOstElementValue("values", "loopHFRavg", _loopHFRavg, true);
     emit InitLoopFrameDone();
 }
 
@@ -567,8 +570,8 @@ void FocusModule::SMComputeLoopFrame()
     sendMessage("SMComputeLoopFrame");
     _loopIteration++;
     _loopHFRavg = ((_loopIteration - 1) * _loopHFRavg + _solver.HFRavg) / _loopIteration;
-    setOstElement("values", "loopHFRavg", _loopHFRavg, false);
-    setOstElement("values", "imgHFR", _solver.HFRavg, true);
+    setOstElementValue("values", "loopHFRavg", _loopHFRavg, false);
+    setOstElementValue("values", "imgHFR", _solver.HFRavg, true);
 
     //qDebug() << "Loop    " << _loopIteration << "/" << _loopIterations << " = " <<  _solver.HFRavg;
 
