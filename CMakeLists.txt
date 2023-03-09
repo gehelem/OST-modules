@@ -48,7 +48,10 @@ include_directories(${Qt5_DIR})
 include_directories(${QT5Declarative_INCLUDE_LIBRARIES} )
 include_directories(${QT5Declarative_INCLUDE_DIRS} )
 include_directories(${STELLARSOLVER_INCLUDE_DIR})
-include_directories(${OST_INCLUDE_DIR})
+include_directories(${OST_INCLUDE_DIR}/ost)
+
+message(STATUS "OST_INCLUDE_DIR=${OST_INCLUDE_DIR}")
+
 
 include(CMakeCommon)
 
@@ -94,22 +97,22 @@ target_link_libraries(ostindipanel PRIVATE
 target_compile_definitions(ostindipanel PRIVATE INDIPANEL_MODULE)
 
 
-# guider module
-add_library(ostguider SHARED
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/guider/guider.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/guider/guider.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/guider/guider.qrc
-)
-target_link_libraries(ostguider PRIVATE
-    ${OST_LIBRARY_INDI}
-    Qt${QT_VERSION_MAJOR}::Core
-    Qt${QT_VERSION_MAJOR}::Concurrent
-    Qt${QT_VERSION_MAJOR}::Widgets
-    ${Boost_LOG_LIBRARY} ${Boost_LOG_SETUP_LIBRARY}
-    Threads::Threads
-    z
-)
-target_compile_definitions(ostguider PRIVATE GUIDER_MODULE)
+## guider module
+#add_library(ostguider SHARED
+#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/guider/guider.h
+#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/guider/guider.cpp
+#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/guider/guider.qrc
+#)
+#target_link_libraries(ostguider PRIVATE
+#    ${OST_LIBRARY_INDI}
+#    Qt${QT_VERSION_MAJOR}::Core
+#    Qt${QT_VERSION_MAJOR}::Concurrent
+#    Qt${QT_VERSION_MAJOR}::Widgets
+#    ${Boost_LOG_LIBRARY} ${Boost_LOG_SETUP_LIBRARY}
+#    Threads::Threads
+#    z
+#)
+#target_compile_definitions(ostguider PRIVATE GUIDER_MODULE)
 
 ## polar module
 #add_library(ostpolar SHARED
@@ -130,22 +133,22 @@ target_compile_definitions(ostguider PRIVATE GUIDER_MODULE)
 #)
 #target_compile_definitions(ostpolar PRIVATE POLAR_MODULE)
 #
-# inspector module
-add_library(ostinspector SHARED
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/inspector/inspector.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/inspector/inspector.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/inspector/inspector.qrc
-)
-target_link_libraries(ostinspector PRIVATE
-    ${OST_LIBRARY_INDI}
-    Qt${QT_VERSION_MAJOR}::Core
-    Qt${QT_VERSION_MAJOR}::Concurrent
-    Qt${QT_VERSION_MAJOR}::Widgets
-    ${Boost_LOG_LIBRARY} ${Boost_LOG_SETUP_LIBRARY}
-    Threads::Threads
-    z
-)
-target_compile_definitions(ostinspector PRIVATE INSPECTOR_MODULE)
+## inspector module
+#add_library(ostinspector SHARED
+#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/inspector/inspector.h
+#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/inspector/inspector.cpp
+#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/inspector/inspector.qrc
+#)
+#target_link_libraries(ostinspector PRIVATE
+#    ${OST_LIBRARY_INDI}
+#    Qt${QT_VERSION_MAJOR}::Core
+#    Qt${QT_VERSION_MAJOR}::Concurrent
+#    Qt${QT_VERSION_MAJOR}::Widgets
+#    ${Boost_LOG_LIBRARY} ${Boost_LOG_SETUP_LIBRARY}
+#    Threads::Threads
+#    z
+#)
+#target_compile_definitions(ostinspector PRIVATE INSPECTOR_MODULE)
 
 # Allsky module
 add_library(ostallsky SHARED
@@ -164,27 +167,27 @@ target_link_libraries(ostallsky PRIVATE
 )
 target_compile_definitions(ostallsky PRIVATE ALLSKY_MODULE)
 
-# sequencer module
-add_library(ostsequencer SHARED
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/sequencer/sequencer.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/sequencer/sequencer.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/sequencer/sequencer.qrc
-)
-target_link_libraries(ostsequencer PRIVATE
-    ${OST_LIBRARY_INDI}
-    Qt${QT_VERSION_MAJOR}::Core
-    Qt${QT_VERSION_MAJOR}::Concurrent
-    Qt${QT_VERSION_MAJOR}::Widgets
-    ${Boost_LOG_LIBRARY} ${Boost_LOG_SETUP_LIBRARY}
-    Threads::Threads
-    z
-)
-target_compile_definitions(ostsequencer PRIVATE INSPECTOR_MODULE)
+## sequencer module
+#add_library(ostsequencer SHARED
+#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/sequencer/sequencer.h
+#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/sequencer/sequencer.cpp
+#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/sequencer/sequencer.qrc
+#)
+#target_link_libraries(ostsequencer PRIVATE
+#    ${OST_LIBRARY_INDI}
+#    Qt${QT_VERSION_MAJOR}::Core
+#    Qt${QT_VERSION_MAJOR}::Concurrent
+#    Qt${QT_VERSION_MAJOR}::Widgets
+#    ${Boost_LOG_LIBRARY} ${Boost_LOG_SETUP_LIBRARY}
+#    Threads::Threads
+#    z
+#)
+#target_compile_definitions(ostsequencer PRIVATE INSPECTOR_MODULE)
 
-install(TARGETS ostallsky ostinspector ostguider ostindipanel ostfocuser ostsequencer
-    RUNTIME DESTINATION "/usr/bin"
-    LIBRARY DESTINATION "/usr/lib"
-)
+#install(TARGETS ostallsky ostinspector ostguider ostindipanel ostfocuser ostsequencer
+#    RUNTIME DESTINATION "/usr/bin"
+#    LIBRARY DESTINATION "/usr/lib"
+#)
 
 #get_cmake_property(_variableNames VARIABLES)
 #list (SORT _variableNames)

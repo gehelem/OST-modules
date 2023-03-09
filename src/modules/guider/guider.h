@@ -1,6 +1,8 @@
 #ifndef GUIDER_MODULE_h_
 #define GUIDER_MODULE_h_
-#include <ost/indimodule.h>
+#include <indimodule.h>
+#include <fileio.h>
+#include <solver.h>
 
 #if defined(GUIDER_MODULE)
 #  define MODULE_INIT Q_DECL_EXPORT

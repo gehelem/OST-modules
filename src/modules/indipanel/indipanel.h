@@ -1,6 +1,6 @@
 #ifndef INDIPANEL_MODULE_h_
 #define INDIPANEL_MODULE_h_
-#include <ost/indimodule.h>
+#include <indimodule.h>
 
 
 #if defined(INDIPANEL_MODULE)
