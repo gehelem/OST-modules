@@ -11,8 +11,8 @@ SequencerModule::SequencerModule(QString name, QString label, QString profile, Q
     : IndiModule(name, label, profile, availableModuleLibs)
 
 {
+    setClassName(metaObject()->className());
     loadOstPropertiesFromFile(":sequencer.json");
-
     setModuleDescription("Sequencer module - work in progress");
     setModuleVersion("0.1");
 
@@ -64,7 +64,7 @@ void SequencerModule::OnMyExternalEvent(const QString &eventType, const QString 
                                         const QVariantMap &eventData)
 {
     //BOOST_LOG_TRIVIAL(debug) << "OnMyExternalEvent - recv : " << getName().toStdString() << "-" << eventType.toStdString() << "-" << eventKey.toStdString();
-    if (getClassName() == eventModule)
+    if (getModuleName() == eventModule)
     {
         foreach(const QString &keyprop, eventData.keys())
         {
@@ -119,7 +119,30 @@ void SequencerModule::OnMyExternalEvent(const QString &eventType, const QString 
                         }
                     }
                 }
+
             }
+            if (eventType == "Fldelete")
+            {
+                double line = eventData[keyprop].toMap()["line"].toDouble();
+                qDebug() << "dummy" << eventType << "-" << eventModule << "-" << eventKey << "-" << eventData << "line=" << line;
+                deleteOstPropertyLine(keyprop, line);
+
+            }
+            if (eventType == "Flcreate")
+            {
+                qDebug() << "dummy" << eventType << "-" << eventModule << "-" << eventKey << "-" << eventData;
+                newOstPropertyLine(keyprop, eventData);
+
+            }
+            if (eventType == "Flupdate")
+            {
+                double line = eventData[keyprop].toMap()["line"].toDouble();
+                qDebug() << "dummy" << eventType << "-" << eventModule << "-" << eventKey << "-" << eventData;
+                updateOstPropertyLine(keyprop, line, eventData);
+
+            }
+
+
         }
     }
 }
@@ -226,8 +249,8 @@ void SequencerModule::OnSucessSEP()
     QImage immap = rawImage.convertToFormat(QImage::Format_RGB32);
     immap.setColorTable(rawImage.colorTable());
 
-    im.save(_webroot + "/" + getName() + ".jpeg", "JPG", 100);
-    setOstPropertyAttribute("image", "URL", getName() + ".jpeg", true);
+    im.save( getWebroot() + "/" + getModuleName() + ".jpeg", "JPG", 100);
+    setOstPropertyAttribute("image", "URL", getModuleName() + ".jpeg", true);
 
     //QRect r;
     //r.setRect(0,0,im.width(),im.height());
@@ -260,8 +283,8 @@ void SequencerModule::OnSucessSEP()
         pushOstElements("histogram");
     }
 
-    immap.save(_webroot + "/" + getName() + "map.jpeg", "JPG", 100);
-    setOstPropertyAttribute("imagemap", "URL", getName() + "map.jpeg", true);
+    immap.save(getWebroot() + "/" + getModuleName() + "map.jpeg", "JPG", 100);
+    setOstPropertyAttribute("imagemap", "URL", getModuleName() + "map.jpeg", true);
 
     emit FindStarsDone();
 }
