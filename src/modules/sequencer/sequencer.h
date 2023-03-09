@@ -1,6 +1,8 @@
 #ifndef SEQUENCER_MODULE_h_
 #define SEQUENCER_MODULE_h_
-#include <ost/indimodule.h>
+#include <indimodule.h>
+#include <fileio.h>
+#include <solver.h>
 
 #if defined(SEQUENCER_MODULE)
 #  define MODULE_INIT Q_DECL_EXPORT
@@ -59,6 +61,7 @@ class MODULE_INIT SequencerModule : public IndiModule
         void startCoarse();
 
         QString _camera  = "CCD Simulator";
+        QString _fw  = "Filter Simulator";
         bool    _newblob;
 
         QPointer<fileio> _image;
@@ -72,10 +75,8 @@ class MODULE_INIT SequencerModule : public IndiModule
         double _loopHFRavg;
         double _exposure = 2;
 
-        int    _iteration;
-        double _bestpos;
-        double _bestposfit;
-        double _besthfr;
+        QVariantMap mActiveSeq;
+
 
 };
 

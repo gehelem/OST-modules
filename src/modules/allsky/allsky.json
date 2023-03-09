@@ -100,10 +100,12 @@
         },
         "elements": {
                 "time": {
-                    "elementLabel": "Time"
+                    "elementLabel": "Time",
+                    "value":""
                 },
                 "snr": {
-                    "elementLabel": "SNR"
+                    "elementLabel": "SNR",
+                    "value":0
                 }
         },
         "group": "",

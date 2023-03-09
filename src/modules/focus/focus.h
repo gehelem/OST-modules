@@ -1,6 +1,8 @@
 #ifndef FOCUS_MODULE_h_
 #define FOCUS_MODULE_h_
-#include <ost/indimodule.h>
+#include <indimodule.h>
+#include <fileio.h>
+#include <solver.h>
 
 #if defined(FOCUS_MODULE)
 #  define MODULE_INIT Q_DECL_EXPORT

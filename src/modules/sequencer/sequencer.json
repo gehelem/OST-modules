@@ -3,25 +3,22 @@
         "devcat": "Control",
         "group": "",
         "permission": 2,
-        "rule":2,
+        "order":0,
+        "rule":1,
         "propertyLabel": "Actions",
         "elements": {
-            "loop": {
-                "elementLabel": "Infinite loop"
+            "run": {
+                "elementLabel": "Run sequence"
                 ,"value":false
             },
             "abort": {
                 "elementLabel": "Abort"
                 ,"value":false
-            },
-            "shoot": {
-                "elementLabel": "Single shoot"
-                ,"value":false
             }
         }
     },
     "imagevalues": {
-        "devcat": "Control",
+        "devcat": "Results",
         "rule":0,
         "elements": {
                 "width": {
@@ -70,28 +67,57 @@
         "permission": 0,
         "propertyLabel": "Last image statistics"
     },
-    "parameters": {
+    "sequence": {
         "devcat": "Control",
         "group": "",
         "permission": 2,
+        "order":1,
+        "grid":0,
         "hasprofile":true,
-        "propertyLabel": "Parameters",
+        "propertyLabel": "Sequence",
         "elements": {
-            "steps": {
-                "elementLabel": "Steps gap",
-                "value":100,
-                "format": "999999"
+            "frametype": {
+                "elementLabel": "Frame type",
+                "value":"L",
+                "listOfValues":{
+                    "L":"Light",
+                    "B":"Bias",
+                    "D":"Dark",
+                    "F":"Flat"
+                }
             },
-            "iterations": {
-                "elementLabel": "Iterations",
-                "value":10,
-                "format": "99"
+            "filter": {
+                "elementLabel": "Filter",
+                "value":"L",
+                "listOfValues":{
+                    "L":"Luminance",
+                    "R":"Red",
+                    "V":"Green",
+                    "B":"Blue"
+                }
             },
             "exposure": {
                 "elementLabel": "Exposure",
                 "value":10,
                 "format": "99.99"
+            },
+            "count": {
+                "elementLabel": "Count",
+                "value":5,
+                "format": "99.99"
+            },
+            "gain": {
+                "elementLabel": "Gain",
+                "value":5,
+                "format": "99"
+            },
+            "offset": {
+                "elementLabel": "Offset",
+                "value":5,
+                "format": "99"
             }
+
+
         }
     },
     "image": {
@@ -111,8 +137,9 @@
     "histogram": {
         "devcat": "Results",
         "rule":0,
-        "GDY":{
-            "D":"i",
+        "grid":0,
+        "GXY":{
+            "X":"i",
             "Y":"n"
         },
         "elements": {
