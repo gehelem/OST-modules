@@ -1,6 +1,8 @@
 #ifndef SEQUENCER_MODULE_h_
 #define SEQUENCER_MODULE_h_
 #include <indimodule.h>
+#include <fileio.h>
+#include <solver.h>
 
 #if defined(SEQUENCER_MODULE)
 #  define MODULE_INIT Q_DECL_EXPORT
@@ -10,10 +12,10 @@
 
 class MODULE_INIT SequencerModule : public IndiModule
 {
-    Q_OBJECT
+        Q_OBJECT
 
     public:
-        SequencerModule(QString name,QString label,QString profile,QVariantMap availableModuleLibs);
+        SequencerModule(QString name, QString label, QString profile, QVariantMap availableModuleLibs);
         ~SequencerModule();
 
     signals:
@@ -40,7 +42,8 @@ class MODULE_INIT SequencerModule : public IndiModule
         void AbortDone();
         void Abort();
     public slots:
-        void OnMyExternalEvent(const QString &eventType, const QString  &eventModule, const QString  &eventKey, const QVariantMap &eventData) override;
+        void OnMyExternalEvent(const QString &eventType, const QString  &eventModule, const QString  &eventKey,
+                               const QVariantMap &eventData) override;
         void OnSucessSEP();
 
     private:
@@ -78,6 +81,7 @@ class MODULE_INIT SequencerModule : public IndiModule
 
 };
 
-extern "C" MODULE_INIT SequencerModule *initialize(QString name,QString label,QString profile,QVariantMap availableModuleLibs);
+extern "C" MODULE_INIT SequencerModule *initialize(QString name, QString label, QString profile,
+        QVariantMap availableModuleLibs);
 
 #endif

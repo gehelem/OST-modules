@@ -1,6 +1,8 @@
 #ifndef INSPECTOR_MODULE_h_
 #define INSPECTOR_MODULE_h_
 #include <indimodule.h>
+#include <fileio.h>
+#include <solver.h>
 
 #if defined(INSPECTOR_MODULE)
 #  define MODULE_INIT Q_DECL_EXPORT
@@ -10,10 +12,10 @@
 
 class MODULE_INIT InspectorModule : public IndiModule
 {
-    Q_OBJECT
+        Q_OBJECT
 
     public:
-        InspectorModule(QString name,QString label,QString profile,QVariantMap availableModuleLibs);
+        InspectorModule(QString name, QString label, QString profile, QVariantMap availableModuleLibs);
         ~InspectorModule();
 
     signals:
@@ -40,7 +42,8 @@ class MODULE_INIT InspectorModule : public IndiModule
         void AbortDone();
         void Abort();
     public slots:
-        void OnMyExternalEvent(const QString &eventType, const QString  &eventModule, const QString  &eventKey, const QVariantMap &eventData) override;
+        void OnMyExternalEvent(const QString &eventType, const QString  &eventModule, const QString  &eventKey,
+                               const QVariantMap &eventData) override;
         void OnSucessSEP();
 
     private:
@@ -78,6 +81,7 @@ class MODULE_INIT InspectorModule : public IndiModule
 
 };
 
-extern "C" MODULE_INIT InspectorModule *initialize(QString name,QString label,QString profile,QVariantMap availableModuleLibs);
+extern "C" MODULE_INIT InspectorModule *initialize(QString name, QString label, QString profile,
+        QVariantMap availableModuleLibs);
 
 #endif

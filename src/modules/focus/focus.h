@@ -1,6 +1,8 @@
 #ifndef FOCUS_MODULE_h_
 #define FOCUS_MODULE_h_
 #include <indimodule.h>
+#include <fileio.h>
+#include <solver.h>
 
 #if defined(FOCUS_MODULE)
 #  define MODULE_INIT Q_DECL_EXPORT
@@ -12,10 +14,10 @@
 
 class MODULE_INIT FocusModule : public IndiModule
 {
-    Q_OBJECT
+        Q_OBJECT
 
     public:
-        FocusModule(QString name,QString label,QString profile,QVariantMap availableModuleLibs);
+        FocusModule(QString name, QString label, QString profile, QVariantMap availableModuleLibs);
         ~FocusModule();
 
     signals:
@@ -55,7 +57,8 @@ class MODULE_INIT FocusModule : public IndiModule
         void cameraAlert();
         void abort();
     public slots:
-        void OnMyExternalEvent(const QString &eventType, const QString  &eventModule, const QString  &eventKey, const QVariantMap &eventData) override;
+        void OnMyExternalEvent(const QString &eventType, const QString  &eventModule, const QString  &eventKey,
+                               const QVariantMap &eventData) override;
         void OnSucessSEP();
 
     private:
@@ -119,6 +122,7 @@ class MODULE_INIT FocusModule : public IndiModule
 
 };
 
-extern "C" MODULE_INIT FocusModule *initialize(QString name,QString label,QString profile,QVariantMap availableModuleLibs);
+extern "C" MODULE_INIT FocusModule *initialize(QString name, QString label, QString profile,
+        QVariantMap availableModuleLibs);
 
 #endif

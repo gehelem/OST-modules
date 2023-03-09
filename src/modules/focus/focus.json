@@ -4,6 +4,7 @@
         "group": "",
         "permission": 0,
         "propertyLabel": "Values",
+        "grid":[],
         "GDY":{
             "D":"focpos",
             "Y":"loopHFRavg"
@@ -55,7 +56,7 @@
         "devcat": "Control",
         "group": "",
         "permission": 2,
-        "rule":2,
+        "rule":1,
         "propertyLabel": "Actions",
         "elements": {
             "coarse": {
