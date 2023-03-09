@@ -18,42 +18,13 @@ SequencerModule::SequencerModule(QString name, QString label, QString profile, Q
 
 
     createOstElement("devices", "camera", "Camera", true);
+    createOstElement("devices", "fw", "Filter wheel", true);
     setOstElementValue("devices", "camera",   _camera, false);
+    setOstElementValue("devices", "fw",   _fw, false);
 
     //saveAttributesToFile("inspector.json");
     _camera = getOstElementValue("devices", "camera").toString();
     _exposure = getOstElementValue("parameters", "exposure").toFloat();
-
-    /*_moduledescription="Inspector module";
-    _devices = new TextProperty(_modulename,"Options","root","devices","Devices",2,0);
-    _devices->addText(new TextValue("camera","Camera","hint",_camera));
-    emit propertyCreated(_devices,&_modulename);
-    _propertyStore.add(_devices);
-
-    _values = new NumberProperty(_modulename,"Control","root","values","Values",0,0);
-    //_values->addNumber(new NumberValue("loopHFRavg","Average HFR","hint",0,"",0,99,0));
-    _values->addNumber(new NumberValue("imgHFR","Last imgage HFR","hint",0,"",0,99,0));
-    //_values->addNumber(new NumberValue("iteration","Iteration","hint",0,"",0,99,0));
-    emit propertyCreated(_values,&_modulename);
-    _propertyStore.add(_values);
-
-
-    _parameters = new NumberProperty(_modulename,"Control","root","parameters","Parameters",2,0);
-    //_parameters->addNumber(new NumberValue("steps"         ,"Steps gap","hint",_steps,"",0,2000,100));
-    //_parameters->addNumber(new NumberValue("iterations"    ,"Iterations","hint",_iterations,"",0,99,1));
-    //_parameters->addNumber(new NumberValue("loopIterations","Average over","hint",_loopIterations,"",0,99,1));
-    _parameters->addNumber(new NumberValue("exposure"      ,"Exposure","hint",_exposure,"",0,120,1));
-    emit propertyCreated(_parameters,&_modulename);
-    _propertyStore.add(_parameters);
-
-    _img = new ImageProperty(_modulename,"Control","root","viewer","Image property label",0,0,0);
-    emit propertyCreated(_img,&_modulename);
-    _propertyStore.add(_img);
-
-    _grid = new GridProperty(_modulename,"Control","root","grid","Grid property label",0,0,"SXY","Set","Pos","HFR","","");
-    emit propertyCreated(_grid,&_modulename);
-    _propertyStore.add(_grid);*/
-
 }
 
 SequencerModule::~SequencerModule()
@@ -96,18 +67,13 @@ void SequencerModule::OnMyExternalEvent(const QString &eventType, const QString 
                 }
                 if (keyprop == "actions")
                 {
-                    if (keyelt == "shoot")
+                    if (keyelt == "run")
                     {
                         if (setOstElementValue(keyprop, keyelt, true, true))
                         {
-                            Shoot();
-                        }
-                    }
-                    if (keyelt == "loop")
-                    {
-                        if (setOstElementValue(keyprop, keyelt, true, true))
-                        {
-                            //
+
+                            sendModNewNumber(_camera, "CCD_EXPOSURE", "CCD_EXPOSURE_VALUE",
+                                             getOstElementGrid("sequence", "exposure")[0].toDouble());
                         }
                     }
                     if (keyelt == "abort")

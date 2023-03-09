@@ -61,6 +61,7 @@ class MODULE_INIT SequencerModule : public IndiModule
         void startCoarse();
 
         QString _camera  = "CCD Simulator";
+        QString _fw  = "Filter Simulator";
         bool    _newblob;
 
         QPointer<fileio> _image;
@@ -74,10 +75,8 @@ class MODULE_INIT SequencerModule : public IndiModule
         double _loopHFRavg;
         double _exposure = 2;
 
-        int    _iteration;
-        double _bestpos;
-        double _bestposfit;
-        double _besthfr;
+        QVariantMap mActiveSeq;
+
 
 };
 

@@ -137,8 +137,9 @@
     "histogram": {
         "devcat": "Results",
         "rule":0,
-        "GDY":{
-            "D":"i",
+        "grid":0,
+        "GXY":{
+            "X":"i",
             "Y":"n"
         },
         "elements": {
