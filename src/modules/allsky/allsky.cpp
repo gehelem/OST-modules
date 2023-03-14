@@ -42,7 +42,9 @@ Allsky::~Allsky()
 void Allsky::OnMyExternalEvent(const QString &eventType, const QString  &eventModule, const QString  &eventKey,
                                const QVariantMap &eventData)
 {
-    //BOOST_LOG_TRIVIAL(debug) << "OnMyExternalEvent - recv : " << getModuleName().toStdString() << "-" << eventType.toStdString() << "-" << eventKey.toStdString();
+    Q_UNUSED(eventType);
+    Q_UNUSED(eventKey);
+    //sendMessage("OnMyExternalEvent - recv : " + getModuleName() + "-" + eventType + "-" + eventKey);
     if (getModuleName() == eventModule)
     {
         foreach(const QString &keyprop, eventData.keys())
@@ -154,6 +156,8 @@ void Allsky::startBatch()
 }
 void Allsky::processFinished(int exitCode, QProcess::ExitStatus exitStatus)
 {
+    Q_UNUSED(exitStatus);
+
     setOstPropertyAttribute("timelapse", "video", getModuleName() + "/batch/" + getModuleName() + ".mp4", true);
     sendMessage("PROCESS FINISHED (" + QString::number(exitCode) + ")");
 }
