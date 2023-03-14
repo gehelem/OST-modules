@@ -12,6 +12,7 @@ Allsky::Allsky(QString name, QString label, QString profile, QVariantMap availab
 {
 
     //Q_INIT_RESOURCE(dummy);
+    setClassName(metaObject()->className());
 
     loadOstPropertiesFromFile(":allsky.json");
 
@@ -109,18 +110,22 @@ void Allsky::startLoop()
     QDir dir;
     dir.mkdir(getWebroot() + "/" + getModuleName());
     dir.mkdir(getWebroot() + "/" + getModuleName() + "/batch/");
-
+    _camera = getOstElementValue("devices", "camera").toString();
     connectIndi();
     connectDevice(_camera);
     setBLOBMode(B_ALSO, _camera.toStdString().c_str(), nullptr);
     //sendModNewNumber(_camera,"SIMULATOR_SETTINGS","SIM_TIME_FACTOR",0.01 );
-
+    INDI::BaseDevice cam = getDevice(_camera.toStdString().c_str());
+    INDI::PropertyNumber ccdExposure = cam.getProperty("CCD_EXPOSURE");
+    //ccdExposure[0].setValue(getOstElementValue("parameters","exposure").toDouble());
+    connectDevice(_camera);
+    setBLOBMode(B_ALSO, _camera.toStdString().c_str(), nullptr);
+    enableDirectBlobAccess(_camera.toStdString().c_str(), nullptr);
     if (!sendModNewNumber(_camera, "CCD_EXPOSURE", "CCD_EXPOSURE_VALUE", getOstElementValue("parameters",
                           "exposure").toDouble()))
     {
         setOstPropertyAttribute("actions", "status", IPS_ALERT, true);
     }
-
 }
 void Allsky::startBatch()
 {
@@ -162,17 +167,17 @@ void Allsky::processError()
     QString output = _process->readAllStandardError();
     sendMessage("Process log : " + output);
 }
-void Allsky::newBLOB(IBLOB *bp)
+void Allsky::newBLOB(INDI::PropertyBlob pblob)
 {
-
-    if (
-        (QString(bp->bvp->device) == _camera)
+    if
+    (
+        (QString(pblob.getDeviceName()) == _camera)
     )
     {
         setOstPropertyAttribute("actions", "status", IPS_OK, true);
         delete _image;
         _image = new fileio();
-        _image->loadBlob(bp);
+        _image->loadBlob(pblob);
 
         setOstElementValue("imagevalues", "width", _image->getStats().width, false);
         setOstElementValue("imagevalues", "height", _image->getStats().height, false);
@@ -184,7 +189,7 @@ void Allsky::newBLOB(IBLOB *bp)
         setOstElementValue("imagevalues", "snr", _image->getStats().SNR, true);
         QList<fileio::Record> rec = _image->getRecords();
         stats = _image->getStats();
-        _image->saveAsFITS(getWebroot() + "/" + getModuleName() + QString(bp->bvp->device) + ".FITS", stats,
+        _image->saveAsFITS(getWebroot() + "/" + getModuleName() + QString(pblob.getDeviceName()) + ".FITS", stats,
                            _image->getImageBuffer(),
                            FITSImage::Solution(), rec, false);
         _index++;
@@ -204,8 +209,8 @@ void Allsky::newBLOB(IBLOB *bp)
 
 
 
-        im.save(getWebroot() + "/" + getModuleName() + QString(bp->bvp->device) + ".jpeg", "JPG", 100);
-        setOstPropertyAttribute("image", "URL", getModuleName() + QString(bp->bvp->device) + ".jpeg", true);
+        im.save(getWebroot() + "/" + getModuleName() + QString(pblob.getDeviceName()) + ".jpeg", "JPG", 100);
+        setOstPropertyAttribute("image", "URL", getModuleName() + QString(pblob.getDeviceName()) + ".jpeg", true);
         QString _n = QStringLiteral("%1").arg(_index, 10, 10, QLatin1Char('0'));
         im.save(getWebroot() + "/" + getModuleName() + "/batch/" + _n + ".jpeg", "JPG", 100);
 
@@ -226,4 +231,17 @@ void Allsky::newBLOB(IBLOB *bp)
 
     }
 
+
+}
+void Allsky::updateProperty(INDI::Property property)
+{
+    if (strcmp(property.getName(), "CCD Simulator") == 0)
+    {
+        qDebug() << "updateProperty " << property.getName();
+    }
+    if (strcmp(property.getName(), "CCD1") == 0)
+    {
+        qDebug() << "updateProperty " << property.getName();
+        newBLOB(property);
+    }
 }

@@ -57,44 +57,44 @@ include(CMakeCommon)
 
 
 
-# Focus module
-#list (APPEND RESOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/focus/focus.qrc)
-#qt5_add_resources (RCC_SOURCES ${RESOURCES})
-add_library(ostfocuser SHARED
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/focus/focus.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/focus/focus.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/focus/focus.qrc
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/focus/polynomialfit.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/focus/polynomialfit.h
-    ${RCC_SOURCES}
-)
-target_link_libraries(ostfocuser PRIVATE
-    ${OST_LIBRARY_INDI}
-    Qt${QT_VERSION_MAJOR}::Core
-    Qt${QT_VERSION_MAJOR}::Concurrent
-    Qt${QT_VERSION_MAJOR}::Widgets
-    ${Boost_LOG_LIBRARY} ${Boost_LOG_SETUP_LIBRARY}
-    Threads::Threads
-    z
-)
-target_compile_definitions(ostfocuser PRIVATE FOCUS_MODULE)
+## Focus module
+##list (APPEND RESOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/focus/focus.qrc)
+##qt5_add_resources (RCC_SOURCES ${RESOURCES})
+#add_library(ostfocuser SHARED
+#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/focus/focus.h
+#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/focus/focus.cpp
+#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/focus/focus.qrc
+#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/focus/polynomialfit.cpp
+#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/focus/polynomialfit.h
+#    ${RCC_SOURCES}
+#)
+#target_link_libraries(ostfocuser PRIVATE
+#    ${OST_LIBRARY_INDI}
+#    Qt${QT_VERSION_MAJOR}::Core
+#    Qt${QT_VERSION_MAJOR}::Concurrent
+#    Qt${QT_VERSION_MAJOR}::Widgets
+#    ${Boost_LOG_LIBRARY} ${Boost_LOG_SETUP_LIBRARY}
+#    Threads::Threads
+#    z
+#)
+#target_compile_definitions(ostfocuser PRIVATE FOCUS_MODULE)
 
 
-# Indipanel module
-add_library(ostindipanel SHARED
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/indipanel/indipanel.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/indipanel/indipanel.cpp
-)
-target_link_libraries(ostindipanel PRIVATE
-    ${OST_LIBRARY_INDI}
-    Qt${QT_VERSION_MAJOR}::Core
-    Qt${QT_VERSION_MAJOR}::Concurrent
-    Qt${QT_VERSION_MAJOR}::Widgets
-    ${Boost_LOG_LIBRARY} ${Boost_LOG_SETUP_LIBRARY}
-    Threads::Threads
-    z
-)
-target_compile_definitions(ostindipanel PRIVATE INDIPANEL_MODULE)
+## Indipanel module
+#add_library(ostindipanel SHARED
+#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/indipanel/indipanel.h
+#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/indipanel/indipanel.cpp
+#)
+#target_link_libraries(ostindipanel PRIVATE
+#    ${OST_LIBRARY_INDI}
+#    Qt${QT_VERSION_MAJOR}::Core
+#    Qt${QT_VERSION_MAJOR}::Concurrent
+#    Qt${QT_VERSION_MAJOR}::Widgets
+#    ${Boost_LOG_LIBRARY} ${Boost_LOG_SETUP_LIBRARY}
+#    Threads::Threads
+#    z
+#)
+#target_compile_definitions(ostindipanel PRIVATE INDIPANEL_MODULE)
 
 
 ## guider module
@@ -167,22 +167,22 @@ target_link_libraries(ostallsky PRIVATE
 )
 target_compile_definitions(ostallsky PRIVATE ALLSKY_MODULE)
 
-# sequencer module
-add_library(ostsequencer SHARED
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/sequencer/sequencer.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/sequencer/sequencer.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/sequencer/sequencer.qrc
-)
-target_link_libraries(ostsequencer PRIVATE
-    ${OST_LIBRARY_INDI}
-    Qt${QT_VERSION_MAJOR}::Core
-    Qt${QT_VERSION_MAJOR}::Concurrent
-    Qt${QT_VERSION_MAJOR}::Widgets
-    ${Boost_LOG_LIBRARY} ${Boost_LOG_SETUP_LIBRARY}
-    Threads::Threads
-    z
-)
-target_compile_definitions(ostsequencer PRIVATE SEQUENCER_MODULE)
+## sequencer module
+#add_library(ostsequencer SHARED
+#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/sequencer/sequencer.h
+#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/sequencer/sequencer.cpp
+#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/sequencer/sequencer.qrc
+#)
+#target_link_libraries(ostsequencer PRIVATE
+#    ${OST_LIBRARY_INDI}
+#    Qt${QT_VERSION_MAJOR}::Core
+#    Qt${QT_VERSION_MAJOR}::Concurrent
+#    Qt${QT_VERSION_MAJOR}::Widgets
+#    ${Boost_LOG_LIBRARY} ${Boost_LOG_SETUP_LIBRARY}
+#    Threads::Threads
+#    z
+#)
+#target_compile_definitions(ostsequencer PRIVATE SEQUENCER_MODULE)
 
 
 
