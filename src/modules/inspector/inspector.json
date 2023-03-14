@@ -77,16 +77,6 @@
         "hasprofile":true,
         "propertyLabel": "Parameters",
         "elements": {
-            "steps": {
-                "elementLabel": "Steps gap",
-                "value":100,
-                "format": "999999"
-            },
-            "iterations": {
-                "elementLabel": "Iterations",
-                "value":10,
-                "format": "99"
-            },
             "exposure": {
                 "elementLabel": "Exposure",
                 "value":10,
@@ -95,15 +85,17 @@
         }
     },
     "image": {
-        "devcat": "Results",
+        "devcat": "Control",
         "group": "",
+        "order":"Control8888",
         "permission": 0,
         "propertyLabel": "Last image",
         "URL": ""
     },
     "imagemap": {
-        "devcat": "Results",
+        "devcat": "Control",
         "group": "",
+        "order":"Control9999",
         "permission": 0,
         "propertyLabel": "Image map",
         "URL": ""

@@ -132,22 +132,21 @@ include(CMakeCommon)
 #)
 #target_compile_definitions(ostpolar PRIVATE POLAR_MODULE)
 #
-## inspector module
-#add_library(ostinspector SHARED
-#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/inspector/inspector.h
-#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/inspector/inspector.cpp
-#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/inspector/inspector.qrc
-#)
-#target_link_libraries(ostinspector PRIVATE
-#    ${OST_LIBRARY_INDI}
-#    Qt${QT_VERSION_MAJOR}::Core
-#    Qt${QT_VERSION_MAJOR}::Concurrent
-#    Qt${QT_VERSION_MAJOR}::Widgets
-#    ${Boost_LOG_LIBRARY} ${Boost_LOG_SETUP_LIBRARY}
-#    Threads::Threads
-#    z
-#)
-#target_compile_definitions(ostinspector PRIVATE INSPECTOR_MODULE)
+# inspector module
+add_library(ostinspector SHARED
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/inspector/inspector.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/inspector/inspector.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/inspector/inspector.qrc
+)
+target_link_libraries(ostinspector PRIVATE
+    ${OST_LIBRARY_INDI}
+    Qt${QT_VERSION_MAJOR}::Core
+    Qt${QT_VERSION_MAJOR}::Concurrent
+    Qt${QT_VERSION_MAJOR}::Widgets
+    Threads::Threads
+    z
+)
+target_compile_definitions(ostinspector PRIVATE INSPECTOR_MODULE)
 
 # Allsky module
 add_library(ostallsky SHARED
@@ -160,7 +159,6 @@ target_link_libraries(ostallsky PRIVATE
     Qt${QT_VERSION_MAJOR}::Core
     Qt${QT_VERSION_MAJOR}::Concurrent
     Qt${QT_VERSION_MAJOR}::Widgets
-    ${Boost_LOG_LIBRARY} ${Boost_LOG_SETUP_LIBRARY}
     Threads::Threads
     z
 )
