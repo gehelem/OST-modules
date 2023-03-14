@@ -33,7 +33,6 @@ find_package(WCSLIB REQUIRED)
 find_package(QT NAMES Qt5 COMPONENTS Gui Widgets Core Concurrent Network WebSockets Sql REQUIRED)
 find_package(Qt5 REQUIRED COMPONENTS Gui Widgets Core Concurrent Network WebSockets Sql)
 find_package(StellarSolver REQUIRED)
-find_package(Boost COMPONENTS log log_setup REQUIRED)
 find_package(OSTSERVER REQUIRED)
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
