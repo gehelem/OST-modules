@@ -12,7 +12,7 @@ Allsky::Allsky(QString name, QString label, QString profile, QVariantMap availab
 {
 
     //Q_INIT_RESOURCE(dummy);
-    setClassName(metaObject()->className());
+    setClassName(QString(metaObject()->className()).toLower());
 
     loadOstPropertiesFromFile(":allsky.json");
 
@@ -117,10 +117,6 @@ void Allsky::startLoop()
     connectDevice(_camera);
     setBLOBMode(B_ALSO, _camera.toStdString().c_str(), nullptr);
     //sendModNewNumber(_camera,"SIMULATOR_SETTINGS","SIM_TIME_FACTOR",0.01 );
-    INDI::BaseDevice cam = getDevice(_camera.toStdString().c_str());
-    INDI::PropertyNumber ccdExposure = cam.getProperty("CCD_EXPOSURE");
-    //ccdExposure[0].setValue(getOstElementValue("parameters","exposure").toDouble());
-    connectDevice(_camera);
     setBLOBMode(B_ALSO, _camera.toStdString().c_str(), nullptr);
     enableDirectBlobAccess(_camera.toStdString().c_str(), nullptr);
     if (!sendModNewNumber(_camera, "CCD_EXPOSURE", "CCD_EXPOSURE_VALUE", getOstElementValue("parameters",
@@ -241,11 +237,9 @@ void Allsky::updateProperty(INDI::Property property)
 {
     if (strcmp(property.getName(), "CCD Simulator") == 0)
     {
-        qDebug() << "updateProperty " << property.getName();
     }
     if (strcmp(property.getName(), "CCD1") == 0)
     {
-        qDebug() << "updateProperty " << property.getName();
         newBLOB(property);
     }
 }
