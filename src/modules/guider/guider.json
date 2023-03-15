@@ -40,7 +40,28 @@
 
         }
     },
-
+    "drift": {
+        "devcat": "Control",
+        "group": "",
+        "order":"Control999",
+        "permission": 0,
+        "propertyLabel": "Drift",
+        "grid":0,
+        "GXY":{
+            "X":"RA",
+            "Y":"DEC"
+        },
+        "elements": {
+            "RA": {
+                "elementLabel": "RA",
+                "format": "99.99"
+            },
+            "DEC": {
+                "elementLabel": "DEC",
+                "format": "99.99"
+            }
+        }
+    },
     "actions": {
         "devcat": "Control",
         "group": "",
@@ -99,7 +120,7 @@
             },
             "calsteps": {
                 "elementLabel": "Iterations / axis",
-                "value":3,
+                "value":2,
                 "format": "99"
             }
 
@@ -119,17 +140,17 @@
             },
             "pulsemin": {
                 "elementLabel": "Min pulse (ms)",
-                "value":100,
+                "value":20,
                 "format": "99"
             },
             "raAgr": {
                 "elementLabel": "RA Agressivity",
-                "value":0.7,
+                "value":0.8,
                 "format": "99.99"
             },
             "deAgr": {
                 "elementLabel": "DEC Agressivity",
-                "value":0.7,
+                "value":0.8,
                 "format": "99"
             }
         }

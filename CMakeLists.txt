@@ -94,21 +94,21 @@ target_link_libraries(ostindipanel PRIVATE
 target_compile_definitions(ostindipanel PRIVATE INDIPANEL_MODULE)
 
 
-## guider module
-#add_library(ostguider SHARED
-#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/guider/guider.h
-#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/guider/guider.cpp
-#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/guider/guider.qrc
-#)
-#target_link_libraries(ostguider PRIVATE
-#    ${OST_LIBRARY_INDI}
-#    Qt${QT_VERSION_MAJOR}::Core
-#    Qt${QT_VERSION_MAJOR}::Concurrent
-#    Qt${QT_VERSION_MAJOR}::Widgets
-#    Threads::Threads
-#    z
-#)
-#target_compile_definitions(ostguider PRIVATE GUIDER_MODULE)
+# guider module
+add_library(ostguider SHARED
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/guider/guider.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/guider/guider.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/guider/guider.qrc
+)
+target_link_libraries(ostguider PRIVATE
+    ${OST_LIBRARY_INDI}
+    Qt${QT_VERSION_MAJOR}::Core
+    Qt${QT_VERSION_MAJOR}::Concurrent
+    Qt${QT_VERSION_MAJOR}::Widgets
+    Threads::Threads
+    z
+)
+target_compile_definitions(ostguider PRIVATE GUIDER_MODULE)
 
 ## polar module
 #add_library(ostpolar SHARED
@@ -181,7 +181,7 @@ target_compile_definitions(ostallsky PRIVATE ALLSKY_MODULE)
 install(TARGETS
     ostallsky
     ostinspector
-#    ostguider
+    ostguider
     ostindipanel
     ostfocuser
 #    ostsequencer
