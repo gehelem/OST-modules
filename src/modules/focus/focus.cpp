@@ -193,7 +193,7 @@ void FocusModule::updateProperty(INDI::Property p)
         sendMessage("FrameResetDone");
         if (_machine.isRunning()) emit FrameResetDone();
     }
-    if ((QString(p.getName()) == "CCD1") == 0)
+    if (QString(p.getName()) == "CCD1")
     {
         newBLOB(p);
     }
