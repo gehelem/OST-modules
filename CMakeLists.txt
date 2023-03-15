@@ -183,10 +183,11 @@ target_compile_definitions(ostallsky PRIVATE ALLSKY_MODULE)
 
 
 
-#install(TARGETS ostallsky ostinspector ostguider ostindipanel ostfocuser ostsequencer
-#    RUNTIME DESTINATION "/usr/bin"
-#    LIBRARY DESTINATION "/usr/lib"
-#)
+install(TARGETS ostallsky ostinspector
+#    ostguider ostindipanel ostfocuser ostsequencer
+    RUNTIME DESTINATION "/usr/bin"
+    LIBRARY DESTINATION "/usr/lib"
+)
 
 #get_cmake_property(_variableNames VARIABLES)
 #list (SORT _variableNames)
