@@ -56,27 +56,26 @@ include(CMakeCommon)
 
 
 
-## Focus module
-##list (APPEND RESOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/focus/focus.qrc)
-##qt5_add_resources (RCC_SOURCES ${RESOURCES})
-#add_library(ostfocuser SHARED
-#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/focus/focus.h
-#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/focus/focus.cpp
-#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/focus/focus.qrc
-#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/focus/polynomialfit.cpp
-#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/focus/polynomialfit.h
-#    ${RCC_SOURCES}
-#)
-#target_link_libraries(ostfocuser PRIVATE
-#    ${OST_LIBRARY_INDI}
-#    Qt${QT_VERSION_MAJOR}::Core
-#    Qt${QT_VERSION_MAJOR}::Concurrent
-#    Qt${QT_VERSION_MAJOR}::Widgets
-#    ${Boost_LOG_LIBRARY} ${Boost_LOG_SETUP_LIBRARY}
-#    Threads::Threads
-#    z
-#)
-#target_compile_definitions(ostfocuser PRIVATE FOCUS_MODULE)
+# Focus module
+#list (APPEND RESOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/focus/focus.qrc)
+#qt5_add_resources (RCC_SOURCES ${RESOURCES})
+add_library(ostfocuser SHARED
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/focus/focus.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/focus/focus.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/focus/focus.qrc
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/focus/polynomialfit.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/focus/polynomialfit.h
+    ${RCC_SOURCES}
+)
+target_link_libraries(ostfocuser PRIVATE
+    ${OST_LIBRARY_INDI}
+    Qt${QT_VERSION_MAJOR}::Core
+    Qt${QT_VERSION_MAJOR}::Concurrent
+    Qt${QT_VERSION_MAJOR}::Widgets
+    Threads::Threads
+    z
+)
+target_compile_definitions(ostfocuser PRIVATE FOCUS_MODULE)
 
 
 # Indipanel module
@@ -89,7 +88,6 @@ target_link_libraries(ostindipanel PRIVATE
     Qt${QT_VERSION_MAJOR}::Core
     Qt${QT_VERSION_MAJOR}::Concurrent
     Qt${QT_VERSION_MAJOR}::Widgets
-    ${Boost_LOG_LIBRARY} ${Boost_LOG_SETUP_LIBRARY}
     Threads::Threads
     z
 )
@@ -107,7 +105,6 @@ target_compile_definitions(ostindipanel PRIVATE INDIPANEL_MODULE)
 #    Qt${QT_VERSION_MAJOR}::Core
 #    Qt${QT_VERSION_MAJOR}::Concurrent
 #    Qt${QT_VERSION_MAJOR}::Widgets
-#    ${Boost_LOG_LIBRARY} ${Boost_LOG_SETUP_LIBRARY}
 #    Threads::Threads
 #    z
 #)
@@ -124,7 +121,6 @@ target_compile_definitions(ostindipanel PRIVATE INDIPANEL_MODULE)
 #    indiclient
 #    Qt${QT_VERSION_MAJOR}::Core
 #    Qt${QT_VERSION_MAJOR}::Concurrent
-#    ${Boost_LOG_LIBRARY} ${Boost_LOG_SETUP_LIBRARY}
 #    ${STELLARSOLVER_LIBRARIES}
 #    ${INDI_LIBRARIES} ${CFITSIO_LIBRARIES} ${ZLIB_LIBRARY}  ${NOVA_LIBRARIES}
 #    ${GSL_LIBRARIES} ${ZLIB_LIBRARY} ${CIMG_LIBRARIES} ${OpenCV_LIBS}
@@ -175,7 +171,6 @@ target_compile_definitions(ostallsky PRIVATE ALLSKY_MODULE)
 #    Qt${QT_VERSION_MAJOR}::Core
 #    Qt${QT_VERSION_MAJOR}::Concurrent
 #    Qt${QT_VERSION_MAJOR}::Widgets
-#    ${Boost_LOG_LIBRARY} ${Boost_LOG_SETUP_LIBRARY}
 #    Threads::Threads
 #    z
 #)
@@ -188,7 +183,7 @@ install(TARGETS
     ostinspector
 #    ostguider
     ostindipanel
-#    ostfocuser
+    ostfocuser
 #    ostsequencer
     RUNTIME DESTINATION "/usr/bin"
     LIBRARY DESTINATION "/usr/lib"

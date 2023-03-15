@@ -62,10 +62,8 @@ class MODULE_INIT FocusModule : public IndiModule
         void OnSucessSEP();
 
     private:
-        void newNumber(INumberVectorProperty *nvp) override;
-        void newBLOB(IBLOB *bp) override;
-        void newSwitch(ISwitchVectorProperty *svp) override;
-
+        void updateProperty(INDI::Property p) override;
+        void newBLOB(INDI::PropertyBlob pblob);
 
         void SMRequestFrameReset();
         void SMRequestBacklash();

@@ -14,7 +14,7 @@ FocusModule::FocusModule(QString name, QString label, QString profile, QVariantM
     Q_INIT_RESOURCE(focus);
 
     loadOstPropertiesFromFile(":focus.json");
-    setClassName(metaObject()->className());
+    setClassName(QString(metaObject()->className()).toLower());
 
     //setModuleLabel(label);
     setModuleDescription("Focus module with statemachines");
@@ -34,15 +34,6 @@ FocusModule::FocusModule(QString name, QString label, QString profile, QVariantM
     _exposure =          getOstElementValue("parameters", "exposure").toInt();
     _backlash =          getOstElementValue("parameters", "backlash").toInt();
 
-
-    /*_img = new ImageProperty(_modulename,"Control","","viewer","Image property label",0,0,0);
-    emit propertyCreated(_img,&_modulename);
-    _propertyStore.add(_img);
-
-    _grid = new GridProperty(_modulename,"Control","","grid","Grid property label",0,0,"SXY","Set","Pos","HFR","","");
-    emit propertyCreated(_grid,&_modulename);
-    _propertyStore.add(_grid);*/
-
 }
 
 FocusModule::~FocusModule()
@@ -54,6 +45,9 @@ void FocusModule::OnMyExternalEvent(const QString &eventType, const QString  &ev
 {
     //BOOST_LOG_TRIVIAL(debug) << "OnMyExternalEvent FocusModule - recv : " << getModuleName().toStdString() << "-" <<
     //                         eventType.toStdString() << "-" << eventKey.toStdString();
+    Q_UNUSED(eventType);
+    Q_UNUSED(eventKey);
+
     if (getModuleName() == eventModule)
     {
         foreach(const QString &keyprop, eventData.keys())
@@ -161,27 +155,26 @@ void FocusModule::OnMyExternalEvent(const QString &eventType, const QString  &ev
     }
 }
 
-
-void FocusModule::newNumber(INumberVectorProperty *nvp)
+void FocusModule::updateProperty(INDI::Property p)
 {
     if (
-        (QString(nvp->device) == _camera )
-        &&  (nvp->s == IPS_ALERT)
+        (QString(p.getDeviceName()) == _camera )
+        &&  (p.getState() == IPS_ALERT)
     )
     {
         sendMessage("cameraAlert");
         emit cameraAlert();
     }
     if (
-        (QString(nvp->device) == _focuser)
-        &&  (QString(nvp->name)   == "ABS_FOCUS_POSITION")
+        (QString(p.getDeviceName()) == _focuser)
+        &&  (QString(p.getName())   == "ABS_FOCUS_POSITION")
     )
     {
-        setOstElementValue("values", "focpos", nvp->np[0].value, true);
+        INDI::PropertyNumber n = p;
+        setOstElementValue("values", "focpos", n[0].value, true);
 
-        if (nvp->s == IPS_OK)
+        if (n.getState() == IPS_OK)
         {
-
             sendMessage("focuserReachedPosition");
             emit GotoBestDone();
             emit BacklashBestDone();
@@ -190,59 +183,50 @@ void FocusModule::newNumber(INumberVectorProperty *nvp)
             emit GotoStartDone();
         }
     }
+    if (
+        (QString(p.getDeviceName()) == _camera)
+        &&  (QString(p.getName())   == "CCD_FRAME_RESET")
+        &&  (p.getState() == IPS_OK)
+    )
+    {
+        INDI::PropertySwitch n = p;
+        sendMessage("FrameResetDone");
+        if (_machine.isRunning()) emit FrameResetDone();
+    }
+    if ((QString(p.getName()) == "CCD1") == 0)
+    {
+        newBLOB(p);
+    }
+
+
 
 }
 
-void FocusModule::newBLOB(IBLOB *bp)
+void FocusModule::newBLOB(INDI::PropertyBlob b)
 {
-    if (
-        (QString(bp->bvp->device) == _camera)
+    if
+    (
+        (QString(b.getDeviceName()) == _camera)
     )
     {
         delete _image;
         _image = new fileio();
-        _image->loadBlob(bp);
-        setBLOBMode(B_NEVER, _camera.toStdString().c_str(), nullptr);
+        _image->loadBlob(b);
+        //setBLOBMode(B_NEVER, _camera.toStdString().c_str(), nullptr);
 
         setOstPropertyAttribute("image", "status", IPS_OK, true);
 
         QImage rawImage = _image->getRawQImage();
-        rawImage.save( getWebroot() + "/" + QString(bp->bvp->device) + ".jpeg", "JPG", 100);
-        setOstPropertyAttribute("image", "URL", QString(bp->bvp->device) + ".jpeg", true);
+        rawImage.save( getWebroot() + "/" + QString(b.getDeviceName()) + ".jpeg", "JPG", 100);
+        setOstPropertyAttribute("image", "URL", QString(b.getDeviceName()) + ".jpeg", true);
 
         if (_machine.isRunning())
         {
             emit ExposureDone();
             emit ExposureBestDone();
         }
+
     }
-
-}
-
-void FocusModule::newSwitch(ISwitchVectorProperty *svp)
-{
-    if (
-        (QString(svp->device) == _camera)
-        //        &&  (QString(svp->name)   =="CCD_FRAME_RESET")
-        &&  (svp->s == IPS_ALERT)
-    )
-    {
-        sendMessage("cameraAlert");
-        emit cameraAlert();
-    }
-
-
-    if (
-        (QString(svp->device) == _camera)
-        &&  (QString(svp->name)   == "CCD_FRAME_RESET")
-        &&  (svp->s == IPS_OK)
-    )
-    {
-        sendMessage("FrameResetDone");
-        if (_machine.isRunning()) emit FrameResetDone();
-    }
-
-
 }
 
 void FocusModule::SMAbort()
@@ -255,6 +239,12 @@ void FocusModule::SMAbort()
 void FocusModule::startCoarse()
 {
     resetOstElements("values");
+    connectIndi();
+    connectDevice(_camera);
+    setBLOBMode(B_ALSO, _camera.toStdString().c_str(), nullptr);
+    sendModNewNumber(_camera, "SIMULATOR_SETTINGS", "SIM_TIME_FACTOR", 0.01 );
+    enableDirectBlobAccess(_camera.toStdString().c_str(), nullptr);
+
     _posvector.clear();
     _hfdvector.clear();
     _coefficients.clear();
@@ -386,7 +376,7 @@ void FocusModule::SMRequestFrameReset()
     sendMessage("SMRequestFrameReset");
 
 
-    setBLOBMode(B_ALSO, _camera.toStdString().c_str(), nullptr);
+    //setBLOBMode(B_ALSO, _camera.toStdString().c_str(), nullptr);
 
     /*qDebug() << "conf count" << _machine.configuration().count();
     QSet<QAbstractState *>::iterator i;
@@ -435,7 +425,7 @@ void FocusModule::SMRequestExposure()
         emit abort();
         return;
     }
-    setBLOBMode(B_ALSO, _camera.toStdString().c_str(), nullptr);
+    //setBLOBMode(B_ALSO, _camera.toStdString().c_str(), nullptr);
     emit RequestExposureDone();
 
 }
