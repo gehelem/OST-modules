@@ -2,6 +2,7 @@
     "actions": {
         "devcat": "Control",
         "group": "",
+        "order":"Control0000",
         "permission": 2,
         "rule":2,
         "propertyLabel": "Actions",
@@ -22,6 +23,7 @@
     },
     "imagevalues": {
         "devcat": "Control",
+        "order":"Control7777",
         "rule":0,
         "elements": {
                 "width": {
@@ -72,6 +74,7 @@
     },
     "parameters": {
         "devcat": "Control",
+        "order":"Control7777",
         "group": "",
         "permission": 2,
         "hasprofile":true,
@@ -95,7 +98,7 @@
     "imagemap": {
         "devcat": "Control",
         "group": "",
-        "order":"Control9999",
+        "order":"Control1111",
         "permission": 0,
         "propertyLabel": "Image map",
         "URL": ""

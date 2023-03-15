@@ -21,16 +21,13 @@ class MODULE_INIT IndiPanel : public IndiModule
         //void OnSetPropertyText(TextProperty* prop) override;
 
     private:
-        void newDevice      (INDI::BaseDevice *dp) override;
-        void removeDevice   (INDI::BaseDevice *dp) override;
-        void newProperty    (INDI::Property *property) override;
-        void removeProperty (INDI::Property *property) override;
-        void newNumber      (INumberVectorProperty *nvp) override;
-        void newText        (ITextVectorProperty *tvp) override;
-        void newLight       (ILightVectorProperty *lvp) override;
-        void newBLOB        (IBLOB *bp) override;
-        void newSwitch      (ISwitchVectorProperty *svp) override;
-        void newMessage     (INDI::BaseDevice *dp, int messageID) override;
+        void newDevice      (INDI::BaseDevice dp) override;
+        void removeDevice   (INDI::BaseDevice dp) override;
+        void newProperty    (INDI::Property property) override;
+        void removeProperty (INDI::Property property) override;
+        void updateProperty (INDI::Property property) override;
+        void newBLOB        (IBLOB bp);
+        void newMessage     (INDI::BaseDevice dp, int messageID) override;
         void OnMyExternalEvent(const QString &eventType, const QString  &eventModule, const QString  &eventKey,
                                const QVariantMap &eventData) override;
 
