@@ -79,21 +79,21 @@ include(CMakeCommon)
 #target_compile_definitions(ostfocuser PRIVATE FOCUS_MODULE)
 
 
-## Indipanel module
-#add_library(ostindipanel SHARED
-#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/indipanel/indipanel.h
-#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/indipanel/indipanel.cpp
-#)
-#target_link_libraries(ostindipanel PRIVATE
-#    ${OST_LIBRARY_INDI}
-#    Qt${QT_VERSION_MAJOR}::Core
-#    Qt${QT_VERSION_MAJOR}::Concurrent
-#    Qt${QT_VERSION_MAJOR}::Widgets
-#    ${Boost_LOG_LIBRARY} ${Boost_LOG_SETUP_LIBRARY}
-#    Threads::Threads
-#    z
-#)
-#target_compile_definitions(ostindipanel PRIVATE INDIPANEL_MODULE)
+# Indipanel module
+add_library(ostindipanel SHARED
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/indipanel/indipanel.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/indipanel/indipanel.cpp
+)
+target_link_libraries(ostindipanel PRIVATE
+    ${OST_LIBRARY_INDI}
+    Qt${QT_VERSION_MAJOR}::Core
+    Qt${QT_VERSION_MAJOR}::Concurrent
+    Qt${QT_VERSION_MAJOR}::Widgets
+    ${Boost_LOG_LIBRARY} ${Boost_LOG_SETUP_LIBRARY}
+    Threads::Threads
+    z
+)
+target_compile_definitions(ostindipanel PRIVATE INDIPANEL_MODULE)
 
 
 ## guider module
@@ -183,8 +183,13 @@ target_compile_definitions(ostallsky PRIVATE ALLSKY_MODULE)
 
 
 
-install(TARGETS ostallsky ostinspector
-#    ostguider ostindipanel ostfocuser ostsequencer
+install(TARGETS
+    ostallsky
+    ostinspector
+#    ostguider
+    ostindipanel
+#    ostfocuser
+#    ostsequencer
     RUNTIME DESTINATION "/usr/bin"
     LIBRARY DESTINATION "/usr/lib"
 )
