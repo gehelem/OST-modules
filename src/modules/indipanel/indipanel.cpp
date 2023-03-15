@@ -259,17 +259,18 @@ void IndiPanel::OnMyExternalEvent(const QString &eventType, const QString  &even
                 //setOstElementValue(keyprop,keyelt,eventData[keyprop].toMap()["elements"].toMap()[keyelt].toMap()["value"],true);
                 if (eventData[keyprop].toMap()["indi"].toInt() == INDI_TEXT)
                 {
-                    sendMessage("INDI_TEXT");
+                    //sendMessage("INDI_TEXT");
                     sendModNewText(devcat, prop, keyelt, eventData[keyprop].toMap()["elements"].toMap()[keyelt].toMap()["value"].toString());
                 }
                 if (eventData[keyprop].toMap()["indi"].toInt() == INDI_NUMBER)
                 {
-                    sendMessage("INDI_NUMBER");
+                    //sendMessage("INDI_NUMBER = " + keyprop + "//" + keyelt + " = " +
+                    //            eventData[keyprop].toMap()["elements"].toMap()[keyelt].toMap()["value"].toFloat());
                     sendModNewNumber(devcat, prop, keyelt, eventData[keyprop].toMap()["elements"].toMap()[keyelt].toMap()["value"].toFloat());
                 }
                 if (eventData[keyprop].toMap()["indi"].toInt() == INDI_SWITCH)
                 {
-                    sendMessage("INDI_SWITCH");
+                    //sendMessage("INDI_SWITCH");
                     keyelt.toStdString();
                     if ( eventData[keyprop].toMap()["elements"].toMap()[keyelt].toMap()["value"].toBool()) sendModNewSwitch(devcat, prop,
                                 keyelt, ISS_ON);
