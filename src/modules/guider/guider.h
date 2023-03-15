@@ -83,9 +83,9 @@ class MODULE_INIT GuiderModule  : public IndiModule
         double _exposure = 0.5;
         int    _pulse  = 1000;
         int    _pulseMax  = 2000;
-        int    _pulseMin  = 100;
-        double _raAgr = 0.7;
-        double _deAgr = 0.7;
+        int    _pulseMin  = 20;
+        double _raAgr = 0.8;
+        double _deAgr = 0.8;
         int    _pulseN = 0;
         int    _pulseS = 0;
         int    _pulseE = 0;

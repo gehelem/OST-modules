@@ -26,10 +26,6 @@ GuiderModule::GuiderModule(QString name, QString label, QString profile, QVarian
     //    emit propertyCreated(_grid,&_modulename);
     //    _propertyStore.add(_grid);
     //
-    //    _gridguide = new GridProperty(_modulename,"Control","root","gridguide","Grid property label",0,0,"PHD","Time","RA","DE","CRA","CDE");
-    //    emit propertyCreated(_gridguide,&_modulename);
-    //    _propertyStore.add(_gridguide);
-    //
     //    _states = new LightProperty(_modulename,"Control","root","states","State",0,0);
     //    _states->addLight(new LightValue("idle"  ,"Idle","hint",1));
     //    _states->addLight(new LightValue("cal"   ,"Calibrating","hint",0));
@@ -392,6 +388,7 @@ void GuiderModule::SMInitInit()
         frameReset(_camera);
         sendModNewNumber(_camera, "SIMULATOR_SETTINGS", "SIM_TIME_FACTOR", 0.01 );
         setOstPropertyAttribute("actions", "status", IPS_BUSY, true);
+        resetOstElements("drift");
     }
     else
     {
@@ -418,9 +415,6 @@ void GuiderModule::SMInitInit()
         emit Abort();
         return;
     }
-    //_gridguide->clear();
-    //_propertyStore.update(_gridguide);
-    //emit propertyUpdated(_gridguide,&_modulename);
     //_grid->clear();
     //_propertyStore.update(_grid);
     //emit propertyUpdated(_grid,&_modulename);
@@ -466,6 +460,7 @@ void GuiderModule::SMInitCal()
 void GuiderModule::SMInitGuide()
 {
     sendMessage("SMInitGuide");
+    resetOstElements("drift");
 
     //BOOST_LOG_TRIVIAL(debug) << "************************************************************";
     //BOOST_LOG_TRIVIAL(debug) << "************************************************************";
@@ -484,10 +479,6 @@ void GuiderModule::SMInitGuide()
     //_states->addLight(new LightValue("error" ,"Error","hint",0));
     //emit propertyUpdated(_states,&_modulename);
     //_propertyStore.update(_states);
-
-    //_gridguide->clear();
-    //_propertyStore.update(_gridguide);
-    //emit propertyUpdated(_gridguide,&_modulename);
 
     //_grid->clear();
     //_propertyStore.update(_grid);
@@ -720,7 +711,7 @@ void GuiderModule::SMComputeGuide()
         if (_pulseW < _pulseMin) _pulseW = 0;
     }
     else _pulseW = 0;
-    if (_pulseW > 0) sendMessage("*********************** guide  W pulse " + QString(_pulseW));
+    if (_pulseW > 0) sendMessage("*********************** guide  W pulse " + QString::number(_pulseW));
 
     if (_driftRA < 0 )
     {
@@ -729,7 +720,7 @@ void GuiderModule::SMComputeGuide()
         if (_pulseE < _pulseMin) _pulseE = 0;
     }
     else _pulseE = 0;
-    if (_pulseE > 0) sendMessage("*********************** guide  E pulse " + QString(_pulseE));
+    if (_pulseE > 0) sendMessage("*********************** guide  E pulse " + QString::number(_pulseE));
 
     if (_driftDE > 0 )
     {
@@ -738,7 +729,7 @@ void GuiderModule::SMComputeGuide()
         if (_pulseS < _pulseMin) _pulseS = 0;
     }
     else _pulseS = 0;
-    if (_pulseS > 0) sendMessage("*********************** guide  S pulse " + QString(_pulseS));
+    if (_pulseS > 0) sendMessage("*********************** guide  S pulse " + QString::number(_pulseS));
 
     if (_driftDE < 0 )
     {
@@ -747,17 +738,17 @@ void GuiderModule::SMComputeGuide()
         if (_pulseN < _pulseMin) _pulseN = 0;
     }
     else _pulseN = 0;
-    if (_pulseN > 0) sendMessage("*********************** guide  N pulse " + QString(_pulseN));
+    if (_pulseN > 0) sendMessage("*********************** guide  N pulse " + QString::number(_pulseN));
 
-    //_gridguide->append(_itt,_driftRA,_driftDE,_pulseW-_pulseE,_pulseN-_pulseS);
-    //_propertyStore.update(_gridguide);
-    //emit propertyAppended(_gridguide,&_modulename,_itt,_driftRA,_driftDE,_pulseW-_pulseE,_pulseN-_pulseS);
     _itt++;
 
     setOstElementValue("values", "pulseN", _pulseN, false);
     setOstElementValue("values", "pulseS", _pulseS, false);
     setOstElementValue("values", "pulseE", _pulseE, false);
     setOstElementValue("values", "pulseW", _pulseW, true);
+    setOstElementValue("drift", "RA", _driftRA, false);
+    setOstElementValue("drift", "DEC", _driftDE, true);
+    pushOstElements("drift");
 
     emit ComputeGuideDone();
 }
