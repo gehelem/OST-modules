@@ -390,7 +390,9 @@ void GuiderModule::SMInitInit()
         setOstPropertyAttribute("actions", "status", IPS_BUSY, true);
         resetOstElements("drift");
         resetOstElements("guiding");
+        resetOstElements("snr");
     }
+
     else
     {
         setOstPropertyAttribute("actions", "status", IPS_ALERT, true);
@@ -748,15 +750,22 @@ void GuiderModule::SMComputeGuide()
     setOstElementValue("values", "pulseE", _pulseE, false);
     setOstElementValue("values", "pulseW", _pulseW, true);
     setOstElementValue("drift", "RA", _driftRA, false);
-    setOstElementValue("drift", "DEC", _driftDE, true);
+    setOstElementValue("drift", "DEC", _driftDE, false);
     pushOstElements("drift");
 
-    setOstElementValue("guiding", "time", QDateTime::currentDateTime().toString("dd/MM/yyyy hh:mm:ss zzz"), false);
+    //setOstElementValue("guiding", "time", QDateTime::currentDateTime().toString("dd/MM/yyyy hh:mm:ss zzz"), false);
+    double tt = QDateTime::currentDateTime().toMSecsSinceEpoch();
+    setOstElementValue("guiding", "time", tt, false);
     setOstElementValue("guiding", "RA", _driftRA, false);
     setOstElementValue("guiding", "DE", _driftDE, false);
     setOstElementValue("guiding", "pDE", _pulseN - _pulseS, false);
     setOstElementValue("guiding", "pRA", _pulseE - _pulseW, false);
     pushOstElements("guiding");
+
+    //setOstElementValue("snr", "time", QDateTime::currentDateTime().toString("dd/MM/yyyy hh:mm:ss zzz"), false);
+    setOstElementValue("snr", "time", tt, false);
+    setOstElementValue("snr", "snr", _image->getStats().SNR, false);
+    pushOstElements("snr");
 
     emit ComputeGuideDone();
 }

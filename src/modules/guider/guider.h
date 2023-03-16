@@ -90,10 +90,10 @@ class MODULE_INIT GuiderModule  : public IndiModule
         int    _pulseS = 0;
         int    _pulseE = 0;
         int    _pulseW = 0;
-        int    _calPulseN = 0;
-        int    _calPulseS = 0;
-        int    _calPulseE = 0;
-        int    _calPulseW = 0;
+        int    _calPulseN = 300;
+        int    _calPulseS = 300;
+        int    _calPulseE = 300;
+        int    _calPulseW = 300;
         int    _calPulseRA = 0;
         int    _calPulseDEC = 0;
         int    _calState = 0;

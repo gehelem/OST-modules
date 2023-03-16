@@ -2,6 +2,7 @@
     "values": {
         "devcat": "Control",
         "group": "",
+        "order":"Control800",
         "permission": 0,
         "propertyLabel": "Values",
         "elements": {
@@ -43,7 +44,7 @@
     "drift": {
         "devcat": "Control",
         "group": "",
-        "order":"Control999",
+        "order":"Control350",
         "permission": 0,
         "propertyLabel": "Drift",
         "grid":0,
@@ -65,7 +66,7 @@
     "guiding": {
         "devcat": "Control",
         "group": "",
-        "order":"Control990",
+        "order":"Control100",
         "permission": 0,
         "propertyLabel": "Guiding graph",
         "grid":0,
@@ -78,7 +79,8 @@
         },
         "elements": {
             "time": {
-                "elementLabel": "time"
+                "elementLabel": "time",
+                "value":0
             },
             "RA": {
                 "elementLabel": "Drift (RA)",
@@ -98,9 +100,33 @@
             }
         }
     },
+    "snr": {
+        "devcat": "Control",
+        "grid":[],
+        "order":"Control300",
+        "rule":0,
+        "GDY":{
+            "D":"time",
+            "Y":"snr"
+        },
+        "elements": {
+                "time": {
+                    "elementLabel": "Time",
+                    "value":0
+                },
+                "snr": {
+                    "elementLabel": "SNR",
+                    "value":0
+                }
+        },
+        "group": "",
+        "permission": 0,
+        "propertyLabel": "SNR"
+    },
     "actions": {
         "devcat": "Control",
         "group": "",
+        "order":"Control000",
         "permission": 2,
         "rule":2,
         "propertyLabel": "Actions",
@@ -129,8 +155,8 @@
     },
 
     "commonParams": {
-        "devcat": "Control",
-        "group": "Parameters",
+        "devcat": "Parameters",
+        "group": "",
         "permission": 2,
         "hasprofile":true,
         "propertyLabel": "Common Parameters",
@@ -143,8 +169,8 @@
         }
     },
     "calParams": {
-        "devcat": "Control",
-        "group": "Parameters",
+        "devcat": "Parameters",
+        "group": "",
         "permission": 2,
         "hasprofile":true,
         "propertyLabel": "Calibration Parameters",
@@ -163,8 +189,8 @@
         }
     },
     "guideParams": {
-        "devcat": "Control",
-        "group": "Parameters",
+        "devcat": "Parameters",
+        "group": "",
         "permission": 2,
         "hasprofile":true,
         "propertyLabel": "Guide parameters",
@@ -193,6 +219,7 @@
     },
     "image": {
         "devcat": "Control",
+        "order":"Control9999",
         "group": "",
         "permission": 0,
         "propertyLabel": "Last image",
