@@ -62,6 +62,42 @@
             }
         }
     },
+    "guiding": {
+        "devcat": "Control",
+        "group": "",
+        "order":"Control990",
+        "permission": 0,
+        "propertyLabel": "Guiding graph",
+        "grid":0,
+        "GPHD":{
+            "D":"time",
+            "RA":"RA",
+            "DE":"DE",
+            "pRA":"pRA",
+            "pDE":"pDE"
+        },
+        "elements": {
+            "time": {
+                "elementLabel": "time"
+            },
+            "RA": {
+                "elementLabel": "Drift (RA)",
+                "format": "99.99"
+            },
+            "DE": {
+                "elementLabel": "Drift (DE)",
+                "format": "99.99"
+            },
+            "pRA": {
+                "elementLabel": "Pulse (RA)",
+                "format": "99.99"
+            },
+            "pDE": {
+                "elementLabel": "Pulse (DE)",
+                "format": "99.99"
+            }
+        }
+    },
     "actions": {
         "devcat": "Control",
         "group": "",

@@ -386,9 +386,10 @@ void GuiderModule::SMInitInit()
         setBLOBMode(B_ALSO, _camera.toStdString().c_str(), nullptr);
         enableDirectBlobAccess(_camera.toStdString().c_str(), nullptr);
         frameReset(_camera);
-        sendModNewNumber(_camera, "SIMULATOR_SETTINGS", "SIM_TIME_FACTOR", 0.01 );
+        //sendModNewNumber(_camera, "SIMULATOR_SETTINGS", "SIM_TIME_FACTOR", 0.01 );
         setOstPropertyAttribute("actions", "status", IPS_BUSY, true);
         resetOstElements("drift");
+        resetOstElements("guiding");
     }
     else
     {
@@ -749,6 +750,13 @@ void GuiderModule::SMComputeGuide()
     setOstElementValue("drift", "RA", _driftRA, false);
     setOstElementValue("drift", "DEC", _driftDE, true);
     pushOstElements("drift");
+
+    setOstElementValue("guiding", "time", QDateTime::currentDateTime().toString("dd/MM/yyyy hh:mm:ss zzz"), false);
+    setOstElementValue("guiding", "RA", _driftRA, false);
+    setOstElementValue("guiding", "DE", _driftDE, false);
+    setOstElementValue("guiding", "pDE", _pulseN - _pulseS, false);
+    setOstElementValue("guiding", "pRA", _pulseE - _pulseW, false);
+    pushOstElements("guiding");
 
     emit ComputeGuideDone();
 }
