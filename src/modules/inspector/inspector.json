@@ -2,6 +2,7 @@
     "actions": {
         "devcat": "Control",
         "group": "",
+        "order":"Control0000",
         "permission": 2,
         "rule":2,
         "propertyLabel": "Actions",
@@ -22,6 +23,7 @@
     },
     "imagevalues": {
         "devcat": "Control",
+        "order":"Control7777",
         "rule":0,
         "elements": {
                 "width": {
@@ -72,21 +74,12 @@
     },
     "parameters": {
         "devcat": "Control",
+        "order":"Control7777",
         "group": "",
         "permission": 2,
         "hasprofile":true,
         "propertyLabel": "Parameters",
         "elements": {
-            "steps": {
-                "elementLabel": "Steps gap",
-                "value":100,
-                "format": "999999"
-            },
-            "iterations": {
-                "elementLabel": "Iterations",
-                "value":10,
-                "format": "99"
-            },
             "exposure": {
                 "elementLabel": "Exposure",
                 "value":10,
@@ -95,15 +88,17 @@
         }
     },
     "image": {
-        "devcat": "Results",
+        "devcat": "Control",
         "group": "",
+        "order":"Control8888",
         "permission": 0,
         "propertyLabel": "Last image",
         "URL": ""
     },
     "imagemap": {
-        "devcat": "Results",
+        "devcat": "Control",
         "group": "",
+        "order":"Control1111",
         "permission": 0,
         "propertyLabel": "Image map",
         "URL": ""
@@ -112,6 +107,7 @@
         "devcat": "Results",
         "rule":0,
         "grid":[],
+        "gridlimit":65535,
         "GDY":{
             "D":"i",
             "Y":"n"

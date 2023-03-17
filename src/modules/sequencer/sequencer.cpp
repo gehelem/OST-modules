@@ -1,42 +1,40 @@
-#include "inspector.h"
+#include "sequencer.h"
 #include <QPainter>
 
-InspectorModule *initialize(QString name, QString label, QString profile, QVariantMap availableModuleLibs)
+SequencerModule *initialize(QString name, QString label, QString profile, QVariantMap availableModuleLibs)
 {
-    InspectorModule *basemodule = new InspectorModule(name, label, profile, availableModuleLibs);
+    SequencerModule *basemodule = new SequencerModule(name, label, profile, availableModuleLibs);
     return basemodule;
 }
 
-InspectorModule::InspectorModule(QString name, QString label, QString profile, QVariantMap availableModuleLibs)
+SequencerModule::SequencerModule(QString name, QString label, QString profile, QVariantMap availableModuleLibs)
     : IndiModule(name, label, profile, availableModuleLibs)
 
 {
-
-    loadOstPropertiesFromFile(":inspector.json");
-    setClassName(QString(metaObject()->className()).toLower());
-
-    setModuleDescription("Inspector module - work in progress");
+    setClassName(metaObject()->className());
+    loadOstPropertiesFromFile(":sequencer.json");
+    setModuleDescription("Sequencer module - work in progress");
     setModuleVersion("0.1");
 
+
     createOstElement("devices", "camera", "Camera", true);
+    createOstElement("devices", "fw", "Filter wheel", true);
     setOstElementValue("devices", "camera",   _camera, false);
+    setOstElementValue("devices", "fw",   _fw, false);
 
     //saveAttributesToFile("inspector.json");
     _camera = getOstElementValue("devices", "camera").toString();
     _exposure = getOstElementValue("parameters", "exposure").toFloat();
 }
 
-InspectorModule::~InspectorModule()
+SequencerModule::~SequencerModule()
 {
 
 }
-void InspectorModule::OnMyExternalEvent(const QString &eventType, const QString  &eventModule, const QString  &eventKey,
+void SequencerModule::OnMyExternalEvent(const QString &eventType, const QString  &eventModule, const QString  &eventKey,
                                         const QVariantMap &eventData)
 {
-    //sendMessage("OnMyExternalEvent - recv : " + getModuleName() + "-" + eventType + "-" + eventKey);
-    Q_UNUSED(eventType);
-    Q_UNUSED(eventKey);
-
+    //BOOST_LOG_TRIVIAL(debug) << "OnMyExternalEvent - recv : " << getName().toStdString() << "-" << eventType.toStdString() << "-" << eventKey.toStdString();
     if (getModuleName() == eventModule)
     {
         foreach(const QString &keyprop, eventData.keys())
@@ -69,18 +67,13 @@ void InspectorModule::OnMyExternalEvent(const QString &eventType, const QString 
                 }
                 if (keyprop == "actions")
                 {
-                    if (keyelt == "shoot")
+                    if (keyelt == "run")
                     {
                         if (setOstElementValue(keyprop, keyelt, true, true))
                         {
-                            Shoot();
-                        }
-                    }
-                    if (keyelt == "loop")
-                    {
-                        if (setOstElementValue(keyprop, keyelt, true, true))
-                        {
-                            //
+
+                            sendModNewNumber(_camera, "CCD_EXPOSURE", "CCD_EXPOSURE_VALUE",
+                                             getOstElementGrid("sequence", "exposure")[0].toDouble());
                         }
                     }
                     if (keyelt == "abort")
@@ -92,22 +85,57 @@ void InspectorModule::OnMyExternalEvent(const QString &eventType, const QString 
                         }
                     }
                 }
+
             }
+            if (eventType == "Fldelete")
+            {
+                double line = eventData[keyprop].toMap()["line"].toDouble();
+                qDebug() << "dummy" << eventType << "-" << eventModule << "-" << eventKey << "-" << eventData << "line=" << line;
+                deleteOstPropertyLine(keyprop, line);
+
+            }
+            if (eventType == "Flcreate")
+            {
+                qDebug() << "dummy" << eventType << "-" << eventModule << "-" << eventKey << "-" << eventData;
+                newOstPropertyLine(keyprop, eventData);
+
+            }
+            if (eventType == "Flupdate")
+            {
+                double line = eventData[keyprop].toMap()["line"].toDouble();
+                qDebug() << "dummy" << eventType << "-" << eventModule << "-" << eventKey << "-" << eventData;
+                updateOstPropertyLine(keyprop, line, eventData);
+
+            }
+
+
         }
     }
 }
 
-void InspectorModule::newBLOB(INDI::PropertyBlob pblob)
+void SequencerModule::newNumber(INumberVectorProperty *nvp)
+{
+    if (
+        (QString(nvp->device) == _camera )
+        &&  (nvp->s == IPS_ALERT)
+    )
+    {
+        sendMessage("cameraAlert");
+        emit cameraAlert();
+    }
+}
+
+void SequencerModule::newBLOB(IBLOB *bp)
 {
 
     if (
-        (QString(pblob.getDeviceName()) == _camera)
+        (QString(bp->bvp->device) == _camera)
     )
     {
         setOstPropertyAttribute("actions", "status", IPS_OK, true);
         delete _image;
         _image = new fileio();
-        _image->loadBlob(pblob);
+        _image->loadBlob(bp);
         stats = _image->getStats();
         setOstElementValue("imagevalues", "width", _image->getStats().width, false);
         setOstElementValue("imagevalues", "height", _image->getStats().height, false);
@@ -119,7 +147,7 @@ void InspectorModule::newBLOB(INDI::PropertyBlob pblob)
         setOstElementValue("imagevalues", "snr", _image->getStats().SNR, true);
         sendMessage("SMFindStars");
         _solver.ResetSolver(stats, _image->getImageBuffer());
-        connect(&_solver, &Solver::successSEP, this, &InspectorModule::OnSucessSEP);
+        connect(&_solver, &Solver::successSEP, this, &SequencerModule::OnSucessSEP);
         _solver.FindStars(_solver.stellarSolverProfiles[0]);
 
     }
@@ -128,43 +156,40 @@ void InspectorModule::newBLOB(INDI::PropertyBlob pblob)
 
 }
 
-void InspectorModule::updateProperty(INDI::Property property)
+void SequencerModule::newSwitch(ISwitchVectorProperty *svp)
 {
-    if (strcmp(property.getName(), "CCD1") == 0)
-    {
-        newBLOB(property);
-    }
     if (
-        (property.getDeviceName() == _camera)
-        &&  (property.getState() == IPS_ALERT)
+        (QString(svp->device) == _camera)
+        //        &&  (QString(svp->name)   =="CCD_FRAME_RESET")
+        &&  (svp->s == IPS_ALERT)
     )
     {
-        sendWarning("cameraAlert");
+        sendMessage("cameraAlert");
         emit cameraAlert();
     }
 
 
     if (
-        (property.getDeviceName() == _camera)
-        &&  (property.getName()   == std::string("CCD_FRAME_RESET"))
-        &&  (property.getState() == IPS_OK)
+        (QString(svp->device) == _camera)
+        &&  (QString(svp->name)   == "CCD_FRAME_RESET")
+        &&  (svp->s == IPS_OK)
     )
     {
         sendMessage("FrameResetDone");
         emit FrameResetDone();
     }
+
+
 }
-void InspectorModule::Shoot()
+
+void SequencerModule::Shoot()
 {
     connectIndi();
     if (connectDevice(_camera))
     {
-        connectIndi();
-        connectDevice(_camera);
         setBLOBMode(B_ALSO, _camera.toStdString().c_str(), nullptr);
-        //sendModNewNumber(_camera,"SIMULATOR_SETTINGS","SIM_TIME_FACTOR",0.01 );
-        enableDirectBlobAccess(_camera.toStdString().c_str(), nullptr);
         frameReset(_camera);
+        sendModNewNumber(_camera, "SIMULATOR_SETTINGS", "SIM_TIME_FACTOR", 0.01 );
         sendModNewNumber(_camera, "CCD_EXPOSURE", "CCD_EXPOSURE_VALUE", _exposure);
         setOstPropertyAttribute("actions", "status", IPS_BUSY, true);
     }
@@ -174,7 +199,7 @@ void InspectorModule::Shoot()
     }
 }
 
-void InspectorModule::OnSucessSEP()
+void SequencerModule::OnSucessSEP()
 {
     setOstPropertyAttribute("actions", "status", IPS_OK, true);
     setOstElementValue("imagevalues", "imgHFR", _solver.HFRavg, false);
@@ -190,7 +215,7 @@ void InspectorModule::OnSucessSEP()
     QImage immap = rawImage.convertToFormat(QImage::Format_RGB32);
     immap.setColorTable(rawImage.colorTable());
 
-    im.save(getWebroot()  + "/" + getModuleName() + ".jpeg", "JPG", 100);
+    im.save( getWebroot() + "/" + getModuleName() + ".jpeg", "JPG", 100);
     setOstPropertyAttribute("image", "URL", getModuleName() + ".jpeg", true);
 
     //QRect r;
