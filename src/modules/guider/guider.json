@@ -157,6 +157,7 @@
     "commonParams": {
         "devcat": "Parameters",
         "group": "",
+        "order":"Parameters000",
         "permission": 2,
         "hasprofile":true,
         "propertyLabel": "Common Parameters",
@@ -171,6 +172,7 @@
     "calParams": {
         "devcat": "Parameters",
         "group": "",
+        "order":"Parameters100",
         "permission": 2,
         "hasprofile":true,
         "propertyLabel": "Calibration Parameters",
@@ -191,6 +193,7 @@
     "guideParams": {
         "devcat": "Parameters",
         "group": "",
+        "order":"Parameters200",
         "permission": 2,
         "rule":2,
         "hasprofile":true,
@@ -215,17 +218,54 @@
                 "elementLabel": "DEC Agressivity",
                 "value":0.8,
                 "format": "99"
-            },
+            }
+        }
+    },
+    "revCorrections": {
+        "devcat": "Parameters",
+        "group": "",
+        "order":"Parameters300",
+        "permission": 2,
+        "rule":2,
+        "hasprofile":true,
+        "propertyLabel": "Reverse guiding corrections",
+        "elements": {
             "revRA": {
-                "elementLabel": "Reverse RA corrections",
+                "elementLabel": "RA",
                 "value":false
             },
             "revDE": {
-                "elementLabel": "Reverse DE corrections",
+                "elementLabel": "DEC",
                 "value":false
             }
-
         }
+    },
+        "disCorrections": {
+            "devcat": "Parameters",
+            "group": "",
+            "permission": 2,
+            "order":"Parameters400",
+            "rule":2,
+            "hasprofile":true,
+            "propertyLabel": "Disable guiding corrections",
+            "elements": {
+                "disRA+": {
+                    "elementLabel": "RA+",
+                    "value":false
+                },
+                "disRA-": {
+                    "elementLabel": "RA-",
+                    "value":false
+                },
+                "disDE+": {
+                    "elementLabel": "DE+",
+                    "value":false
+                },
+                "disDE-": {
+                    "elementLabel": "DE-",
+                    "value":false
+                }
+            }
     },
     "image": {
         "devcat": "Control",

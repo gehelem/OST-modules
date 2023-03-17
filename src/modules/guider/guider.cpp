@@ -117,10 +117,14 @@ void GuiderModule::OnMyExternalEvent(const QString &eventType, const QString  &e
                             _deAgr = val.toDouble();
                         }
                     }
-                    if (keyelt == "revRA" || keyelt == "revDE")
-                    {
-                        setOstElementValue(keyprop, keyelt, val, true);
-                    }
+                }
+                if (keyprop == "revCorrections"  && (keyelt == "revRA" || keyelt == "revDE" ))
+                {
+                    setOstElementValue(keyprop, keyelt, val, true);
+                }
+                if (keyprop == "disCorrections"  && (keyelt == "disRA+" || keyelt == "disRA-" || keyelt == "disDE+" || keyelt == "disDE-"))
+                {
+                    setOstElementValue(keyprop, keyelt, val, true);
                 }
                 if (keyprop == "actions")
                 {
@@ -712,10 +716,15 @@ void GuiderModule::SMComputeGuide()
     //BOOST_LOG_TRIVIAL(debug) << "*********************** guide  RA drift (px) " << _driftRA;
     //BOOST_LOG_TRIVIAL(debug) << "*********************** guide  DE drift (px) " << _driftDE;
     int  revRA = 1;
-    if (getOstElementValue("guideParams", "revRA").toBool()) revRA = -1;
+    if (getOstElementValue("revCorrections", "revRA").toBool()) revRA = -1;
     int  revDE = 1;
-    if (getOstElementValue("guideParams", "revDE").toBool()) revDE = -1;
-    if (revRA * _driftRA > 0 )
+    if (getOstElementValue("revCorrections", "revDE").toBool()) revDE = -1;
+    bool disRAO = getOstElementValue("disCorrections", "disRA+").toBool();
+    bool disRAE = getOstElementValue("disCorrections", "disRA-").toBool();
+    bool disDEN = getOstElementValue("disCorrections", "disDE+").toBool();
+    bool disDES = getOstElementValue("disCorrections", "disDE-").toBool();
+
+    if (revRA * _driftRA > 0 && !disRAO)
     {
         _pulseW = _raAgr * revRA * _driftRA * _calPulseW;
         if (_pulseW > _pulseMax) _pulseW = _pulseMax;
@@ -724,7 +733,7 @@ void GuiderModule::SMComputeGuide()
     else _pulseW = 0;
     if (_pulseW > 0) sendMessage("*********************** guide  W pulse " + QString::number(_pulseW));
 
-    if (revRA * _driftRA < 0 )
+    if (revRA * _driftRA < 0 && !disRAE)
     {
         _pulseE = -_raAgr * revRA * _driftRA * _calPulseE;
         if (_pulseE > _pulseMax) _pulseE = _pulseMax;
@@ -733,7 +742,7 @@ void GuiderModule::SMComputeGuide()
     else _pulseE = 0;
     if (_pulseE > 0) sendMessage("*********************** guide  E pulse " + QString::number(_pulseE));
 
-    if (revDE * _driftDE > 0 )
+    if (revDE * _driftDE > 0 && !disDEN)
     {
         _pulseS = _deAgr * revDE * _driftDE * _calPulseS;
         if (_pulseS > _pulseMax) _pulseS = _pulseMax;
@@ -742,7 +751,7 @@ void GuiderModule::SMComputeGuide()
     else _pulseS = 0;
     if (_pulseS > 0) sendMessage("*********************** guide  S pulse " + QString::number(_pulseS));
 
-    if (revDE * _driftDE < 0 )
+    if (revDE * _driftDE < 0 && !disDES)
     {
         _pulseN = -_deAgr * revDE * _driftDE * _calPulseN;
         if (_pulseN > _pulseMax) _pulseN = _pulseMax;
