@@ -118,6 +118,14 @@ void GuiderModule::OnMyExternalEvent(const QString &eventType, const QString  &e
                         }
                     }
                 }
+                if (keyprop == "revCorrections"  && (keyelt == "revRA" || keyelt == "revDE" ))
+                {
+                    setOstElementValue(keyprop, keyelt, val, true);
+                }
+                if (keyprop == "disCorrections"  && (keyelt == "disRA+" || keyelt == "disRA-" || keyelt == "disDE+" || keyelt == "disDE-"))
+                {
+                    setOstElementValue(keyprop, keyelt, val, true);
+                }
                 if (keyprop == "actions")
                 {
                     if (keyelt == "calguide")
@@ -184,7 +192,7 @@ void GuiderModule::updateProperty(INDI::Property property)
         &&  (property.getState() == IPS_OK)
     )
     {
-        sendMessage("FrameResetDone");
+        //sendMessage("FrameResetDone");
         emit FrameResetDone();
     }
     if (
@@ -377,7 +385,7 @@ void GuiderModule::buildGuideStateMachines(void)
 }
 void GuiderModule::SMInitInit()
 {
-    sendMessage("SMInitInit");
+    //sendMessage("SMInitInit");
     if (connectDevice(_camera))
     {
         connectIndi();
@@ -386,7 +394,7 @@ void GuiderModule::SMInitInit()
         setBLOBMode(B_ALSO, _camera.toStdString().c_str(), nullptr);
         enableDirectBlobAccess(_camera.toStdString().c_str(), nullptr);
         frameReset(_camera);
-        //sendModNewNumber(_camera, "SIMULATOR_SETTINGS", "SIM_TIME_FACTOR", 0.01 );
+        sendModNewNumber(_camera, "SIMULATOR_SETTINGS", "SIM_TIME_FACTOR", 1 );
         setOstPropertyAttribute("actions", "status", IPS_BUSY, true);
         resetOstElements("drift");
         resetOstElements("guiding");
@@ -426,7 +434,7 @@ void GuiderModule::SMInitInit()
 }
 void GuiderModule::SMInitCal()
 {
-    sendMessage("SMInitCal");
+    //sendMessage("SMInitCal");
     //_states->addLight(new LightValue("idle"  ,"Idle","hint",0));
     //_states->addLight(new LightValue("cal"   ,"Calibrating","hint",2));
     //_states->addLight(new LightValue("guide" ,"Guiding","hint",0));
@@ -462,7 +470,7 @@ void GuiderModule::SMInitCal()
 }
 void GuiderModule::SMInitGuide()
 {
-    sendMessage("SMInitGuide");
+    //sendMessage("SMInitGuide");
     resetOstElements("drift");
 
     //BOOST_LOG_TRIVIAL(debug) << "************************************************************";
@@ -493,7 +501,7 @@ void GuiderModule::SMInitGuide()
 void GuiderModule::SMRequestFrameReset()
 {
     //BOOST_LOG_TRIVIAL(debug) << "SMRequestFrameReset";
-    sendMessage("SMRequestFrameReset");
+    //sendMessage("SMRequestFrameReset");
     if (!frameReset(_camera))
     {
         emit Abort();
@@ -507,7 +515,7 @@ void GuiderModule::SMRequestFrameReset()
 void GuiderModule::SMRequestExposure()
 {
     //BOOST_LOG_TRIVIAL(debug) << "SMRequestExposure";
-    sendMessage("SMRequestExposure");
+    //sendMessage("SMRequestExposure");
     if (!sendModNewNumber(_camera, "CCD_EXPOSURE", "CCD_EXPOSURE_VALUE", _exposure))
     {
         emit Abort();
@@ -707,41 +715,50 @@ void GuiderModule::SMComputeGuide()
     double _driftDE = -_dxFirst * sin(_calCcdOrientation) + _dyFirst * cos(_calCcdOrientation);
     //BOOST_LOG_TRIVIAL(debug) << "*********************** guide  RA drift (px) " << _driftRA;
     //BOOST_LOG_TRIVIAL(debug) << "*********************** guide  DE drift (px) " << _driftDE;
-    if (_driftRA > 0 )
+    int  revRA = 1;
+    if (getOstElementValue("revCorrections", "revRA").toBool()) revRA = -1;
+    int  revDE = 1;
+    if (getOstElementValue("revCorrections", "revDE").toBool()) revDE = -1;
+    bool disRAO = getOstElementValue("disCorrections", "disRA+").toBool();
+    bool disRAE = getOstElementValue("disCorrections", "disRA-").toBool();
+    bool disDEN = getOstElementValue("disCorrections", "disDE+").toBool();
+    bool disDES = getOstElementValue("disCorrections", "disDE-").toBool();
+
+    if (revRA * _driftRA > 0 && !disRAO)
     {
-        _pulseW = _raAgr * _driftRA * _calPulseW;
+        _pulseW = _raAgr * revRA * _driftRA * _calPulseW;
         if (_pulseW > _pulseMax) _pulseW = _pulseMax;
         if (_pulseW < _pulseMin) _pulseW = 0;
     }
     else _pulseW = 0;
-    if (_pulseW > 0) sendMessage("*********************** guide  W pulse " + QString::number(_pulseW));
+    //if (_pulseW > 0) sendMessage("*********************** guide  W pulse " + QString::number(_pulseW));
 
-    if (_driftRA < 0 )
+    if (revRA * _driftRA < 0 && !disRAE)
     {
-        _pulseE = -_raAgr * _driftRA * _calPulseE;
+        _pulseE = -_raAgr * revRA * _driftRA * _calPulseE;
         if (_pulseE > _pulseMax) _pulseE = _pulseMax;
         if (_pulseE < _pulseMin) _pulseE = 0;
     }
     else _pulseE = 0;
-    if (_pulseE > 0) sendMessage("*********************** guide  E pulse " + QString::number(_pulseE));
+    //if (_pulseE > 0) sendMessage("*********************** guide  E pulse " + QString::number(_pulseE));
 
-    if (_driftDE > 0 )
+    if (revDE * _driftDE > 0 && !disDEN)
     {
-        _pulseS = _deAgr * _driftDE * _calPulseS;
+        _pulseS = _deAgr * revDE * _driftDE * _calPulseS;
         if (_pulseS > _pulseMax) _pulseS = _pulseMax;
         if (_pulseS < _pulseMin) _pulseS = 0;
     }
     else _pulseS = 0;
-    if (_pulseS > 0) sendMessage("*********************** guide  S pulse " + QString::number(_pulseS));
+    //if (_pulseS > 0) sendMessage("*********************** guide  S pulse " + QString::number(_pulseS));
 
-    if (_driftDE < 0 )
+    if (revDE * _driftDE < 0 && !disDES)
     {
-        _pulseN = -_deAgr * _driftDE * _calPulseN;
+        _pulseN = -_deAgr * revDE * _driftDE * _calPulseN;
         if (_pulseN > _pulseMax) _pulseN = _pulseMax;
         if (_pulseN < _pulseMin) _pulseN = 0;
     }
     else _pulseN = 0;
-    if (_pulseN > 0) sendMessage("*********************** guide  N pulse " + QString::number(_pulseN));
+    //if (_pulseN > 0) sendMessage("*********************** guide  N pulse " + QString::number(_pulseN));
 
     _itt++;
 
@@ -772,7 +789,7 @@ void GuiderModule::SMComputeGuide()
 void GuiderModule::SMRequestPulses()
 {
 
-    sendMessage("SMRequestPulses");
+    //sendMessage("SMRequestPulses");
 
     if (_pulseN > 0)
     {
@@ -834,7 +851,7 @@ void GuiderModule::SMFindStars()
 {
     //BOOST_LOG_TRIVIAL(debug) << "SMFindStars";
 
-    sendMessage("SMFindStars");
+    //sendMessage("SMFindStars");
     stats = _image->getStats();
     _solver.ResetSolver(stats, _image->getImageBuffer());
     connect(&_solver, &Solver::successSEP, this, &GuiderModule::OnSucessSEP);
@@ -846,7 +863,7 @@ void GuiderModule::OnSucessSEP()
 {
     //BOOST_LOG_TRIVIAL(debug) << "OnSucessSEP";
 
-    sendMessage("SEP finished");
+    //sendMessage("SEP finished");
     disconnect(&_solver, &Solver::successSEP, this, &GuiderModule::OnSucessSEP);
     //BOOST_LOG_TRIVIAL(debug) << "********* SEP Finished";
     emit FindStarsDone();
