@@ -128,7 +128,7 @@
         "group": "",
         "order":"Control000",
         "permission": 2,
-        "rule":2,
+        "rule":0,
         "propertyLabel": "Actions",
         "elements": {
             "abort": {
@@ -192,6 +192,7 @@
         "devcat": "Parameters",
         "group": "",
         "permission": 2,
+        "rule":0,
         "hasprofile":true,
         "propertyLabel": "Guide parameters",
         "elements": {
@@ -214,7 +215,16 @@
                 "elementLabel": "DEC Agressivity",
                 "value":0.8,
                 "format": "99"
+            },
+            "revRA": {
+                "elementLabel": "Reverse RA corrections",
+                "value":false
+            },
+            "revDE": {
+                "elementLabel": "Reverse DE corrections",
+                "value":false
             }
+
         }
     },
     "image": {
