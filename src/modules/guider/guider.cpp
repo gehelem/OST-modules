@@ -117,6 +117,10 @@ void GuiderModule::OnMyExternalEvent(const QString &eventType, const QString  &e
                             _deAgr = val.toDouble();
                         }
                     }
+                    if (keyelt == "revRA" || keyelt == "revDE")
+                    {
+                        setOstElementValue(keyprop, keyelt, val, true);
+                    }
                 }
                 if (keyprop == "actions")
                 {
@@ -707,36 +711,40 @@ void GuiderModule::SMComputeGuide()
     double _driftDE = -_dxFirst * sin(_calCcdOrientation) + _dyFirst * cos(_calCcdOrientation);
     //BOOST_LOG_TRIVIAL(debug) << "*********************** guide  RA drift (px) " << _driftRA;
     //BOOST_LOG_TRIVIAL(debug) << "*********************** guide  DE drift (px) " << _driftDE;
-    if (_driftRA > 0 )
+    int  revRA = 1;
+    if (getOstElementValue("guideParams", "revRA").toBool()) revRA = -1;
+    int  revDE = 1;
+    if (getOstElementValue("guideParams", "revDE").toBool()) revDE = -1;
+    if (revRA * _driftRA > 0 )
     {
-        _pulseW = _raAgr * _driftRA * _calPulseW;
+        _pulseW = _raAgr * revRA * _driftRA * _calPulseW;
         if (_pulseW > _pulseMax) _pulseW = _pulseMax;
         if (_pulseW < _pulseMin) _pulseW = 0;
     }
     else _pulseW = 0;
     if (_pulseW > 0) sendMessage("*********************** guide  W pulse " + QString::number(_pulseW));
 
-    if (_driftRA < 0 )
+    if (revRA * _driftRA < 0 )
     {
-        _pulseE = -_raAgr * _driftRA * _calPulseE;
+        _pulseE = -_raAgr * revRA * _driftRA * _calPulseE;
         if (_pulseE > _pulseMax) _pulseE = _pulseMax;
         if (_pulseE < _pulseMin) _pulseE = 0;
     }
     else _pulseE = 0;
     if (_pulseE > 0) sendMessage("*********************** guide  E pulse " + QString::number(_pulseE));
 
-    if (_driftDE > 0 )
+    if (revDE * _driftDE > 0 )
     {
-        _pulseS = _deAgr * _driftDE * _calPulseS;
+        _pulseS = _deAgr * revDE * _driftDE * _calPulseS;
         if (_pulseS > _pulseMax) _pulseS = _pulseMax;
         if (_pulseS < _pulseMin) _pulseS = 0;
     }
     else _pulseS = 0;
     if (_pulseS > 0) sendMessage("*********************** guide  S pulse " + QString::number(_pulseS));
 
-    if (_driftDE < 0 )
+    if (revDE * _driftDE < 0 )
     {
-        _pulseN = -_deAgr * _driftDE * _calPulseN;
+        _pulseN = -_deAgr * revDE * _driftDE * _calPulseN;
         if (_pulseN > _pulseMax) _pulseN = _pulseMax;
         if (_pulseN < _pulseMin) _pulseN = 0;
     }

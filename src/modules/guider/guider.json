@@ -192,7 +192,7 @@
         "devcat": "Parameters",
         "group": "",
         "permission": 2,
-        "rule":0,
+        "rule":2,
         "hasprofile":true,
         "propertyLabel": "Guide parameters",
         "elements": {
