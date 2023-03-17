@@ -386,7 +386,7 @@ void GuiderModule::SMInitInit()
         setBLOBMode(B_ALSO, _camera.toStdString().c_str(), nullptr);
         enableDirectBlobAccess(_camera.toStdString().c_str(), nullptr);
         frameReset(_camera);
-        //sendModNewNumber(_camera, "SIMULATOR_SETTINGS", "SIM_TIME_FACTOR", 0.01 );
+        sendModNewNumber(_camera, "SIMULATOR_SETTINGS", "SIM_TIME_FACTOR", 1 );
         setOstPropertyAttribute("actions", "status", IPS_BUSY, true);
         resetOstElements("drift");
         resetOstElements("guiding");
