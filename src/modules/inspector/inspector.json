@@ -107,6 +107,7 @@
         "devcat": "Results",
         "rule":0,
         "grid":[],
+        "gridlimit":65535,
         "GDY":{
             "D":"i",
             "Y":"n"
