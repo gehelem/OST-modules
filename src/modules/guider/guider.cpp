@@ -192,7 +192,7 @@ void GuiderModule::updateProperty(INDI::Property property)
         &&  (property.getState() == IPS_OK)
     )
     {
-        sendMessage("FrameResetDone");
+        //sendMessage("FrameResetDone");
         emit FrameResetDone();
     }
     if (
@@ -385,7 +385,7 @@ void GuiderModule::buildGuideStateMachines(void)
 }
 void GuiderModule::SMInitInit()
 {
-    sendMessage("SMInitInit");
+    //sendMessage("SMInitInit");
     if (connectDevice(_camera))
     {
         connectIndi();
@@ -434,7 +434,7 @@ void GuiderModule::SMInitInit()
 }
 void GuiderModule::SMInitCal()
 {
-    sendMessage("SMInitCal");
+    //sendMessage("SMInitCal");
     //_states->addLight(new LightValue("idle"  ,"Idle","hint",0));
     //_states->addLight(new LightValue("cal"   ,"Calibrating","hint",2));
     //_states->addLight(new LightValue("guide" ,"Guiding","hint",0));
@@ -470,7 +470,7 @@ void GuiderModule::SMInitCal()
 }
 void GuiderModule::SMInitGuide()
 {
-    sendMessage("SMInitGuide");
+    //sendMessage("SMInitGuide");
     resetOstElements("drift");
 
     //BOOST_LOG_TRIVIAL(debug) << "************************************************************";
@@ -501,7 +501,7 @@ void GuiderModule::SMInitGuide()
 void GuiderModule::SMRequestFrameReset()
 {
     //BOOST_LOG_TRIVIAL(debug) << "SMRequestFrameReset";
-    sendMessage("SMRequestFrameReset");
+    //sendMessage("SMRequestFrameReset");
     if (!frameReset(_camera))
     {
         emit Abort();
@@ -515,7 +515,7 @@ void GuiderModule::SMRequestFrameReset()
 void GuiderModule::SMRequestExposure()
 {
     //BOOST_LOG_TRIVIAL(debug) << "SMRequestExposure";
-    sendMessage("SMRequestExposure");
+    //sendMessage("SMRequestExposure");
     if (!sendModNewNumber(_camera, "CCD_EXPOSURE", "CCD_EXPOSURE_VALUE", _exposure))
     {
         emit Abort();
@@ -731,7 +731,7 @@ void GuiderModule::SMComputeGuide()
         if (_pulseW < _pulseMin) _pulseW = 0;
     }
     else _pulseW = 0;
-    if (_pulseW > 0) sendMessage("*********************** guide  W pulse " + QString::number(_pulseW));
+    //if (_pulseW > 0) sendMessage("*********************** guide  W pulse " + QString::number(_pulseW));
 
     if (revRA * _driftRA < 0 && !disRAE)
     {
@@ -740,7 +740,7 @@ void GuiderModule::SMComputeGuide()
         if (_pulseE < _pulseMin) _pulseE = 0;
     }
     else _pulseE = 0;
-    if (_pulseE > 0) sendMessage("*********************** guide  E pulse " + QString::number(_pulseE));
+    //if (_pulseE > 0) sendMessage("*********************** guide  E pulse " + QString::number(_pulseE));
 
     if (revDE * _driftDE > 0 && !disDEN)
     {
@@ -749,7 +749,7 @@ void GuiderModule::SMComputeGuide()
         if (_pulseS < _pulseMin) _pulseS = 0;
     }
     else _pulseS = 0;
-    if (_pulseS > 0) sendMessage("*********************** guide  S pulse " + QString::number(_pulseS));
+    //if (_pulseS > 0) sendMessage("*********************** guide  S pulse " + QString::number(_pulseS));
 
     if (revDE * _driftDE < 0 && !disDES)
     {
@@ -758,7 +758,7 @@ void GuiderModule::SMComputeGuide()
         if (_pulseN < _pulseMin) _pulseN = 0;
     }
     else _pulseN = 0;
-    if (_pulseN > 0) sendMessage("*********************** guide  N pulse " + QString::number(_pulseN));
+    //if (_pulseN > 0) sendMessage("*********************** guide  N pulse " + QString::number(_pulseN));
 
     _itt++;
 
@@ -789,7 +789,7 @@ void GuiderModule::SMComputeGuide()
 void GuiderModule::SMRequestPulses()
 {
 
-    sendMessage("SMRequestPulses");
+    //sendMessage("SMRequestPulses");
 
     if (_pulseN > 0)
     {
@@ -851,7 +851,7 @@ void GuiderModule::SMFindStars()
 {
     //BOOST_LOG_TRIVIAL(debug) << "SMFindStars";
 
-    sendMessage("SMFindStars");
+    //sendMessage("SMFindStars");
     stats = _image->getStats();
     _solver.ResetSolver(stats, _image->getImageBuffer());
     connect(&_solver, &Solver::successSEP, this, &GuiderModule::OnSucessSEP);
@@ -863,7 +863,7 @@ void GuiderModule::OnSucessSEP()
 {
     //BOOST_LOG_TRIVIAL(debug) << "OnSucessSEP";
 
-    sendMessage("SEP finished");
+    //sendMessage("SEP finished");
     disconnect(&_solver, &Solver::successSEP, this, &GuiderModule::OnSucessSEP);
     //BOOST_LOG_TRIVIAL(debug) << "********* SEP Finished";
     emit FindStarsDone();
