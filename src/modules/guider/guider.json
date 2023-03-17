@@ -48,6 +48,7 @@
         "permission": 0,
         "propertyLabel": "Drift",
         "grid":0,
+        "gridlimit":50,
         "GXY":{
             "X":"RA",
             "Y":"DEC"
@@ -70,6 +71,7 @@
         "permission": 0,
         "propertyLabel": "Guiding graph",
         "grid":0,
+        "gridlimit":50,
         "GPHD":{
             "D":"time",
             "RA":"RA",
@@ -103,6 +105,7 @@
     "snr": {
         "devcat": "Control",
         "grid":[],
+        "gridlimit":50,
         "order":"Control300",
         "rule":0,
         "GDY":{
