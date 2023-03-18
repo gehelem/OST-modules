@@ -79,6 +79,7 @@ class MODULE_INIT FocusModule : public IndiModule
         void SMComputeResult();
         void SMInitLoopFrame();
         void SMComputeLoopFrame();
+        void SMFocusDone();
 
 
         void SMAlert();
