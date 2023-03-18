@@ -33,7 +33,6 @@ find_package(WCSLIB REQUIRED)
 find_package(QT NAMES Qt5 COMPONENTS Gui Widgets Core Concurrent Network WebSockets Sql REQUIRED)
 find_package(Qt5 REQUIRED COMPONENTS Gui Widgets Core Concurrent Network WebSockets Sql)
 find_package(StellarSolver REQUIRED)
-find_package(Boost COMPONENTS log log_setup REQUIRED)
 find_package(OSTSERVER REQUIRED)
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
@@ -48,7 +47,10 @@ include_directories(${Qt5_DIR})
 include_directories(${QT5Declarative_INCLUDE_LIBRARIES} )
 include_directories(${QT5Declarative_INCLUDE_DIRS} )
 include_directories(${STELLARSOLVER_INCLUDE_DIR})
-include_directories(${OST_INCLUDE_DIR})
+include_directories(${OST_INCLUDE_DIR}/ost)
+
+message(STATUS "OST_INCLUDE_DIR=${OST_INCLUDE_DIR}")
+
 
 include(CMakeCommon)
 
@@ -70,7 +72,6 @@ target_link_libraries(ostfocuser PRIVATE
     Qt${QT_VERSION_MAJOR}::Core
     Qt${QT_VERSION_MAJOR}::Concurrent
     Qt${QT_VERSION_MAJOR}::Widgets
-    ${Boost_LOG_LIBRARY} ${Boost_LOG_SETUP_LIBRARY}
     Threads::Threads
     z
 )
@@ -87,7 +88,6 @@ target_link_libraries(ostindipanel PRIVATE
     Qt${QT_VERSION_MAJOR}::Core
     Qt${QT_VERSION_MAJOR}::Concurrent
     Qt${QT_VERSION_MAJOR}::Widgets
-    ${Boost_LOG_LIBRARY} ${Boost_LOG_SETUP_LIBRARY}
     Threads::Threads
     z
 )
@@ -105,7 +105,6 @@ target_link_libraries(ostguider PRIVATE
     Qt${QT_VERSION_MAJOR}::Core
     Qt${QT_VERSION_MAJOR}::Concurrent
     Qt${QT_VERSION_MAJOR}::Widgets
-    ${Boost_LOG_LIBRARY} ${Boost_LOG_SETUP_LIBRARY}
     Threads::Threads
     z
 )
@@ -122,7 +121,6 @@ target_compile_definitions(ostguider PRIVATE GUIDER_MODULE)
 #    indiclient
 #    Qt${QT_VERSION_MAJOR}::Core
 #    Qt${QT_VERSION_MAJOR}::Concurrent
-#    ${Boost_LOG_LIBRARY} ${Boost_LOG_SETUP_LIBRARY}
 #    ${STELLARSOLVER_LIBRARIES}
 #    ${INDI_LIBRARIES} ${CFITSIO_LIBRARIES} ${ZLIB_LIBRARY}  ${NOVA_LIBRARIES}
 #    ${GSL_LIBRARIES} ${ZLIB_LIBRARY} ${CIMG_LIBRARIES} ${OpenCV_LIBS}
@@ -141,7 +139,6 @@ target_link_libraries(ostinspector PRIVATE
     Qt${QT_VERSION_MAJOR}::Core
     Qt${QT_VERSION_MAJOR}::Concurrent
     Qt${QT_VERSION_MAJOR}::Widgets
-    ${Boost_LOG_LIBRARY} ${Boost_LOG_SETUP_LIBRARY}
     Threads::Threads
     z
 )
@@ -158,32 +155,38 @@ target_link_libraries(ostallsky PRIVATE
     Qt${QT_VERSION_MAJOR}::Core
     Qt${QT_VERSION_MAJOR}::Concurrent
     Qt${QT_VERSION_MAJOR}::Widgets
-    ${Boost_LOG_LIBRARY} ${Boost_LOG_SETUP_LIBRARY}
     Threads::Threads
     z
 )
 target_compile_definitions(ostallsky PRIVATE ALLSKY_MODULE)
 
-# sequencer module
-add_library(ostsequencer SHARED
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/sequencer/sequencer.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/sequencer/sequencer.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/sequencer/sequencer.qrc
-)
-target_link_libraries(ostsequencer PRIVATE
-    ${OST_LIBRARY_INDI}
-    Qt${QT_VERSION_MAJOR}::Core
-    Qt${QT_VERSION_MAJOR}::Concurrent
-    Qt${QT_VERSION_MAJOR}::Widgets
-    ${Boost_LOG_LIBRARY} ${Boost_LOG_SETUP_LIBRARY}
-    Threads::Threads
-    z
-)
-target_compile_definitions(ostsequencer PRIVATE INSPECTOR_MODULE)
+## sequencer module
+#add_library(ostsequencer SHARED
+#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/sequencer/sequencer.h
+#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/sequencer/sequencer.cpp
+#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/sequencer/sequencer.qrc
+#)
+#target_link_libraries(ostsequencer PRIVATE
+#    ${OST_LIBRARY_INDI}
+#    Qt${QT_VERSION_MAJOR}::Core
+#    Qt${QT_VERSION_MAJOR}::Concurrent
+#    Qt${QT_VERSION_MAJOR}::Widgets
+#    Threads::Threads
+#    z
+#)
+#target_compile_definitions(ostsequencer PRIVATE SEQUENCER_MODULE)
 
-install(TARGETS ostallsky ostinspector ostguider ostindipanel ostfocuser ostsequencer
+
+
+install(TARGETS
+    ostallsky
+    ostinspector
+    ostguider
+    ostindipanel
+    ostfocuser
+#    ostsequencer
     RUNTIME DESTINATION "/usr/bin"
-    LIBRARY DESTINATION "/usr/lib/ost"
+    LIBRARY DESTINATION "/usr/lib"
 )
 
 #get_cmake_property(_variableNames VARIABLES)
@@ -196,4 +199,5 @@ install(TARGETS ostallsky ostinspector ostguider ostindipanel ostfocuser ostsequ
 #message(STATUS "OST_INCLUDE_DIR=${OST_INCLUDE_DIR}")
 #message(STATUS "OST_LIBRARY_BASE=${OST_LIBRARY_BASE}")
 #message(STATUS "OST_LIBRARY_INDI=${OST_LIBRARY_INDI}")
+
 
