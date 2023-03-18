@@ -79,6 +79,7 @@
             "frametype": {
                 "elementLabel": "Frame type",
                 "value":"L",
+                "gridvalues":["L","L","L","L","D"],
                 "listOfValues":{
                     "L":"Light",
                     "B":"Bias",
@@ -89,35 +90,44 @@
             "filter": {
                 "elementLabel": "Filter",
                 "value":"L",
+                "gridvalues":["L","R","G","B",""],
                 "listOfValues":{
                     "L":"Luminance",
                     "R":"Red",
-                    "V":"Green",
+                    "G":"Green",
                     "B":"Blue"
                 }
             },
             "exposure": {
                 "elementLabel": "Exposure",
                 "value":10,
-                "format": "99.99"
+                "gridvalues":[10,10,10,10,10],
+                "format": "99"
             },
             "count": {
                 "elementLabel": "Count",
                 "value":5,
-                "format": "99.99"
+                "gridvalues":[2,2,2,2,2],
+                "format": "99"
             },
             "gain": {
                 "elementLabel": "Gain",
                 "value":5,
+                "gridvalues":[100,100,100,100,100],
                 "format": "99"
             },
             "offset": {
                 "elementLabel": "Offset",
                 "value":5,
+                "gridvalues":[10,10,10,10,10],
                 "format": "99"
+            },
+            "status": {
+                "elementLabel": "Status",
+                "value":"idle",
+                "gridvalues":["","","","",""]
+
             }
-
-
         }
     },
     "image": {

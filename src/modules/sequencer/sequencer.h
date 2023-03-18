@@ -56,6 +56,9 @@ class MODULE_INIT SequencerModule : public IndiModule
         void SMLoadblob();
         void SMAbort();
 
+        void StartSequence();
+        void StartLine();
+
         QString _camera  = "CCD Simulator";
         QString _fw  = "Filter Simulator";
         bool    _newblob;
@@ -70,6 +73,15 @@ class MODULE_INIT SequencerModule : public IndiModule
         int    _loopIteration;
         double _loopHFRavg;
         double _exposure = 2;
+
+        int currentLine = 0;
+        int currentCount = 0;
+        double currentExposure = 0;
+        int currentGain = 0;
+        int currentOffset = 0;
+        QString currentFilter = "";
+        QString currentFrameType = "";
+        QString currentStatus = "";
 
         QVariantMap mActiveSeq;
 
