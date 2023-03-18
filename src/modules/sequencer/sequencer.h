@@ -47,18 +47,14 @@ class MODULE_INIT SequencerModule : public IndiModule
         void OnSucessSEP();
 
     private:
-        void newNumber(INumberVectorProperty *nvp) override;
-        void newBLOB(IBLOB *bp) override;
-        void newSwitch(ISwitchVectorProperty *svp) override;
-
-
+        void newBLOB(INDI::PropertyBlob pblob);
+        void updateProperty(INDI::Property property) override;
 
         void Shoot();
         void SMAlert();
         //void SMLoadblob(IBLOB *bp);
         void SMLoadblob();
         void SMAbort();
-        void startCoarse();
 
         QString _camera  = "CCD Simulator";
         QString _fw  = "Filter Simulator";

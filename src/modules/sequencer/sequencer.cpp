@@ -11,9 +11,9 @@ SequencerModule::SequencerModule(QString name, QString label, QString profile, Q
     : IndiModule(name, label, profile, availableModuleLibs)
 
 {
-    setClassName(metaObject()->className());
+    setClassName(QString(metaObject()->className()).toLower());
     loadOstPropertiesFromFile(":sequencer.json");
-    setModuleDescription("Sequencer module - work in progress");
+    setModuleDescription("Sequencer module");
     setModuleVersion("0.1");
 
 
@@ -73,7 +73,8 @@ void SequencerModule::OnMyExternalEvent(const QString &eventType, const QString 
                         {
 
                             sendModNewNumber(_camera, "CCD_EXPOSURE", "CCD_EXPOSURE_VALUE",
-                                             getOstElementGrid("sequence", "exposure")[0].toDouble());
+                                             //getOstElementGrid("sequence", "exposure")[0].toDouble());
+                                             getOstElementLineValue("sequence", "exposure", 0).toDouble());
                         }
                     }
                     if (keyelt == "abort")
@@ -113,29 +114,17 @@ void SequencerModule::OnMyExternalEvent(const QString &eventType, const QString 
     }
 }
 
-void SequencerModule::newNumber(INumberVectorProperty *nvp)
-{
-    if (
-        (QString(nvp->device) == _camera )
-        &&  (nvp->s == IPS_ALERT)
-    )
-    {
-        sendMessage("cameraAlert");
-        emit cameraAlert();
-    }
-}
-
-void SequencerModule::newBLOB(IBLOB *bp)
+void SequencerModule::newBLOB(INDI::PropertyBlob pblob)
 {
 
     if (
-        (QString(bp->bvp->device) == _camera)
+        (QString(pblob.getDeviceName()) == _camera)
     )
     {
         setOstPropertyAttribute("actions", "status", IPS_OK, true);
         delete _image;
         _image = new fileio();
-        _image->loadBlob(bp);
+        _image->loadBlob(pblob);
         stats = _image->getStats();
         setOstElementValue("imagevalues", "width", _image->getStats().width, false);
         setOstElementValue("imagevalues", "height", _image->getStats().height, false);
@@ -155,13 +144,15 @@ void SequencerModule::newBLOB(IBLOB *bp)
 
 
 }
-
-void SequencerModule::newSwitch(ISwitchVectorProperty *svp)
+void SequencerModule::updateProperty(INDI::Property property)
 {
+    if (strcmp(property.getName(), "CCD1") == 0)
+    {
+        newBLOB(property);
+    }
     if (
-        (QString(svp->device) == _camera)
-        //        &&  (QString(svp->name)   =="CCD_FRAME_RESET")
-        &&  (svp->s == IPS_ALERT)
+        (property.getDeviceName() == _camera)
+        &&  (property.getState() == IPS_ALERT)
     )
     {
         sendMessage("cameraAlert");
@@ -170,15 +161,14 @@ void SequencerModule::newSwitch(ISwitchVectorProperty *svp)
 
 
     if (
-        (QString(svp->device) == _camera)
-        &&  (QString(svp->name)   == "CCD_FRAME_RESET")
-        &&  (svp->s == IPS_OK)
+        (property.getDeviceName()  == _camera)
+        &&  (QString(property.getName())   == "CCD_FRAME_RESET")
+        &&  (property.getState()  == IPS_OK)
     )
     {
         sendMessage("FrameResetDone");
         emit FrameResetDone();
     }
-
 
 }
 
