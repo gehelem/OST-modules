@@ -77,6 +77,7 @@ class MODULE_INIT InspectorModule : public IndiModule
         double _bestpos;
         double _bestposfit;
         double _besthfr;
+        QString mState = "idle";
 
 };
 
