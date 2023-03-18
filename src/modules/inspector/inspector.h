@@ -50,7 +50,7 @@ class MODULE_INIT InspectorModule : public IndiModule
         void updateProperty(INDI::Property property) override;
         void newBLOB(INDI::PropertyBlob pblob);
 
-
+        void initIndi(void);
 
         void Shoot();
         void SMAlert();

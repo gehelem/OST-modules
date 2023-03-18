@@ -74,6 +74,7 @@ void InspectorModule::OnMyExternalEvent(const QString &eventType, const QString 
                         if (setOstElementValue(keyprop, keyelt, true, true))
                         {
                             mState = "single";
+                            initIndi();
                             Shoot();
                         }
                     }
@@ -82,6 +83,7 @@ void InspectorModule::OnMyExternalEvent(const QString &eventType, const QString 
                         if (setOstElementValue(keyprop, keyelt, true, true))
                         {
                             mState = "loop";
+                            initIndi();
                             Shoot();
                         }
                     }
@@ -120,7 +122,7 @@ void InspectorModule::newBLOB(INDI::PropertyBlob pblob)
         setOstElementValue("imagevalues", "median", _image->getStats().median[0], false);
         setOstElementValue("imagevalues", "stddev", _image->getStats().stddev[0], false);
         setOstElementValue("imagevalues", "snr", _image->getStats().SNR, true);
-        sendMessage("SMFindStars");
+        //sendMessage("SMFindStars");
         _solver.ResetSolver(stats, _image->getImageBuffer());
         connect(&_solver, &Solver::successSEP, this, &InspectorModule::OnSucessSEP);
         _solver.FindStars(_solver.stellarSolverProfiles[0]);
@@ -132,6 +134,8 @@ void InspectorModule::newBLOB(INDI::PropertyBlob pblob)
 
 void InspectorModule::updateProperty(INDI::Property property)
 {
+    if (mState == "idle") return;
+
     if (strcmp(property.getName(), "CCD1") == 0)
     {
         newBLOB(property);
@@ -152,20 +156,14 @@ void InspectorModule::updateProperty(INDI::Property property)
         &&  (property.getState() == IPS_OK)
     )
     {
-        sendMessage("FrameResetDone");
+        //sendMessage("FrameResetDone");
         emit FrameResetDone();
     }
 }
 void InspectorModule::Shoot()
 {
-    connectIndi();
     if (connectDevice(_camera))
     {
-        connectIndi();
-        connectDevice(_camera);
-        setBLOBMode(B_ALSO, _camera.toStdString().c_str(), nullptr);
-        //sendModNewNumber(_camera,"SIMULATOR_SETTINGS","SIM_TIME_FACTOR",0.01 );
-        enableDirectBlobAccess(_camera.toStdString().c_str(), nullptr);
         frameReset(_camera);
         sendModNewNumber(_camera, "CCD_EXPOSURE", "CCD_EXPOSURE_VALUE", _exposure);
         setOstPropertyAttribute("actions", "status", IPS_BUSY, true);
@@ -174,6 +172,15 @@ void InspectorModule::Shoot()
     {
         setOstPropertyAttribute("actions", "status", IPS_ALERT, true);
     }
+}
+void InspectorModule::initIndi()
+{
+    connectIndi();
+    connectDevice(_camera);
+    setBLOBMode(B_ALSO, _camera.toStdString().c_str(), nullptr);
+    //sendModNewNumber(_camera,"SIMULATOR_SETTINGS","SIM_TIME_FACTOR",0.01 );
+    enableDirectBlobAccess(_camera.toStdString().c_str(), nullptr);
+
 }
 
 void InspectorModule::OnSucessSEP()
@@ -206,7 +213,7 @@ void InspectorModule::OnSucessSEP()
     p.setPen(QPen(Qt::green));
     foreach( FITSImage::Star s, _solver.stars )
     {
-        qDebug() << "draw " << s.x << "/" << s.y;
+        //qDebug() << "draw " << s.x << "/" << s.y;
         int x = s.x;
         int y = s.y;
         int a = s.a;
