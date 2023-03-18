@@ -143,11 +143,8 @@ void SequencerModule::newBLOB(INDI::PropertyBlob pblob)
 
         im.save( getWebroot() + "/" + getModuleName() + ".jpeg", "JPG", 100);
         setOstPropertyAttribute("image", "URL", getModuleName() + ".jpeg", true);
-        //QString tt = QDateTime::currentDateTime().toString("dd/MM/yyyy hh:mm:ss zzz")
         QString tt = QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss_zzz");
-        //_image->saveAsFITS(getWebroot() + "/" + getModuleName() + "-" + tt + ".FITS");
-        im.save( getWebroot() + "/" + getModuleName() + "-" + tt + ".jpeg", "JPG", 100);
-
+        _image->saveAsFITSSimple(getWebroot() + "/" + getModuleName() + "-" + tt + ".FITS");
 
         currentCount--;
         sendMessage("RVC frame " + QString::number(currentLine) + "/" + QString::number(currentCount));
