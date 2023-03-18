@@ -47,18 +47,17 @@ class MODULE_INIT SequencerModule : public IndiModule
         void OnSucessSEP();
 
     private:
-        void newNumber(INumberVectorProperty *nvp) override;
-        void newBLOB(IBLOB *bp) override;
-        void newSwitch(ISwitchVectorProperty *svp) override;
-
-
+        void newBLOB(INDI::PropertyBlob pblob);
+        void updateProperty(INDI::Property property) override;
 
         void Shoot();
         void SMAlert();
         //void SMLoadblob(IBLOB *bp);
         void SMLoadblob();
         void SMAbort();
-        void startCoarse();
+
+        void StartSequence();
+        void StartLine();
 
         QString _camera  = "CCD Simulator";
         QString _fw  = "Filter Simulator";
@@ -74,6 +73,15 @@ class MODULE_INIT SequencerModule : public IndiModule
         int    _loopIteration;
         double _loopHFRavg;
         double _exposure = 2;
+
+        int currentLine = 0;
+        int currentCount = 0;
+        double currentExposure = 0;
+        int currentGain = 0;
+        int currentOffset = 0;
+        QString currentFilter = "";
+        QString currentFrameType = "";
+        QString currentStatus = "";
 
         QVariantMap mActiveSeq;
 
