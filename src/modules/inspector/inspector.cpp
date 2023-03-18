@@ -12,49 +12,18 @@ InspectorModule::InspectorModule(QString name, QString label, QString profile, Q
 
 {
 
-    loadPropertiesFromFile(":inspector.json");
+    loadOstPropertiesFromFile(":inspector.json");
+    setClassName(QString(metaObject()->className()).toLower());
 
-    setModuleLabel(label);
     setModuleDescription("Inspector module - work in progress");
     setModuleVersion("0.1");
 
     createOstElement("devices", "camera", "Camera", true);
-    setOstElement("devices", "camera",   _camera, false);
+    setOstElementValue("devices", "camera",   _camera, false);
 
     //saveAttributesToFile("inspector.json");
     _camera = getOstElementValue("devices", "camera").toString();
     _exposure = getOstElementValue("parameters", "exposure").toFloat();
-
-    /*_moduledescription="Inspector module";
-    _devices = new TextProperty(_modulename,"Options","root","devices","Devices",2,0);
-    _devices->addText(new TextValue("camera","Camera","hint",_camera));
-    emit propertyCreated(_devices,&_modulename);
-    _propertyStore.add(_devices);
-
-    _values = new NumberProperty(_modulename,"Control","root","values","Values",0,0);
-    //_values->addNumber(new NumberValue("loopHFRavg","Average HFR","hint",0,"",0,99,0));
-    _values->addNumber(new NumberValue("imgHFR","Last imgage HFR","hint",0,"",0,99,0));
-    //_values->addNumber(new NumberValue("iteration","Iteration","hint",0,"",0,99,0));
-    emit propertyCreated(_values,&_modulename);
-    _propertyStore.add(_values);
-
-
-    _parameters = new NumberProperty(_modulename,"Control","root","parameters","Parameters",2,0);
-    //_parameters->addNumber(new NumberValue("steps"         ,"Steps gap","hint",_steps,"",0,2000,100));
-    //_parameters->addNumber(new NumberValue("iterations"    ,"Iterations","hint",_iterations,"",0,99,1));
-    //_parameters->addNumber(new NumberValue("loopIterations","Average over","hint",_loopIterations,"",0,99,1));
-    _parameters->addNumber(new NumberValue("exposure"      ,"Exposure","hint",_exposure,"",0,120,1));
-    emit propertyCreated(_parameters,&_modulename);
-    _propertyStore.add(_parameters);
-
-    _img = new ImageProperty(_modulename,"Control","root","viewer","Image property label",0,0,0);
-    emit propertyCreated(_img,&_modulename);
-    _propertyStore.add(_img);
-
-    _grid = new GridProperty(_modulename,"Control","root","grid","Grid property label",0,0,"SXY","Set","Pos","HFR","","");
-    emit propertyCreated(_grid,&_modulename);
-    _propertyStore.add(_grid);*/
-
 }
 
 InspectorModule::~InspectorModule()
@@ -64,19 +33,22 @@ InspectorModule::~InspectorModule()
 void InspectorModule::OnMyExternalEvent(const QString &eventType, const QString  &eventModule, const QString  &eventKey,
                                         const QVariantMap &eventData)
 {
-    //BOOST_LOG_TRIVIAL(debug) << "OnMyExternalEvent - recv : " << getName().toStdString() << "-" << eventType.toStdString() << "-" << eventKey.toStdString();
-    if (getName() == eventModule)
+    //sendMessage("OnMyExternalEvent - recv : " + getModuleName() + "-" + eventType + "-" + eventKey);
+    Q_UNUSED(eventType);
+    Q_UNUSED(eventKey);
+
+    if (getModuleName() == eventModule)
     {
         foreach(const QString &keyprop, eventData.keys())
         {
             foreach(const QString &keyelt, eventData[keyprop].toMap()["elements"].toMap().keys())
             {
-                setOstElement(keyprop, keyelt, eventData[keyprop].toMap()["elements"].toMap()[keyelt].toMap()["value"], true);
+                setOstElementValue(keyprop, keyelt, eventData[keyprop].toMap()["elements"].toMap()[keyelt].toMap()["value"], true);
                 if (keyprop == "devices")
                 {
                     if (keyelt == "camera")
                     {
-                        if (setOstElement(keyprop, keyelt, eventData[keyprop].toMap()["elements"].toMap()[keyelt].toMap()["value"], false))
+                        if (setOstElementValue(keyprop, keyelt, eventData[keyprop].toMap()["elements"].toMap()[keyelt].toMap()["value"], false))
                         {
                             setOstPropertyAttribute(keyprop, "status", IPS_OK, true);
                             _camera = getOstElementValue("devices", "camera").toString();
@@ -88,7 +60,7 @@ void InspectorModule::OnMyExternalEvent(const QString &eventType, const QString 
                 {
                     if (keyelt == "exposure")
                     {
-                        if (setOstElement(keyprop, keyelt, eventData[keyprop].toMap()["elements"].toMap()[keyelt].toMap()["value"], false))
+                        if (setOstElementValue(keyprop, keyelt, eventData[keyprop].toMap()["elements"].toMap()[keyelt].toMap()["value"], false))
                         {
                             setOstPropertyAttribute(keyprop, "status", IPS_OK, true);
                             _exposure = getOstElementValue("parameters", "exposure").toFloat();
@@ -99,24 +71,29 @@ void InspectorModule::OnMyExternalEvent(const QString &eventType, const QString 
                 {
                     if (keyelt == "shoot")
                     {
-                        if (setOstElement(keyprop, keyelt, true, true))
+                        if (setOstElementValue(keyprop, keyelt, true, true))
                         {
+                            mState = "single";
+                            initIndi();
                             Shoot();
                         }
                     }
                     if (keyelt == "loop")
                     {
-                        if (setOstElement(keyprop, keyelt, true, true))
+                        if (setOstElementValue(keyprop, keyelt, true, true))
                         {
-                            //
+                            mState = "loop";
+                            initIndi();
+                            Shoot();
                         }
                     }
                     if (keyelt == "abort")
                     {
-                        if (setOstElement(keyprop, keyelt, false, false))
+                        if (setOstElementValue(keyprop, keyelt, false, false))
                         {
                             emit Abort();
-                            //
+                            mState = "idle";
+                            setOstPropertyAttribute("actions", "status", IPS_OK, true);
                         }
                     }
                 }
@@ -125,83 +102,69 @@ void InspectorModule::OnMyExternalEvent(const QString &eventType, const QString 
     }
 }
 
-void InspectorModule::newNumber(INumberVectorProperty *nvp)
-{
-    if (
-        (QString(nvp->device) == _camera )
-        &&  (nvp->s == IPS_ALERT)
-    )
-    {
-        sendMessage("cameraAlert");
-        emit cameraAlert();
-    }
-}
-
-void InspectorModule::newBLOB(IBLOB *bp)
+void InspectorModule::newBLOB(INDI::PropertyBlob pblob)
 {
 
     if (
-        (QString(bp->bvp->device) == _camera)
+        (QString(pblob.getDeviceName()) == _camera) && (mState != "idle")
     )
     {
         setOstPropertyAttribute("actions", "status", IPS_OK, true);
         delete _image;
         _image = new fileio();
-        _image->loadBlob(bp);
+        _image->loadBlob(pblob);
         stats = _image->getStats();
-        setOstElement("imagevalues", "width", _image->getStats().width, false);
-        setOstElement("imagevalues", "height", _image->getStats().height, false);
-        setOstElement("imagevalues", "min", _image->getStats().min[0], false);
-        setOstElement("imagevalues", "max", _image->getStats().max[0], false);
-        setOstElement("imagevalues", "mean", _image->getStats().mean[0], false);
-        setOstElement("imagevalues", "median", _image->getStats().median[0], false);
-        setOstElement("imagevalues", "stddev", _image->getStats().stddev[0], false);
-        setOstElement("imagevalues", "snr", _image->getStats().SNR, true);
-        sendMessage("SMFindStars");
+        setOstElementValue("imagevalues", "width", _image->getStats().width, false);
+        setOstElementValue("imagevalues", "height", _image->getStats().height, false);
+        setOstElementValue("imagevalues", "min", _image->getStats().min[0], false);
+        setOstElementValue("imagevalues", "max", _image->getStats().max[0], false);
+        setOstElementValue("imagevalues", "mean", _image->getStats().mean[0], false);
+        setOstElementValue("imagevalues", "median", _image->getStats().median[0], false);
+        setOstElementValue("imagevalues", "stddev", _image->getStats().stddev[0], false);
+        setOstElementValue("imagevalues", "snr", _image->getStats().SNR, true);
+        //sendMessage("SMFindStars");
         _solver.ResetSolver(stats, _image->getImageBuffer());
         connect(&_solver, &Solver::successSEP, this, &InspectorModule::OnSucessSEP);
         _solver.FindStars(_solver.stellarSolverProfiles[0]);
-
     }
 
 
 
 }
 
-void InspectorModule::newSwitch(ISwitchVectorProperty *svp)
+void InspectorModule::updateProperty(INDI::Property property)
 {
+    if (mState == "idle") return;
+
+    if (strcmp(property.getName(), "CCD1") == 0)
+    {
+        newBLOB(property);
+    }
     if (
-        (QString(svp->device) == _camera)
-        //        &&  (QString(svp->name)   =="CCD_FRAME_RESET")
-        &&  (svp->s == IPS_ALERT)
+        (property.getDeviceName() == _camera)
+        &&  (property.getState() == IPS_ALERT)
     )
     {
-        sendMessage("cameraAlert");
+        sendWarning("cameraAlert");
         emit cameraAlert();
     }
 
 
     if (
-        (QString(svp->device) == _camera)
-        &&  (QString(svp->name)   == "CCD_FRAME_RESET")
-        &&  (svp->s == IPS_OK)
+        (property.getDeviceName() == _camera)
+        &&  (property.getName()   == std::string("CCD_FRAME_RESET"))
+        &&  (property.getState() == IPS_OK)
     )
     {
-        sendMessage("FrameResetDone");
+        //sendMessage("FrameResetDone");
         emit FrameResetDone();
     }
-
-
 }
-
 void InspectorModule::Shoot()
 {
-    connectIndi();
     if (connectDevice(_camera))
     {
-        setBLOBMode(B_ALSO, _camera.toStdString().c_str(), nullptr);
         frameReset(_camera);
-        sendModNewNumber(_camera, "SIMULATOR_SETTINGS", "SIM_TIME_FACTOR", 0.01 );
         sendModNewNumber(_camera, "CCD_EXPOSURE", "CCD_EXPOSURE_VALUE", _exposure);
         setOstPropertyAttribute("actions", "status", IPS_BUSY, true);
     }
@@ -210,12 +173,21 @@ void InspectorModule::Shoot()
         setOstPropertyAttribute("actions", "status", IPS_ALERT, true);
     }
 }
+void InspectorModule::initIndi()
+{
+    connectIndi();
+    connectDevice(_camera);
+    setBLOBMode(B_ALSO, _camera.toStdString().c_str(), nullptr);
+    //sendModNewNumber(_camera,"SIMULATOR_SETTINGS","SIM_TIME_FACTOR",0.01 );
+    enableDirectBlobAccess(_camera.toStdString().c_str(), nullptr);
+
+}
 
 void InspectorModule::OnSucessSEP()
 {
     setOstPropertyAttribute("actions", "status", IPS_OK, true);
-    setOstElement("imagevalues", "imgHFR", _solver.HFRavg, false);
-    setOstElement("imagevalues", "starscount", _solver.stars.size(), true);
+    setOstElementValue("imagevalues", "imgHFR", _solver.HFRavg, false);
+    setOstElementValue("imagevalues", "starscount", _solver.stars.size(), true);
 
 
 
@@ -227,8 +199,8 @@ void InspectorModule::OnSucessSEP()
     QImage immap = rawImage.convertToFormat(QImage::Format_RGB32);
     immap.setColorTable(rawImage.colorTable());
 
-    im.save(_webroot + "/" + getName() + ".jpeg", "JPG", 100);
-    setOstPropertyAttribute("image", "URL", getName() + ".jpeg", true);
+    im.save(getWebroot()  + "/" + getModuleName() + ".jpeg", "JPG", 100);
+    setOstPropertyAttribute("image", "URL", getModuleName() + ".jpeg", true);
 
     //QRect r;
     //r.setRect(0,0,im.width(),im.height());
@@ -241,13 +213,13 @@ void InspectorModule::OnSucessSEP()
     p.setPen(QPen(Qt::green));
     foreach( FITSImage::Star s, _solver.stars )
     {
-        qDebug() << "draw " << s.x << "/" << s.y;
+        //qDebug() << "draw " << s.x << "/" << s.y;
         int x = s.x;
         int y = s.y;
         int a = s.a;
         int b = s.b;
-        qDebug() << "draw " << x << "/" << y;
-        p.drawEllipse(QPoint(x, y), a * 5, b * 5);
+        //qDebug() << "draw " << x << "/" << y;
+        p.drawEllipse(QPoint(x / 2, y / 2), a * 5, b * 5);
     }
     p.end();
 
@@ -256,13 +228,22 @@ void InspectorModule::OnSucessSEP()
     for( int i = 1; i < his.size(); i++)
     {
         //qDebug() << "HIS " << i << "-"  << _image->getCumulativeFrequency(0)[i] << "-"  << _image->getHistogramIntensity(0)[i] << "-"  << _image->getHistogramFrequency(0)[i];
-        setOstElement("histogram", "i", i, false);
-        setOstElement("histogram", "n", his[i], false);
+        setOstElementValue("histogram", "i", i, false);
+        setOstElementValue("histogram", "n", his[i], false);
         pushOstElements("histogram");
     }
 
-    immap.save(_webroot + "/" + getName() + "map.jpeg", "JPG", 100);
-    setOstPropertyAttribute("imagemap", "URL", getName() + "map.jpeg", true);
+    immap.save(getWebroot() + "/" + getModuleName() + "map.jpeg", "JPG", 100);
+    setOstPropertyAttribute("imagemap", "URL", getModuleName() + "map.jpeg", true);
+
+    if (mState == "single")
+    {
+        mState = "idle";
+    }
+    if (mState == "loop")
+    {
+        Shoot();
+    }
 
     emit FindStarsDone();
 }

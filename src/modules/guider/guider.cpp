@@ -11,26 +11,20 @@ GuiderModule::GuiderModule(QString name, QString label, QString profile, QVarian
     : IndiModule(name, label, profile, availableModuleLibs)
 {
 
-    loadPropertiesFromFile(":guider.json");
-
-    setModuleLabel(label);
+    loadOstPropertiesFromFile(":guider.json");
+    setClassName(QString(metaObject()->className()).toLower());
     setModuleDescription("Guider module - work in progress");
     setModuleVersion("0.1");
-    setModuleType("guider");
 
     createOstElement("devices", "camera", "Camera", true);
     createOstElement("devices", "mount", "Mount", true);
-    setOstElement("devices", "camera",   _camera, false);
-    setOstElement("devices", "mount",    _mount, true);
+    setOstElementValue("devices", "camera",   _camera, false);
+    setOstElementValue("devices", "mount",    _mount, true);
 
 
     //    _grid = new GridProperty(_modulename,"Control","root","grid","Grid property label",0,0,"PXY","Set","DX","DY","","");
     //    emit propertyCreated(_grid,&_modulename);
     //    _propertyStore.add(_grid);
-    //
-    //    _gridguide = new GridProperty(_modulename,"Control","root","gridguide","Grid property label",0,0,"PHD","Time","RA","DE","CRA","CDE");
-    //    emit propertyCreated(_gridguide,&_modulename);
-    //    _propertyStore.add(_gridguide);
     //
     //    _states = new LightProperty(_modulename,"Control","root","states","State",0,0);
     //    _states->addLight(new LightValue("idle"  ,"Idle","hint",1));
@@ -55,21 +49,22 @@ GuiderModule::~GuiderModule()
 void GuiderModule::OnMyExternalEvent(const QString &eventType, const QString  &eventModule, const QString  &eventKey,
                                      const QVariantMap &eventData)
 {
+    Q_UNUSED(eventType);
+    Q_UNUSED(eventKey);
+
     //BOOST_LOG_TRIVIAL(debug) << "OnMyExternalEvent - recv : " << getName().toStdString() << "-" << eventType.toStdString() << "-" << eventKey.toStdString();
-    if (getName() == eventModule)
+    if (getModuleName() == eventModule)
     {
         foreach(const QString &keyprop, eventData.keys())
         {
             foreach(const QString &keyelt, eventData[keyprop].toMap()["elements"].toMap().keys())
             {
-                BOOST_LOG_TRIVIAL(debug) << "OnMyExternalEvent - recv : " << getName().toStdString() << "-" << eventType.toStdString() <<
-                                         "-" << keyprop.toStdString() << "-" << keyelt.toStdString();
                 QVariant val = eventData[keyprop].toMap()["elements"].toMap()[keyelt].toMap()["value"];
                 if (keyprop == "commonParams")
                 {
                     if (keyelt == "exposure")
                     {
-                        if (setOstElement(keyprop, keyelt, val, true))
+                        if (setOstElementValue(keyprop, keyelt, val, true))
                         {
                             _exposure = val.toDouble();
                         }
@@ -79,14 +74,14 @@ void GuiderModule::OnMyExternalEvent(const QString &eventType, const QString  &e
                 {
                     if (keyelt == "pulse")
                     {
-                        if (setOstElement(keyprop, keyelt, val, true))
+                        if (setOstElementValue(keyprop, keyelt, val, true))
                         {
                             _pulse = val.toInt();
                         }
                     }
                     if (keyelt == "calsteps")
                     {
-                        if (setOstElement(keyprop, keyelt, val, true))
+                        if (setOstElementValue(keyprop, keyelt, val, true))
                         {
                             _calSteps = val.toInt();
                         }
@@ -96,40 +91,49 @@ void GuiderModule::OnMyExternalEvent(const QString &eventType, const QString  &e
                 {
                     if (keyelt == "pulsemax")
                     {
-                        if (setOstElement(keyprop, keyelt, val, true))
+                        if (setOstElementValue(keyprop, keyelt, val, true))
                         {
                             _pulseMax = val.toInt();
                         }
                     }
                     if (keyelt == "pulsemin")
                     {
-                        if (setOstElement(keyprop, keyelt, val, true))
+                        if (setOstElementValue(keyprop, keyelt, val, true))
                         {
                             _pulseMin = val.toInt();
                         }
                     }
                     if (keyelt == "raAgr")
                     {
-                        if (setOstElement(keyprop, keyelt, val, true))
+                        if (setOstElementValue(keyprop, keyelt, val, true))
                         {
                             _raAgr = val.toDouble();
                         }
                     }
                     if (keyelt == "deAgr")
                     {
-                        if (setOstElement(keyprop, keyelt, val, true))
+                        if (setOstElementValue(keyprop, keyelt, val, true))
                         {
                             _deAgr = val.toDouble();
                         }
                     }
                 }
+                if (keyprop == "revCorrections"  && (keyelt == "revRA" || keyelt == "revDE" ))
+                {
+                    setOstElementValue(keyprop, keyelt, val, true);
+                }
+                if (keyprop == "disCorrections"  && (keyelt == "disRA+" || keyelt == "disRA-" || keyelt == "disDE+" || keyelt == "disDE-"))
+                {
+                    setOstElementValue(keyprop, keyelt, val, true);
+                }
                 if (keyprop == "actions")
                 {
                     if (keyelt == "calguide")
                     {
-                        if (setOstElement(keyprop, keyelt, false, false))
+                        if (setOstElementValue(keyprop, keyelt, false, false))
                         {
                             setOstPropertyAttribute(keyprop, "status", IPS_BUSY, true);
+
                             disconnect(&_SMInit,        &QStateMachine::finished, nullptr, nullptr);
                             disconnect(&_SMCalibration, &QStateMachine::finished, nullptr, nullptr);
                             connect(&_SMInit,           &QStateMachine::finished, &_SMCalibration, &QStateMachine::start) ;
@@ -139,7 +143,7 @@ void GuiderModule::OnMyExternalEvent(const QString &eventType, const QString  &e
                     }
                     if (keyelt == "abort")
                     {
-                        if (setOstElement(keyprop, keyelt, false, false))
+                        if (setOstElementValue(keyprop, keyelt, false, false))
                         {
                             setOstPropertyAttribute(keyprop, "status", IPS_OK, true);
                             emit Abort();
@@ -147,7 +151,7 @@ void GuiderModule::OnMyExternalEvent(const QString &eventType, const QString  &e
                     }
                     if (keyelt == "calibration")
                     {
-                        if (setOstElement(keyprop, keyelt, false, false))
+                        if (setOstElementValue(keyprop, keyelt, false, false))
                         {
                             setOstPropertyAttribute(keyprop, "status", IPS_OK, true);
                             disconnect(&_SMInit,        &QStateMachine::finished, nullptr, nullptr);
@@ -159,7 +163,7 @@ void GuiderModule::OnMyExternalEvent(const QString &eventType, const QString  &e
                     }
                     if (keyelt == "guide")
                     {
-                        if (setOstElement(keyprop, keyelt, false, false))
+                        if (setOstElementValue(keyprop, keyelt, false, false))
                         {
                             setOstPropertyAttribute(keyprop, "status", IPS_OK, true);
                             disconnect(&_SMInit,        &QStateMachine::finished, nullptr, nullptr);
@@ -176,12 +180,25 @@ void GuiderModule::OnMyExternalEvent(const QString &eventType, const QString  &e
     }
 }
 
-void GuiderModule::newNumber(INumberVectorProperty *nvp)
+void GuiderModule::updateProperty(INDI::Property property)
 {
+    if (strcmp(property.getName(), "CCD1") == 0)
+    {
+        newBLOB(property);
+    }
     if (
-        (QString(nvp->device) == _mount) &&
-        (QString(nvp->name)   == "TELESCOPE_TIMED_GUIDE_NS") &&
-        (nvp->s   == IPS_IDLE)
+        (property.getDeviceName() == _camera)
+        &&  (QString(property.getName()) == "CCD_FRAME_RESET")
+        &&  (property.getState() == IPS_OK)
+    )
+    {
+        //sendMessage("FrameResetDone");
+        emit FrameResetDone();
+    }
+    if (
+        (property.getDeviceName() == _mount) &&
+        (QString(property.getName())   == "TELESCOPE_TIMED_GUIDE_NS") &&
+        (property.getState()  == IPS_IDLE)
 
     )
     {
@@ -189,9 +206,9 @@ void GuiderModule::newNumber(INumberVectorProperty *nvp)
     }
 
     if (
-        (QString(nvp->device) == _mount) &&
-        (QString(nvp->name)   == "TELESCOPE_TIMED_GUIDE_WE") &&
-        (nvp->s   == IPS_IDLE)
+        (property.getDeviceName() == _mount) &&
+        (QString(property.getName())  == "TELESCOPE_TIMED_GUIDE_WE") &&
+        (property.getState()  == IPS_IDLE)
 
     )
     {
@@ -199,54 +216,42 @@ void GuiderModule::newNumber(INumberVectorProperty *nvp)
     }
 
     if (
-        (QString(nvp->device) == _mount) &&
-        ( (QString(nvp->name)   == "TELESCOPE_TIMED_GUIDE_WE") ||
-          (QString(nvp->name)   == "TELESCOPE_TIMED_GUIDE_NS") ) &&
-        (nvp->s   == IPS_IDLE)
+        (property.getDeviceName() == _mount) &&
+        ( (QString(property.getName())   == "TELESCOPE_TIMED_GUIDE_WE") ||
+          (QString(property.getName())  == "TELESCOPE_TIMED_GUIDE_NS") ) &&
+        (property.getState()  == IPS_IDLE)
 
     )
     {
         if (_pulseRAfinished && _pulseDECfinished) emit PulsesDone();
     }
 
+
 }
 
-void GuiderModule::newBLOB(IBLOB *bp)
+void GuiderModule::newBLOB(INDI::PropertyBlob pblob)
 {
     if (
-        (QString(bp->bvp->device) == _camera)
+        (QString(pblob.getDeviceName()) == _camera)
     )
     {
         delete _image;
         _image = new fileio();
-        _image->loadBlob(bp);
+        _image->loadBlob(pblob);
         stats = _image->getStats();
         QImage rawImage = _image->getRawQImage();
         QImage im = rawImage.convertToFormat(QImage::Format_RGB32);
         im.setColorTable(rawImage.colorTable());
 
-        im.save(_webroot + "/" + getName() + ".jpeg", "JPG", 100);
-        setOstPropertyAttribute("image", "URL", getName() + ".jpeg", true);
+        im.save(getWebroot() + "/" + getModuleName() + ".jpeg", "JPG", 100);
+        setOstPropertyAttribute("image", "URL", getModuleName() + ".jpeg", true);
 
-        BOOST_LOG_TRIVIAL(debug) << "Emit Exposure done";
+        //BOOST_LOG_TRIVIAL(debug) << "Emit Exposure done";
         emit ExposureDone();
     }
 
 }
 
-void GuiderModule::newSwitch(ISwitchVectorProperty *svp)
-{
-    if (
-        (QString(svp->device) == _camera)
-        &&  (QString(svp->name)   == "CCD_FRAME_RESET")
-        &&  (svp->s == IPS_OK)
-    )
-    {
-        sendMessage("FrameResetDone");
-        emit FrameResetDone();
-    }
-
-}
 void GuiderModule::buildInitStateMachines(void)
 {
     /* Initialization statemachine = SMInit */
@@ -380,15 +385,22 @@ void GuiderModule::buildGuideStateMachines(void)
 }
 void GuiderModule::SMInitInit()
 {
-    BOOST_LOG_TRIVIAL(debug) << "SMInitInit";
-    sendMessage("SMInitInit");
+    //sendMessage("SMInitInit");
     if (connectDevice(_camera))
     {
+        connectIndi();
+        connectDevice(_camera);
+        connectDevice(_mount);
         setBLOBMode(B_ALSO, _camera.toStdString().c_str(), nullptr);
+        enableDirectBlobAccess(_camera.toStdString().c_str(), nullptr);
         frameReset(_camera);
-        sendModNewNumber(_camera, "SIMULATOR_SETTINGS", "SIM_TIME_FACTOR", 0.01 );
+        sendModNewNumber(_camera, "SIMULATOR_SETTINGS", "SIM_TIME_FACTOR", 1 );
         setOstPropertyAttribute("actions", "status", IPS_BUSY, true);
+        resetOstElements("drift");
+        resetOstElements("guiding");
+        resetOstElements("snr");
     }
+
     else
     {
         setOstPropertyAttribute("actions", "status", IPS_ALERT, true);
@@ -414,20 +426,15 @@ void GuiderModule::SMInitInit()
         emit Abort();
         return;
     }
-    //_gridguide->clear();
-    //_propertyStore.update(_gridguide);
-    //emit propertyUpdated(_gridguide,&_modulename);
     //_grid->clear();
     //_propertyStore.update(_grid);
     //emit propertyUpdated(_grid,&_modulename);
-    BOOST_LOG_TRIVIAL(debug) << "SMInitInitDone";
+    //BOOST_LOG_TRIVIAL(debug) << "SMInitInitDone";
     emit InitDone();
 }
 void GuiderModule::SMInitCal()
 {
-    BOOST_LOG_TRIVIAL(debug) << "SMInitCal";
-    sendMessage("SMInitCal");
-    BOOST_LOG_TRIVIAL(debug) << "Guider module - Start calibration";
+    //sendMessage("SMInitCal");
     //_states->addLight(new LightValue("idle"  ,"Idle","hint",0));
     //_states->addLight(new LightValue("cal"   ,"Calibrating","hint",2));
     //_states->addLight(new LightValue("guide" ,"Guiding","hint",0));
@@ -441,10 +448,10 @@ void GuiderModule::SMInitCal()
     _calPulseS = 0;
     _calPulseE = 0;
     _calPulseW = 0;
-    setOstElement("values", "calPulseN", _calPulseN, false);
-    setOstElement("values", "calPulseS", _calPulseS, false);
-    setOstElement("values", "calPulseE", _calPulseE, false);
-    setOstElement("values", "calPulseW", _calPulseW, true);
+    setOstElementValue("values", "calPulseN", _calPulseN, false);
+    setOstElementValue("values", "calPulseS", _calPulseS, false);
+    setOstElementValue("values", "calPulseE", _calPulseE, false);
+    setOstElementValue("values", "calPulseW", _calPulseW, true);
 
     _pulseN = 0;
     _pulseS = 0;
@@ -459,25 +466,24 @@ void GuiderModule::SMInitCal()
     _pulseDECfinished = true;
     _pulseRAfinished = true;
 
-    BOOST_LOG_TRIVIAL(debug) << "SMInitCalDone";
     emit InitCalDone();
 }
 void GuiderModule::SMInitGuide()
 {
-    BOOST_LOG_TRIVIAL(debug) << "SMInitGuide";
-    sendMessage("SMInitGuide");
+    //sendMessage("SMInitGuide");
+    resetOstElements("drift");
 
-    BOOST_LOG_TRIVIAL(debug) << "************************************************************";
-    BOOST_LOG_TRIVIAL(debug) << "************************************************************";
-    BOOST_LOG_TRIVIAL(debug) << "Guider module - Start guide with fllowing calibration data : ";
-    BOOST_LOG_TRIVIAL(debug) << "*********************** cal CCD Orientation " << _calCcdOrientation * 180 / PI;
-    BOOST_LOG_TRIVIAL(debug) << "*********************** cal moutn pointing west  " << _calMountPointingWest;
-    BOOST_LOG_TRIVIAL(debug) << "*********************** cal W " << _calPulseW;
-    BOOST_LOG_TRIVIAL(debug) << "*********************** cal E " << _calPulseE;
-    BOOST_LOG_TRIVIAL(debug) << "*********************** cal N " << _calPulseN;
-    BOOST_LOG_TRIVIAL(debug) << "*********************** cal S " << _calPulseS;
-    BOOST_LOG_TRIVIAL(debug) << "************************************************************";
-    BOOST_LOG_TRIVIAL(debug) << "************************************************************";
+    //BOOST_LOG_TRIVIAL(debug) << "************************************************************";
+    //BOOST_LOG_TRIVIAL(debug) << "************************************************************";
+    //BOOST_LOG_TRIVIAL(debug) << "Guider module - Start guide with fllowing calibration data : ";
+    //BOOST_LOG_TRIVIAL(debug) << "*********************** cal CCD Orientation " << _calCcdOrientation * 180 / PI;
+    //BOOST_LOG_TRIVIAL(debug) << "*********************** cal moutn pointing west  " << _calMountPointingWest;
+    //BOOST_LOG_TRIVIAL(debug) << "*********************** cal W " << _calPulseW;
+    //BOOST_LOG_TRIVIAL(debug) << "*********************** cal E " << _calPulseE;
+    //BOOST_LOG_TRIVIAL(debug) << "*********************** cal N " << _calPulseN;
+    //BOOST_LOG_TRIVIAL(debug) << "*********************** cal S " << _calPulseS;
+    //BOOST_LOG_TRIVIAL(debug) << "************************************************************";
+    //BOOST_LOG_TRIVIAL(debug) << "************************************************************";
     //_states->addLight(new LightValue("idle"  ,"Idle","hint",0));
     //_states->addLight(new LightValue("cal"   ,"Calibrating","hint",0));
     //_states->addLight(new LightValue("guide" ,"Guiding","hint",2));
@@ -485,35 +491,31 @@ void GuiderModule::SMInitGuide()
     //emit propertyUpdated(_states,&_modulename);
     //_propertyStore.update(_states);
 
-    //_gridguide->clear();
-    //_propertyStore.update(_gridguide);
-    //emit propertyUpdated(_gridguide,&_modulename);
-
     //_grid->clear();
     //_propertyStore.update(_grid);
     //emit propertyUpdated(_grid,&_modulename);
 
-    BOOST_LOG_TRIVIAL(debug) << "SMInitGuideDone";
+    //BOOST_LOG_TRIVIAL(debug) << "SMInitGuideDone";
     emit InitGuideDone();
 }
 void GuiderModule::SMRequestFrameReset()
 {
-    BOOST_LOG_TRIVIAL(debug) << "SMRequestFrameReset";
-    sendMessage("SMRequestFrameReset");
+    //BOOST_LOG_TRIVIAL(debug) << "SMRequestFrameReset";
+    //sendMessage("SMRequestFrameReset");
     if (!frameReset(_camera))
     {
         emit Abort();
         return;
     }
-    BOOST_LOG_TRIVIAL(debug) << "SMRequestFrameResetDone";
+    //BOOST_LOG_TRIVIAL(debug) << "SMRequestFrameResetDone";
     emit RequestFrameResetDone();
 }
 
 
 void GuiderModule::SMRequestExposure()
 {
-    BOOST_LOG_TRIVIAL(debug) << "SMRequestExposure";
-    sendMessage("SMRequestExposure");
+    //BOOST_LOG_TRIVIAL(debug) << "SMRequestExposure";
+    //sendMessage("SMRequestExposure");
     if (!sendModNewNumber(_camera, "CCD_EXPOSURE", "CCD_EXPOSURE_VALUE", _exposure))
     {
         emit Abort();
@@ -523,28 +525,29 @@ void GuiderModule::SMRequestExposure()
 }
 void GuiderModule::SMComputeFirst()
 {
-    BOOST_LOG_TRIVIAL(debug) << "SMComputeFirst";
+    //BOOST_LOG_TRIVIAL(debug) << "SMComputeFirst";
     _trigFirst.clear();
     buildIndexes(_solver, _trigFirst);
-    BOOST_LOG_TRIVIAL(debug) << "******************************************************************** ";
-    BOOST_LOG_TRIVIAL(debug) << "******************************************************************** ";
-    BOOST_LOG_TRIVIAL(debug) << "************ Guider module - initialization : ";
-    BOOST_LOG_TRIVIAL(debug) << "*********************** mount pointing west true/false  " << _mountPointingWest;
-    BOOST_LOG_TRIVIAL(debug) << "*********************** actual RA  " << _mountRA;
-    BOOST_LOG_TRIVIAL(debug) << "*********************** actual DEC " << _mountDEC;
-    BOOST_LOG_TRIVIAL(debug) << "******************************************************************** ";
-    BOOST_LOG_TRIVIAL(debug) << "******************************************************************** ";
+    //BOOST_LOG_TRIVIAL(debug) << "******************************************************************** ";
+    //BOOST_LOG_TRIVIAL(debug) << "******************************************************************** ";
+    //BOOST_LOG_TRIVIAL(debug) << "************ Guider module - initialization : ";
+    //BOOST_LOG_TRIVIAL(debug) << "*********************** mount pointing west true/false  " << _mountPointingWest;
+    //BOOST_LOG_TRIVIAL(debug) << "*********************** actual RA  " << _mountRA;
+    //BOOST_LOG_TRIVIAL(debug) << "*********************** actual DEC " << _mountDEC;
+    //BOOST_LOG_TRIVIAL(debug) << "******************************************************************** ";
+    //BOOST_LOG_TRIVIAL(debug) << "******************************************************************** ";
 
 
     emit ComputeFirstDone();
 }
 void GuiderModule::SMComputeCal()
 {
-    BOOST_LOG_TRIVIAL(debug) << "SMComputeCal";
+    //BOOST_LOG_TRIVIAL(debug) << "SMComputeCal";
     buildIndexes(_solver, _trigCurrent);
     _ccdOrientation = 0;
 
     double coeff[2];
+    Q_UNUSED(coeff);
     if (_trigCurrent.size() > 0)
     {
         matchIndexes(_trigPrev, _trigCurrent, _matchedCurPrev, _dxPrev, _dyPrev);
@@ -552,7 +555,7 @@ void GuiderModule::SMComputeCal()
         //_grid->append(_dxFirst,_dyFirst);
         //_propertyStore.update(_grid);
         //emit propertyAppended(_grid,&_modulename,0,_dxFirst,_dyFirst,0,0);
-        BOOST_LOG_TRIVIAL(debug) << "DX DY // first =  " << _dxFirst << "-" << _dyFirst;
+        //BOOST_LOG_TRIVIAL(debug) << "DX DY // first =  " << _dxFirst << "-" << _dyFirst;
         _dxvector.push_back(_dxPrev);
         _dyvector.push_back(_dyPrev);
         /*if (_dxvector.size() > 1)
@@ -565,9 +568,9 @@ void GuiderModule::SMComputeCal()
     }
     else
     {
-        BOOST_LOG_TRIVIAL(debug) << "houston, we have a problem";
+        //BOOST_LOG_TRIVIAL(debug) << "houston, we have a problem";
     }
-    BOOST_LOG_TRIVIAL(debug) << "Drifts // prev " << sqrt(square(_dxPrev) + square(_dyPrev));
+    //BOOST_LOG_TRIVIAL(debug) << "Drifts // prev " << sqrt(square(_dxPrev) + square(_dyPrev));
     _trigPrev = _trigCurrent;
 
     /*if (_calState==0) {
@@ -585,7 +588,7 @@ void GuiderModule::SMComputeCal()
     {
         double ddx = 0;
         double ddy = 0;
-        for (int i = 1; i < _dxvector.size(); i++)
+        for (unsigned int i = 1; i < _dxvector.size(); i++)
         {
             ddx = ddx + _dxvector[i];
             ddy = ddy + _dyvector[i];
@@ -593,10 +596,10 @@ void GuiderModule::SMComputeCal()
         ddx = ddx / (_dxvector.size());
         ddy = ddy / (_dyvector.size());
         double a = atan(ddy / ddx);
-        BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " DX drift " <<  ddx;
-        BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " DY drift " <<  ddy;
-        BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " Total drift " <<  sqrt(square(ddy) + square(
-                                     ddy));
+        //BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " DX drift " <<  ddx;
+        //BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " DY drift " <<  ddy;
+        //BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " Total drift " <<  sqrt(square(ddy) + square(
+        //ddy));
         if (_calState == 0)
         {
             _calPulseW = _pulse / sqrt(square(ddy) + square(ddy));
@@ -604,42 +607,42 @@ void GuiderModule::SMComputeCal()
             _calMountPointingWest = _mountPointingWest;
             _calCcdOrientation = _ccdOrientation;
 
-            BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " Drift orientation =  " << a * 180 / PI;
-            BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " W drift (px) " <<  sqrt(square(ddy) + square(
-                                         ddy));
-            BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " W drift ms/px " << _calPulseW;
-            BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " W drift ms/'' " << (_pulse) / (sqrt(square(
-                                         ddy) + square(ddy))*_ccdSampling);
+            //BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " Drift orientation =  " << a * 180 / PI;
+            //BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " W drift (px) " <<  sqrt(square(ddy) + square(
+            //                             ddy));
+            //BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " W drift ms/px " << _calPulseW;
+            //BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " W drift ms/'' " << (_pulse) / (sqrt(square(
+            //ddy) + square(ddy))*_ccdSampling);
         }
         if (_calState == 1)
         {
             _calPulseE = _pulse / sqrt(square(ddy) + square(ddy));
-            BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " Drift orientation =  " << a * 180 / PI;
-            BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " E drift (px) " <<  sqrt(square(ddy) + square(
-                                         ddy));
-            BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " E drift ms/px " << _calPulseE;
-            BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " E drift ms/'' " << (_pulse) / (sqrt(square(
-                                         ddy) + square(ddy))*_ccdSampling);
+            //BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " Drift orientation =  " << a * 180 / PI;
+            //BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " E drift (px) " <<  sqrt(square(ddy) + square(
+            //                             ddy));
+            //BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " E drift ms/px " << _calPulseE;
+            //BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " E drift ms/'' " << (_pulse) / (sqrt(square(
+            //ddy) + square(ddy))*_ccdSampling);
         }
         if (_calState == 2)
         {
             _calPulseN = _pulse / sqrt(square(ddy) + square(ddy));
-            BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " Drift orientation =  " << a * 180 / PI;
-            BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " N drift (px) " <<  sqrt(square(ddy) + square(
-                                         ddy));
-            BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " N drift ms/px " << _calPulseN;
-            BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " N drift ms/'' " << (_pulse) / (sqrt(square(
-                                         ddy) + square(ddy))*_ccdSampling);
+            //BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " Drift orientation =  " << a * 180 / PI;
+            //BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " N drift (px) " <<  sqrt(square(ddy) + square(
+            //                             ddy));
+            //BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " N drift ms/px " << _calPulseN;
+            //BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " N drift ms/'' " << (_pulse) / (sqrt(square(
+            //ddy) + square(ddy))*_ccdSampling);
         }
         if (_calState == 3)
         {
             _calPulseS = _pulse / sqrt(square(ddy) + square(ddy));
-            BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " Drift orientation =  " << a * 180 / PI;
-            BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " S drift (px) " <<  sqrt(square(ddy) + square(
-                                         ddy));
-            BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " S drift ms/px " << _calPulseS;
-            BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " S drift ms/'' " << (_pulse) / (sqrt(square(
-                                         ddy) + square(ddy))*_ccdSampling);
+            //BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " Drift orientation =  " << a * 180 / PI;
+            //BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " S drift (px) " <<  sqrt(square(ddy) + square(
+            //                             ddy));
+            //BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " S drift ms/px " << _calPulseS;
+            //BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " S drift ms/'' " << (_pulse) / (sqrt(square(
+            //ddy) + square(ddy))*_ccdSampling);
         }
 
         _calStep = 0;
@@ -651,14 +654,14 @@ void GuiderModule::SMComputeCal()
         //}
         if (_calState >= 4)
         {
-            BOOST_LOG_TRIVIAL(debug) << "*********************** cal W " << _calPulseW;
-            BOOST_LOG_TRIVIAL(debug) << "*********************** cal E " << _calPulseE;
-            BOOST_LOG_TRIVIAL(debug) << "*********************** cal N " << _calPulseN;
-            BOOST_LOG_TRIVIAL(debug) << "*********************** cal S " << _calPulseS;
-            setOstElement("values", "calPulseN", _calPulseN, false);
-            setOstElement("values", "calPulseS", _calPulseS, false);
-            setOstElement("values", "calPulseE", _calPulseE, false);
-            setOstElement("values", "calPulseW", _calPulseW, true);
+            //BOOST_LOG_TRIVIAL(debug) << "*********************** cal W " << _calPulseW;
+            //BOOST_LOG_TRIVIAL(debug) << "*********************** cal E " << _calPulseE;
+            //BOOST_LOG_TRIVIAL(debug) << "*********************** cal N " << _calPulseN;
+            //BOOST_LOG_TRIVIAL(debug) << "*********************** cal S " << _calPulseS;
+            setOstElementValue("values", "calPulseN", _calPulseN, false);
+            setOstElementValue("values", "calPulseS", _calPulseS, false);
+            setOstElementValue("values", "calPulseE", _calPulseE, false);
+            setOstElementValue("values", "calPulseW", _calPulseW, true);
 
             emit CalibrationDone();
             _trigFirst = _trigCurrent;
@@ -693,14 +696,14 @@ void GuiderModule::SMComputeGuide()
     //emit propertyUpdated(_states,&_modulename);
     //_propertyStore.update(_states);
 
-    BOOST_LOG_TRIVIAL(debug) << "SMComputeGuide " << _solver.stars.size();
+    //BOOST_LOG_TRIVIAL(debug) << "SMComputeGuide " << _solver.stars.size();
     _pulseW = 0;
     _pulseE = 0;
     _pulseN = 0;
     _pulseS = 0;
     buildIndexes(_solver, _trigCurrent);
 
-    BOOST_LOG_TRIVIAL(debug) << "Trig current size " << _trigCurrent.size();
+    //BOOST_LOG_TRIVIAL(debug) << "Trig current size " << _trigCurrent.size();
     if (_trigCurrent.size() > 0)
     {
         matchIndexes(_trigFirst, _trigCurrent, _matchedCurFirst, _dxFirst, _dyFirst);
@@ -710,65 +713,87 @@ void GuiderModule::SMComputeGuide()
     }
     double _driftRA =  _dxFirst * cos(_calCcdOrientation) + _dyFirst * sin(_calCcdOrientation);
     double _driftDE = -_dxFirst * sin(_calCcdOrientation) + _dyFirst * cos(_calCcdOrientation);
-    BOOST_LOG_TRIVIAL(debug) << "*********************** guide  RA drift (px) " << _driftRA;
-    BOOST_LOG_TRIVIAL(debug) << "*********************** guide  DE drift (px) " << _driftDE;
-    if (_driftRA > 0 )
+    //BOOST_LOG_TRIVIAL(debug) << "*********************** guide  RA drift (px) " << _driftRA;
+    //BOOST_LOG_TRIVIAL(debug) << "*********************** guide  DE drift (px) " << _driftDE;
+    int  revRA = 1;
+    if (getOstElementValue("revCorrections", "revRA").toBool()) revRA = -1;
+    int  revDE = 1;
+    if (getOstElementValue("revCorrections", "revDE").toBool()) revDE = -1;
+    bool disRAO = getOstElementValue("disCorrections", "disRA+").toBool();
+    bool disRAE = getOstElementValue("disCorrections", "disRA-").toBool();
+    bool disDEN = getOstElementValue("disCorrections", "disDE+").toBool();
+    bool disDES = getOstElementValue("disCorrections", "disDE-").toBool();
+
+    if (revRA * _driftRA > 0 && !disRAO)
     {
-        _pulseW = _raAgr * _driftRA * _calPulseW;
+        _pulseW = _raAgr * revRA * _driftRA * _calPulseW;
         if (_pulseW > _pulseMax) _pulseW = _pulseMax;
         if (_pulseW < _pulseMin) _pulseW = 0;
     }
     else _pulseW = 0;
-    if (_pulseW > 0) BOOST_LOG_TRIVIAL(debug) << "*********************** guide  W pulse " << _pulseW;
+    //if (_pulseW > 0) sendMessage("*********************** guide  W pulse " + QString::number(_pulseW));
 
-    if (_driftRA < 0 )
+    if (revRA * _driftRA < 0 && !disRAE)
     {
-        _pulseE = -_raAgr * _driftRA * _calPulseE;
+        _pulseE = -_raAgr * revRA * _driftRA * _calPulseE;
         if (_pulseE > _pulseMax) _pulseE = _pulseMax;
         if (_pulseE < _pulseMin) _pulseE = 0;
     }
     else _pulseE = 0;
-    if (_pulseE > 0) BOOST_LOG_TRIVIAL(debug) << "*********************** guide  E pulse " << _pulseE;
+    //if (_pulseE > 0) sendMessage("*********************** guide  E pulse " + QString::number(_pulseE));
 
-    if (_driftDE > 0 )
+    if (revDE * _driftDE > 0 && !disDEN)
     {
-        _pulseS = _deAgr * _driftDE * _calPulseS;
+        _pulseS = _deAgr * revDE * _driftDE * _calPulseS;
         if (_pulseS > _pulseMax) _pulseS = _pulseMax;
         if (_pulseS < _pulseMin) _pulseS = 0;
     }
     else _pulseS = 0;
-    if (_pulseS > 0) BOOST_LOG_TRIVIAL(debug) << "*********************** guide  S pulse " << _pulseS;
+    //if (_pulseS > 0) sendMessage("*********************** guide  S pulse " + QString::number(_pulseS));
 
-    if (_driftDE < 0 )
+    if (revDE * _driftDE < 0 && !disDES)
     {
-        _pulseN = -_deAgr * _driftDE * _calPulseN;
+        _pulseN = -_deAgr * revDE * _driftDE * _calPulseN;
         if (_pulseN > _pulseMax) _pulseN = _pulseMax;
         if (_pulseN < _pulseMin) _pulseN = 0;
     }
     else _pulseN = 0;
-    if (_pulseN > 0) BOOST_LOG_TRIVIAL(debug) << "*********************** guide  N pulse " << _pulseN;
+    //if (_pulseN > 0) sendMessage("*********************** guide  N pulse " + QString::number(_pulseN));
 
-    //_gridguide->append(_itt,_driftRA,_driftDE,_pulseW-_pulseE,_pulseN-_pulseS);
-    //_propertyStore.update(_gridguide);
-    //emit propertyAppended(_gridguide,&_modulename,_itt,_driftRA,_driftDE,_pulseW-_pulseE,_pulseN-_pulseS);
     _itt++;
 
-    setOstElement("values", "pulseN", _pulseN, false);
-    setOstElement("values", "pulseS", _pulseS, false);
-    setOstElement("values", "pulseE", _pulseE, false);
-    setOstElement("values", "pulseW", _pulseW, true);
+    setOstElementValue("values", "pulseN", _pulseN, false);
+    setOstElementValue("values", "pulseS", _pulseS, false);
+    setOstElementValue("values", "pulseE", _pulseE, false);
+    setOstElementValue("values", "pulseW", _pulseW, true);
+    setOstElementValue("drift", "RA", _driftRA, false);
+    setOstElementValue("drift", "DEC", _driftDE, false);
+    pushOstElements("drift");
+
+    //setOstElementValue("guiding", "time", QDateTime::currentDateTime().toString("dd/MM/yyyy hh:mm:ss zzz"), false);
+    double tt = QDateTime::currentDateTime().toMSecsSinceEpoch();
+    setOstElementValue("guiding", "time", tt, false);
+    setOstElementValue("guiding", "RA", _driftRA, false);
+    setOstElementValue("guiding", "DE", _driftDE, false);
+    setOstElementValue("guiding", "pDE", _pulseN - _pulseS, false);
+    setOstElementValue("guiding", "pRA", _pulseE - _pulseW, false);
+    pushOstElements("guiding");
+
+    //setOstElementValue("snr", "time", QDateTime::currentDateTime().toString("dd/MM/yyyy hh:mm:ss zzz"), false);
+    setOstElementValue("snr", "time", tt, false);
+    setOstElementValue("snr", "snr", _image->getStats().SNR, false);
+    pushOstElements("snr");
 
     emit ComputeGuideDone();
 }
 void GuiderModule::SMRequestPulses()
 {
-    BOOST_LOG_TRIVIAL(debug) << "SMRequestPulses";
 
-    sendMessage("SMRequestPulses");
+    //sendMessage("SMRequestPulses");
 
     if (_pulseN > 0)
     {
-        BOOST_LOG_TRIVIAL(debug) << "********* Pulse  N " << _pulseN;
+        //BOOST_LOG_TRIVIAL(debug) << "********* Pulse  N " << _pulseN;
         _pulseDECfinished = false;
         if (!sendModNewNumber(_mount, "TELESCOPE_TIMED_GUIDE_NS", "TIMED_GUIDE_N", _pulseN))
         {
@@ -780,7 +805,7 @@ void GuiderModule::SMRequestPulses()
     if (_pulseS > 0)
     {
         _pulseDECfinished = false;
-        BOOST_LOG_TRIVIAL(debug) << "********* Pulse  S " << _pulseS;
+        //BOOST_LOG_TRIVIAL(debug) << "********* Pulse  S " << _pulseS;
         if (!sendModNewNumber(_mount, "TELESCOPE_TIMED_GUIDE_NS", "TIMED_GUIDE_S", _pulseS))
         {
             emit abort();
@@ -791,7 +816,7 @@ void GuiderModule::SMRequestPulses()
     if (_pulseE > 0)
     {
         _pulseRAfinished = false;
-        BOOST_LOG_TRIVIAL(debug) << "********* Pulse  E " << _pulseE;
+        //BOOST_LOG_TRIVIAL(debug) << "********* Pulse  E " << _pulseE;
         if (!sendModNewNumber(_mount, "TELESCOPE_TIMED_GUIDE_WE", "TIMED_GUIDE_E", _pulseE))
         {
             emit abort();
@@ -802,7 +827,7 @@ void GuiderModule::SMRequestPulses()
     if (_pulseW > 0)
     {
         _pulseRAfinished = false;
-        BOOST_LOG_TRIVIAL(debug) << "********* Pulse  W " << _pulseW;
+        //BOOST_LOG_TRIVIAL(debug) << "********* Pulse  W " << _pulseW;
         if (!sendModNewNumber(_mount, "TELESCOPE_TIMED_GUIDE_WE", "TIMED_GUIDE_W", _pulseW))
         {
             emit abort();
@@ -810,13 +835,13 @@ void GuiderModule::SMRequestPulses()
         }
     }
 
-    BOOST_LOG_TRIVIAL(debug) << "SMRequestPulses before";
+    //BOOST_LOG_TRIVIAL(debug) << "SMRequestPulses before";
     emit RequestPulsesDone();
-    BOOST_LOG_TRIVIAL(debug) << "SMRequestPulses after";
+    //BOOST_LOG_TRIVIAL(debug) << "SMRequestPulses after";
 
     if ((_pulseN == 0) && (_pulseS == 0) && (_pulseE == 0) && (_pulseW == 0))
     {
-        BOOST_LOG_TRIVIAL(debug) << "SMRequestPulses zéro";
+        //BOOST_LOG_TRIVIAL(debug) << "SMRequestPulses zéro";
         emit PulsesDone();
     }
 
@@ -824,9 +849,9 @@ void GuiderModule::SMRequestPulses()
 
 void GuiderModule::SMFindStars()
 {
-    BOOST_LOG_TRIVIAL(debug) << "SMFindStars";
+    //BOOST_LOG_TRIVIAL(debug) << "SMFindStars";
 
-    sendMessage("SMFindStars");
+    //sendMessage("SMFindStars");
     stats = _image->getStats();
     _solver.ResetSolver(stats, _image->getImageBuffer());
     connect(&_solver, &Solver::successSEP, this, &GuiderModule::OnSucessSEP);
@@ -836,11 +861,11 @@ void GuiderModule::SMFindStars()
 
 void GuiderModule::OnSucessSEP()
 {
-    BOOST_LOG_TRIVIAL(debug) << "OnSucessSEP";
+    //BOOST_LOG_TRIVIAL(debug) << "OnSucessSEP";
 
-    sendMessage("SEP finished");
+    //sendMessage("SEP finished");
     disconnect(&_solver, &Solver::successSEP, this, &GuiderModule::OnSucessSEP);
-    BOOST_LOG_TRIVIAL(debug) << "********* SEP Finished";
+    //BOOST_LOG_TRIVIAL(debug) << "********* SEP Finished";
     emit FindStarsDone();
 }
 

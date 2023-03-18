@@ -72,25 +72,9 @@ class MODULE_INIT GuiderModule  : public IndiModule
         void OnMyExternalEvent(const QString &eventType, const QString  &eventModule, const QString  &eventKey,
                                const QVariantMap &eventData) override;
         void OnSucessSEP();
-        void DummySlot()
-        {
-            BOOST_LOG_TRIVIAL(debug) << "************************* DUMMY SLOT";
-        }
     private:
-        void newNumber(INumberVectorProperty *nvp) override;
-        void newBLOB(IBLOB *bp) override;
-        void newSwitch(ISwitchVectorProperty *svp) override;
-
-        //SwitchProperty* _actions;
-        //NumberProperty* _commonParams;
-        //NumberProperty* _calParams;
-        //NumberProperty* _guideParams;
-        //NumberProperty* _values;
-        //ImageProperty*  _img;
-        //GridProperty*   _grid;
-        //LightProperty*  _states;
-        //GridProperty*   _gridguide;
-
+        void updateProperty(INDI::Property p) override;
+        void newBLOB(INDI::PropertyBlob pblob);
 
         QPointer<fileio> _image;
         Solver _solver;
@@ -99,17 +83,17 @@ class MODULE_INIT GuiderModule  : public IndiModule
         double _exposure = 0.5;
         int    _pulse  = 1000;
         int    _pulseMax  = 2000;
-        int    _pulseMin  = 100;
-        double _raAgr = 0.7;
-        double _deAgr = 0.7;
+        int    _pulseMin  = 20;
+        double _raAgr = 0.8;
+        double _deAgr = 0.8;
         int    _pulseN = 0;
         int    _pulseS = 0;
         int    _pulseE = 0;
         int    _pulseW = 0;
-        int    _calPulseN = 0;
-        int    _calPulseS = 0;
-        int    _calPulseE = 0;
-        int    _calPulseW = 0;
+        int    _calPulseN = 300;
+        int    _calPulseS = 300;
+        int    _calPulseE = 300;
+        int    _calPulseW = 300;
         int    _calPulseRA = 0;
         int    _calPulseDEC = 0;
         int    _calState = 0;

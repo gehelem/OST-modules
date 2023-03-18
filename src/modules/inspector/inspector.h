@@ -47,11 +47,10 @@ class MODULE_INIT InspectorModule : public IndiModule
         void OnSucessSEP();
 
     private:
-        void newNumber(INumberVectorProperty *nvp) override;
-        void newBLOB(IBLOB *bp) override;
-        void newSwitch(ISwitchVectorProperty *svp) override;
+        void updateProperty(INDI::Property property) override;
+        void newBLOB(INDI::PropertyBlob pblob);
 
-
+        void initIndi(void);
 
         void Shoot();
         void SMAlert();
@@ -78,6 +77,7 @@ class MODULE_INIT InspectorModule : public IndiModule
         double _bestpos;
         double _bestposfit;
         double _besthfr;
+        QString mState = "idle";
 
 };
 

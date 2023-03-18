@@ -23,7 +23,8 @@ class MODULE_INIT Allsky : public IndiModule
                                const QVariantMap &eventData) override;
         void processFinished(int exitCode, QProcess::ExitStatus exitStatus);
     private:
-        void newBLOB(IBLOB *bp) override;
+        void newBLOB(INDI::PropertyBlob pblob);
+        void updateProperty(INDI::Property property) override;
         void startLoop();
         void startBatch();
         void processOutput();

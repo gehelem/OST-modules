@@ -2,6 +2,7 @@
     "values": {
         "devcat": "Control",
         "group": "",
+        "order":"Control800",
         "permission": 0,
         "propertyLabel": "Values",
         "elements": {
@@ -40,12 +41,97 @@
 
         }
     },
-
+    "drift": {
+        "devcat": "Control",
+        "group": "",
+        "order":"Control350",
+        "permission": 0,
+        "propertyLabel": "Drift",
+        "grid":0,
+        "gridlimit":50,
+        "GXY":{
+            "X":"RA",
+            "Y":"DEC"
+        },
+        "elements": {
+            "RA": {
+                "elementLabel": "RA",
+                "format": "99.99"
+            },
+            "DEC": {
+                "elementLabel": "DEC",
+                "format": "99.99"
+            }
+        }
+    },
+    "guiding": {
+        "devcat": "Control",
+        "group": "",
+        "order":"Control100",
+        "permission": 0,
+        "propertyLabel": "Guiding graph",
+        "grid":0,
+        "gridlimit":50,
+        "GPHD":{
+            "D":"time",
+            "RA":"RA",
+            "DE":"DE",
+            "pRA":"pRA",
+            "pDE":"pDE"
+        },
+        "elements": {
+            "time": {
+                "elementLabel": "time",
+                "value":0
+            },
+            "RA": {
+                "elementLabel": "Drift (RA)",
+                "format": "99.99"
+            },
+            "DE": {
+                "elementLabel": "Drift (DE)",
+                "format": "99.99"
+            },
+            "pRA": {
+                "elementLabel": "Pulse (RA)",
+                "format": "99.99"
+            },
+            "pDE": {
+                "elementLabel": "Pulse (DE)",
+                "format": "99.99"
+            }
+        }
+    },
+    "snr": {
+        "devcat": "Control",
+        "grid":[],
+        "gridlimit":50,
+        "order":"Control300",
+        "rule":0,
+        "GDY":{
+            "D":"time",
+            "Y":"snr"
+        },
+        "elements": {
+                "time": {
+                    "elementLabel": "Time",
+                    "value":0
+                },
+                "snr": {
+                    "elementLabel": "SNR",
+                    "value":0
+                }
+        },
+        "group": "",
+        "permission": 0,
+        "propertyLabel": "SNR"
+    },
     "actions": {
         "devcat": "Control",
         "group": "",
+        "order":"Control000",
         "permission": 2,
-        "rule":2,
+        "rule":0,
         "propertyLabel": "Actions",
         "elements": {
             "abort": {
@@ -72,8 +158,9 @@
     },
 
     "commonParams": {
-        "devcat": "Control",
-        "group": "Parameters",
+        "devcat": "Parameters",
+        "group": "",
+        "order":"Parameters000",
         "permission": 2,
         "hasprofile":true,
         "propertyLabel": "Common Parameters",
@@ -86,8 +173,9 @@
         }
     },
     "calParams": {
-        "devcat": "Control",
-        "group": "Parameters",
+        "devcat": "Parameters",
+        "group": "",
+        "order":"Parameters100",
         "permission": 2,
         "hasprofile":true,
         "propertyLabel": "Calibration Parameters",
@@ -99,16 +187,18 @@
             },
             "calsteps": {
                 "elementLabel": "Iterations / axis",
-                "value":3,
+                "value":2,
                 "format": "99"
             }
 
         }
     },
     "guideParams": {
-        "devcat": "Control",
-        "group": "Parameters",
+        "devcat": "Parameters",
+        "group": "",
+        "order":"Parameters200",
         "permission": 2,
+        "rule":2,
         "hasprofile":true,
         "propertyLabel": "Guide parameters",
         "elements": {
@@ -119,23 +209,70 @@
             },
             "pulsemin": {
                 "elementLabel": "Min pulse (ms)",
-                "value":100,
+                "value":20,
                 "format": "99"
             },
             "raAgr": {
                 "elementLabel": "RA Agressivity",
-                "value":0.7,
+                "value":0.8,
                 "format": "99.99"
             },
             "deAgr": {
                 "elementLabel": "DEC Agressivity",
-                "value":0.7,
+                "value":0.8,
                 "format": "99"
             }
         }
     },
+    "revCorrections": {
+        "devcat": "Parameters",
+        "group": "",
+        "order":"Parameters300",
+        "permission": 2,
+        "rule":2,
+        "hasprofile":true,
+        "propertyLabel": "Reverse guiding corrections",
+        "elements": {
+            "revRA": {
+                "elementLabel": "RA",
+                "value":false
+            },
+            "revDE": {
+                "elementLabel": "DEC",
+                "value":false
+            }
+        }
+    },
+        "disCorrections": {
+            "devcat": "Parameters",
+            "group": "",
+            "permission": 2,
+            "order":"Parameters400",
+            "rule":2,
+            "hasprofile":true,
+            "propertyLabel": "Disable guiding corrections",
+            "elements": {
+                "disRA+": {
+                    "elementLabel": "RA+",
+                    "value":false
+                },
+                "disRA-": {
+                    "elementLabel": "RA-",
+                    "value":false
+                },
+                "disDE+": {
+                    "elementLabel": "DE+",
+                    "value":false
+                },
+                "disDE-": {
+                    "elementLabel": "DE-",
+                    "value":false
+                }
+            }
+    },
     "image": {
         "devcat": "Control",
+        "order":"Control9999",
         "group": "",
         "permission": 0,
         "propertyLabel": "Last image",
