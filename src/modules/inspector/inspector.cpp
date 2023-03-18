@@ -73,6 +73,7 @@ void InspectorModule::OnMyExternalEvent(const QString &eventType, const QString 
                     {
                         if (setOstElementValue(keyprop, keyelt, true, true))
                         {
+                            mState = "single";
                             Shoot();
                         }
                     }
@@ -80,7 +81,8 @@ void InspectorModule::OnMyExternalEvent(const QString &eventType, const QString 
                     {
                         if (setOstElementValue(keyprop, keyelt, true, true))
                         {
-                            //
+                            mState = "loop";
+                            Shoot();
                         }
                     }
                     if (keyelt == "abort")
@@ -88,7 +90,8 @@ void InspectorModule::OnMyExternalEvent(const QString &eventType, const QString 
                         if (setOstElementValue(keyprop, keyelt, false, false))
                         {
                             emit Abort();
-                            //
+                            mState = "idle";
+                            setOstPropertyAttribute("actions", "status", IPS_OK, true);
                         }
                     }
                 }
@@ -101,7 +104,7 @@ void InspectorModule::newBLOB(INDI::PropertyBlob pblob)
 {
 
     if (
-        (QString(pblob.getDeviceName()) == _camera)
+        (QString(pblob.getDeviceName()) == _camera) && (mState != "idle")
     )
     {
         setOstPropertyAttribute("actions", "status", IPS_OK, true);
@@ -121,7 +124,6 @@ void InspectorModule::newBLOB(INDI::PropertyBlob pblob)
         _solver.ResetSolver(stats, _image->getImageBuffer());
         connect(&_solver, &Solver::successSEP, this, &InspectorModule::OnSucessSEP);
         _solver.FindStars(_solver.stellarSolverProfiles[0]);
-
     }
 
 
@@ -209,8 +211,8 @@ void InspectorModule::OnSucessSEP()
         int y = s.y;
         int a = s.a;
         int b = s.b;
-        qDebug() << "draw " << x << "/" << y;
-        p.drawEllipse(QPoint(x, y), a * 5, b * 5);
+        //qDebug() << "draw " << x << "/" << y;
+        p.drawEllipse(QPoint(x / 2, y / 2), a * 5, b * 5);
     }
     p.end();
 
@@ -226,6 +228,15 @@ void InspectorModule::OnSucessSEP()
 
     immap.save(getWebroot() + "/" + getModuleName() + "map.jpeg", "JPG", 100);
     setOstPropertyAttribute("imagemap", "URL", getModuleName() + "map.jpeg", true);
+
+    if (mState == "single")
+    {
+        mState = "idle";
+    }
+    if (mState == "loop")
+    {
+        Shoot();
+    }
 
     emit FindStarsDone();
 }
