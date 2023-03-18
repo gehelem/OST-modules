@@ -162,7 +162,7 @@ void FocusModule::updateProperty(INDI::Property p)
         &&  (p.getState() == IPS_ALERT)
     )
     {
-        sendMessage("cameraAlert");
+        //sendMessage("cameraAlert");
         emit cameraAlert();
     }
     if (
@@ -175,7 +175,7 @@ void FocusModule::updateProperty(INDI::Property p)
 
         if (n.getState() == IPS_OK)
         {
-            sendMessage("focuserReachedPosition");
+            //sendMessage("focuserReachedPosition");
             emit GotoBestDone();
             emit BacklashBestDone();
             emit BacklashDone();
@@ -190,7 +190,7 @@ void FocusModule::updateProperty(INDI::Property p)
     )
     {
         INDI::PropertySwitch n = p;
-        sendMessage("FrameResetDone");
+        //sendMessage("FrameResetDone");
         if (_machine.isRunning()) emit FrameResetDone();
     }
     if (QString(p.getName()) == "CCD1")
@@ -233,7 +233,7 @@ void FocusModule::SMAbort()
 {
 
     _machine.stop();
-    sendMessage("machine stopped");
+    //sendMessage("machine stopped");
 }
 
 void FocusModule::startCoarse()
@@ -331,6 +331,7 @@ void FocusModule::startCoarse()
     connect(ComputeResult,      &QState::entered, this, &FocusModule::SMComputeResult);
     connect(ComputeLoopFrame,   &QState::entered, this, &FocusModule::SMComputeLoopFrame);
     connect(InitLoopFrame,      &QState::entered, this, &FocusModule::SMInitLoopFrame);
+    connect(Final,      &QState::entered, this, &FocusModule::SMFocusDone);
 
     /* mapping signals to state transitions */
     CoarseFocus->       addTransition(this, &FocusModule::abort,                Abort);
@@ -367,13 +368,13 @@ void FocusModule::startCoarse()
 
 
     _machine.start();
-    sendMessage("machine started");
+    //sendMessage("machine started");
     qDebug() << "Start coarse focus";
 }
 
 void FocusModule::SMRequestFrameReset()
 {
-    sendMessage("SMRequestFrameReset");
+    //sendMessage("SMRequestFrameReset");
 
 
     //setBLOBMode(B_ALSO, _camera.toStdString().c_str(), nullptr);
@@ -397,7 +398,7 @@ void FocusModule::SMRequestFrameReset()
 
 void FocusModule::SMRequestBacklash()
 {
-    sendMessage("SMRequestBacklash");
+    //sendMessage("SMRequestBacklash");
     if (!sendModNewNumber(_focuser, "ABS_FOCUS_POSITION", "FOCUS_ABSOLUTE_POSITION", _startpos - _backlash))
     {
         emit abort();
@@ -408,7 +409,7 @@ void FocusModule::SMRequestBacklash()
 
 void FocusModule::SMRequestGotoStart()
 {
-    sendMessage("SMRequestGotoStart");
+    //sendMessage("SMRequestGotoStart");
     if (!sendModNewNumber(_focuser, "ABS_FOCUS_POSITION", "FOCUS_ABSOLUTE_POSITION", _startpos))
     {
         emit abort();
@@ -419,7 +420,7 @@ void FocusModule::SMRequestGotoStart()
 
 void FocusModule::SMRequestExposure()
 {
-    sendMessage("SMRequestExposure");
+    //sendMessage("SMRequestExposure");
     if (!sendModNewNumber(_camera, "CCD_EXPOSURE", "CCD_EXPOSURE_VALUE", _exposure))
     {
         emit abort();
@@ -432,7 +433,7 @@ void FocusModule::SMRequestExposure()
 
 void FocusModule::SMFindStars()
 {
-    sendMessage("SMFindStars");
+    //sendMessage("SMFindStars");
     stats = _image->getStats();
     _solver.ResetSolver(stats, _image->getImageBuffer());
     connect(&_solver, &Solver::successSEP, this, &FocusModule::OnSucessSEP);
@@ -447,7 +448,7 @@ void FocusModule::OnSucessSEP()
 
 void FocusModule::SMCompute()
 {
-    sendMessage("SMCompute");
+    //sendMessage("SMCompute");
 
     _posvector.push_back(_startpos + _iteration * _steps);
     _hfdvector.push_back(_loopHFRavg);
@@ -465,8 +466,8 @@ void FocusModule::SMCompute()
         //emit valueChanged(_loopHFRavg);
         _bestpos = _startpos + _iteration * _steps;
     }
-    qDebug() << "Compute " << _iteration << "/" << _iterations << "=" << _loopHFRavg << "bestpos/pos" << _bestpos << "/" <<
-             _startpos + _iteration*_steps << "polfit=" << _bestposfit;
+    //qDebug() << "Compute " << _iteration << "/" << _iterations << "=" << _loopHFRavg << "bestpos/pos" << _bestpos << "/" <<
+    //_startpos + _iteration*_steps << "polfit=" << _bestposfit;
 
     setOstElementValue("values", "loopHFRavg", _loopHFRavg, false);
     setOstElementValue("values", "bestpos",   _bestpos, false);
@@ -493,7 +494,7 @@ void FocusModule::SMCompute()
 
 void FocusModule::SMRequestGotoNext()
 {
-    sendMessage("SMRequestGotoNext");
+    //sendMessage("SMRequestGotoNext");
     if (!sendModNewNumber(_focuser, "ABS_FOCUS_POSITION", "FOCUS_ABSOLUTE_POSITION", _startpos + _iteration * _steps))
     {
         emit abort();
@@ -504,7 +505,7 @@ void FocusModule::SMRequestGotoNext()
 
 void FocusModule::SMRequestBacklashBest()
 {
-    sendMessage("SMRequestBacklashBest");
+    //sendMessage("SMRequestBacklashBest");
     if (!sendModNewNumber(_focuser, "ABS_FOCUS_POSITION", "FOCUS_ABSOLUTE_POSITION", _bestpos - _backlash))
     {
         emit abort();
@@ -515,8 +516,9 @@ void FocusModule::SMRequestBacklashBest()
 
 void FocusModule::SMRequestGotoBest()
 {
-    sendMessage("SMRequestGotoBest");
-    if (!sendModNewNumber(_focuser, "ABS_FOCUS_POSITION", "FOCUS_ABSOLUTE_POSITION", _bestpos))
+    //sendMessage("SMRequestGotoBest");
+    if (_bestposfit == 99 ) _bestposfit = _bestpos;
+    if (!sendModNewNumber(_focuser, "ABS_FOCUS_POSITION", "FOCUS_ABSOLUTE_POSITION", _bestposfit))
     {
         emit abort();
         return;
@@ -526,19 +528,27 @@ void FocusModule::SMRequestGotoBest()
 
 void FocusModule::SMRequestExposureBest()
 {
-    sendMessage("SMRequestExposureBest");
+    //sendMessage("SMRequestExposureBest");
     if (!sendModNewNumber(_camera, "CCD_EXPOSURE", "CCD_EXPOSURE_VALUE", _exposure))
     {
         emit abort();
         return;
     }
+    double mFinalPos = 0;
+    if (!getModNumber(_focuser, "ABS_FOCUS_POSITION", "FOCUS_ABSOLUTE_POSITION", mFinalPos))
+    {
+        emit abort();
+        return;
+    }
+    setOstElementValue("results", "pos", mFinalPos, true);
     emit RequestExposureBestDone();
 }
 
 void FocusModule::SMComputeResult()
 {
-    sendMessage("SMComputeResult");
+    //sendMessage("SMComputeResult");
     setOstElementValue("values", "imgHFR", _solver.HFRavg, true);
+    setOstElementValue("results", "hfr", _solver.HFRavg, true);
     // what should i do here ?
     emit ComputeResultDone();
 }
@@ -548,7 +558,7 @@ void FocusModule::SMComputeResult()
 
 void FocusModule::SMInitLoopFrame()
 {
-    sendMessage("SMInitLoopFrame");
+    //sendMessage("SMInitLoopFrame");
     _loopIteration = 0;
     _loopHFRavg = 99;
     setOstElementValue("values", "loopHFRavg", _loopHFRavg, true);
@@ -557,7 +567,7 @@ void FocusModule::SMInitLoopFrame()
 
 void FocusModule::SMComputeLoopFrame()
 {
-    sendMessage("SMComputeLoopFrame");
+    //sendMessage("SMComputeLoopFrame");
     _loopIteration++;
     _loopHFRavg = ((_loopIteration - 1) * _loopHFRavg + _solver.HFRavg) / _loopIteration;
     setOstElementValue("values", "loopHFRavg", _loopHFRavg, false);
@@ -582,3 +592,9 @@ void FocusModule::SMAlert()
     emit abort();
 }
 
+void FocusModule::SMFocusDone()
+{
+    sendMessage("Focus done");
+    setOstElementValue("results", "hfr", _solver.HFRavg, false);
+    setOstPropertyAttribute("actions", "status", IPS_OK, true);
+}
