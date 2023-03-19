@@ -184,7 +184,7 @@ install(TARGETS
     ostguider
     ostindipanel
     ostfocuser
-#    ostsequencer
+    ostsequencer
     RUNTIME DESTINATION "/usr/bin"
     LIBRARY DESTINATION "/usr/lib"
 )
