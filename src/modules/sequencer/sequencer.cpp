@@ -151,7 +151,7 @@ void SequencerModule::newBLOB(INDI::PropertyBlob pblob)
         if(currentCount == 0)
         {
             //sendMessage("line finished" + QString::number(currentLine));
-            setOstElementLineValue("sequence", "status", currentLine, "OK");
+            setOstElementLineValue("sequence", "status", currentLine, "Finished");
             StartLine();
         }
         else
