@@ -147,7 +147,7 @@ void SequencerModule::newBLOB(INDI::PropertyBlob pblob)
         _image->saveAsFITSSimple(getWebroot() + "/" + getModuleName() + "-" + tt + ".FITS");
 
         currentCount--;
-        sendMessage("RVC frame " + QString::number(currentLine) + "/" + QString::number(currentCount));
+        //sendMessage("RVC frame " + QString::number(currentLine) + "/" + QString::number(currentCount));
         if(currentCount == 0)
         {
             //sendMessage("line finished" + QString::number(currentLine));
