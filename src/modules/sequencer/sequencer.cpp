@@ -144,7 +144,7 @@ void SequencerModule::newBLOB(INDI::PropertyBlob pblob)
         im.save( getWebroot() + "/" + getModuleName() + ".jpeg", "JPG", 100);
         setOstPropertyAttribute("image", "URL", getModuleName() + ".jpeg", true);
         QString tt = QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss_zzz");
-        _image->saveAsFITSSimple(getWebroot() + "/" + getModuleName() + "-" + tt + ".FITS");
+        _image->saveAsFITSSimple(getWebroot() + "/" + getModuleName() + "-" + currentFilter + "-" + tt + ".FITS");
 
         currentCount--;
         //sendMessage("RVC frame " + QString::number(currentLine) + "/" + QString::number(currentCount));
@@ -160,12 +160,36 @@ void SequencerModule::newBLOB(INDI::PropertyBlob pblob)
         }
 
     }
+}
+void SequencerModule::newProperty(INDI::Property property)
+{
+    if (
+        (property.getDeviceName()  == _fw)
+        &&  (QString(property.getName())   == "FILTER_NAME")
+    )
+    {
+        clearOstElementLov("sequence", "filter");
+        INDI::PropertyText txt = property;
+        for (unsigned int i = 0; i < txt.count(); i++ )
+        {
+            addOstElementLov("sequence", "filter", QString::number(i + 1), txt[i].getText());
+        }
+    }
+    if (
+        (property.getDeviceName()  == _fw)
+        &&  (QString(property.getName())   == "FILTER_SLOT")
+        &&  (property.getState() == IPS_OK)
 
-
+    )
+    {
+        Shoot();
+    }
 
 }
+
 void SequencerModule::updateProperty(INDI::Property property)
 {
+
     if (strcmp(property.getName(), "CCD1") == 0)
     {
         newBLOB(property);
@@ -190,6 +214,16 @@ void SequencerModule::updateProperty(INDI::Property property)
         emit FrameResetDone();
     }
 
+    if (
+        (property.getDeviceName()  == _fw)
+        &&  (QString(property.getName())   == "FILTER_SLOT")
+        &&  (property.getState() == IPS_OK)
+
+    )
+    {
+        //sendMessage("Filter OK");
+        Shoot();
+    }
 }
 
 void SequencerModule::Shoot()
@@ -292,9 +326,12 @@ void SequencerModule::StartLine()
     }
     else
     {
+
         currentCount = getOstElementLineValue("sequence", "count", currentLine).toInt();
         currentExposure  = getOstElementLineValue("sequence", "exposure", currentLine).toDouble();
         setOstElementLineValue("sequence", "status", currentLine, "Running " + QString::number(currentCount));
-        Shoot();
+        int i = getOstElementLineValue("sequence", "filter", currentLine).toInt();
+        currentFilter = getOstElementLov("sequence", "filter", QString::number(i)).toString();
+        sendModNewNumber(_fw, "FILTER_SLOT", "FILTER_SLOT_VALUE", i );
     }
 }
