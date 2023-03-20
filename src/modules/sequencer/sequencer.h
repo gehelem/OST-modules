@@ -48,6 +48,7 @@ class MODULE_INIT SequencerModule : public IndiModule
 
     private:
         void newBLOB(INDI::PropertyBlob pblob);
+        void newProperty(INDI::Property property) override;
         void updateProperty(INDI::Property property) override;
 
         void Shoot();
