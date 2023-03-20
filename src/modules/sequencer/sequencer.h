@@ -85,6 +85,7 @@ class MODULE_INIT SequencerModule : public IndiModule
         QString currentStatus = "";
 
         QVariantMap mActiveSeq;
+        bool isSequenceRunning = false;
 
 
 };
