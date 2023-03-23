@@ -79,7 +79,8 @@ void SequencerModule::OnMyExternalEvent(const QString &eventType, const QString 
                         if (setOstElementValue(keyprop, keyelt, false, false))
                         {
                             emit Abort();
-                            //
+                            isSequenceRunning = false;
+
                         }
                     }
                 }
@@ -116,6 +117,7 @@ void SequencerModule::newBLOB(INDI::PropertyBlob pblob)
 
     if (
         (QString(pblob.getDeviceName()) == _camera)
+        && isSequenceRunning
     )
     {
         delete _image;
@@ -179,6 +181,8 @@ void SequencerModule::newProperty(INDI::Property property)
         (property.getDeviceName()  == _fw)
         &&  (QString(property.getName())   == "FILTER_SLOT")
         &&  (property.getState() == IPS_OK)
+        && isSequenceRunning
+
 
     )
     {
@@ -218,7 +222,7 @@ void SequencerModule::updateProperty(INDI::Property property)
         (property.getDeviceName()  == _fw)
         &&  (QString(property.getName())   == "FILTER_SLOT")
         &&  (property.getState() == IPS_OK)
-
+        && isSequenceRunning
     )
     {
         //sendMessage("Filter OK");
@@ -296,6 +300,8 @@ void SequencerModule::OnSucessSEP()
 void SequencerModule::StartSequence()
 {
     currentLine = -1;
+    isSequenceRunning = true;
+
     connectIndi();
     if (connectDevice(_camera))
     {
@@ -323,6 +329,8 @@ void SequencerModule::StartLine()
     {
         sendMessage("Sequence completed");
         setOstPropertyAttribute("actions", "status", IPS_OK, true);
+        isSequenceRunning = false;
+
     }
     else
     {
