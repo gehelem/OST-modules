@@ -1,0 +1,95 @@
+{
+    "search": {
+        "devcat": "Control",
+        "order": "Control0000",
+        "group": "",
+        "permission": 2,
+        "value": "default",
+        "rule":0,
+        "propertyLabel": "",
+        "elements": {
+            "searchbtn": {
+                "elementLabel": "Search object",
+                "value":false
+            }
+        }
+    },
+    "results": {
+        "devcat": "Control",
+        "order": "Control0005",
+        "group": "",
+        "permission": 0,
+        "grid":0,
+        "gridlimit":255,
+        "rule":0,
+        "propertyLabel": "Results",
+        "elements": {
+            "name": {
+                "elementLabel": "Internal name",
+                "value":""
+            },
+            "RA": {
+                "elementLabel": "RA",
+                "value":0
+            },
+            "DEC": {
+                "elementLabel": "DEC",
+                "value":0
+            }
+        }
+    },
+    "target": {
+        "devcat": "Control",
+        "order": "Control0007",
+        "group": "",
+        "permission": 2,
+        "rule":0,
+        "propertyLabel": "Target",
+        "elements": {
+            "name": {
+                "elementLabel": "Internal name",
+                "value":""
+            },
+            "RA": {
+                "elementLabel": "RA",
+                "value":0
+            },
+            "DEC": {
+                "elementLabel": "DEC",
+                "value":0
+            }
+        }
+    },
+
+    "actions": {
+        "devcat": "Control",
+        "group": "",
+        "order":"Control0010",
+        "permission": 2,
+        "rule":0,
+        "propertyLabel": "Actions",
+        "elements": {
+            "xx1": {
+                "elementLabel": "xx1"
+                ,"value":false
+            },
+            "xx2": {
+                "elementLabel": "xx2"
+                ,"value":false
+            },
+            "xx3": {
+                "elementLabel": "xx3"
+                ,"value":false
+            }
+        }
+    },
+    "image": {
+        "devcat": "Control",
+        "group": "",
+        "order":"Control8888",
+        "permission": 0,
+        "propertyLabel": "",
+        "URL": ""
+    }
+
+}
