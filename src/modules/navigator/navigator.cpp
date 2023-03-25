@@ -70,6 +70,33 @@ void Navigator::OnMyExternalEvent(const QString &pEventType, const QString  &pEv
                         }
                     }
                 }
+                if (keyprop == "actions")
+                {
+                    setOstPropertyAttribute(keyprop, "status", IPS_BUSY, true);
+                    if (keyelt == "slew")
+                    {
+                        QString dev = getOstElementValue("devices", "mount").toString();
+                        QString cam  = getOstElementValue("devices", "camera").toString();
+                        double ra  = getOstElementValue("selection", "RA").toDouble();
+                        double dec  = getOstElementValue("selection", "DEC").toDouble();
+                        INDI::BaseDevice dp = getDevice(dev.toStdString().c_str());
+                        if (!dp.isValid())
+                        {
+                            sendError("Error - unable to find " + dev + " device. Aborting.");
+                            return;
+                        }
+                        INDI::PropertyNumber prop = dp.getProperty("EQUATORIAL_EOD_COORD");
+                        if (!prop.isValid())
+                        {
+                            sendError("Error - unable to find " + dev + "/" + prop + " property. Aborting.");
+                            return;
+                        }
+                        prop.findWidgetByName("RA")->value = ra;
+                        prop.findWidgetByName("DEC")->value = dec;
+                        sendNewNumber(prop);
+                        sendMessage("Slewing to " + getOstElementValue("selection", "code").toString());
+                    }
+                }
             }
             if (pEventType == "Flselect")
             {
