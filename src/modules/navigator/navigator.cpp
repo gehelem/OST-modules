@@ -66,12 +66,26 @@ void Navigator::OnMyExternalEvent(const QString &pEventType, const QString  &pEv
                     {
                         if (setOstElementValue(keyprop, keyelt, true, true))
                         {
-                            sendMessage("Searching " + getOstPropertyValue("search").toString());
+                            updateSearchList();
                         }
                     }
                 }
             }
+            if (pEventType == "Flselect")
+            {
+                double line = pEventData[keyprop].toMap()["line"].toDouble();
+                QString code = getOstElementLineValue("results", "code", line).toString();
+                float ra = getOstElementLineValue("results", "RA", line).toFloat();
+                float dec = getOstElementLineValue("results", "DEC", line).toFloat();
+                QString ns = getOstElementLineValue("results", "NS", line).toString();
+                setOstElementValue("selection", "code", code, false);
+                setOstElementValue("selection", "RA", ra, false);
+                setOstElementValue("selection", "DEC", dec, false);
+                setOstElementValue("selection", "NS", ns, true);
+
+            }
         }
+
     }
 }
 
@@ -164,4 +178,42 @@ void Navigator::OnSucessSEP()
     setOstPropertyAttribute("image", "URL", getModuleName() + ".jpeg", true);
 
     emit FindStarsDone();
+}
+void Navigator::updateSearchList(void)
+{
+    sendMessage("Searching " + getOstPropertyValue("search").toString());
+    resetOstElements("results");
+    QList<catalogResult> results;
+    searchCatalog(getOstPropertyValue("search").toString(), results);
+    if (results.count() == 0)
+    {
+        sendWarning("Searching " + getOstPropertyValue("search").toString() + " gives no result");
+        return;
+    }
+
+    int max = 20;
+    if (max < results.count())
+    {
+        sendWarning("updateSearchList more than " + QString::number(max) + " objects found, limiting result to " + QString::number(
+                        max));
+    }
+    else
+    {
+        max = results.count();
+    }
+
+    for (int i = 0; i < max; i++)
+    {
+        setOstElementValue("results", "catalog", results[i].catalog, false);
+        setOstElementValue("results", "code", results[i].code, false);
+        setOstElementValue("results", "RA", results[i].RA, false);
+        setOstElementValue("results", "NS", results[i].NS, false);
+        setOstElementValue("results", "DEC", results[i].DEC, false);
+        setOstElementValue("results", "diam", results[i].diam, false);
+        setOstElementValue("results", "mag", results[i].mag, false);
+        setOstElementValue("results", "name", results[i].name, false);
+        setOstElementValue("results", "alias", results[i].alias, false);
+        pushOstElements("results");
+    }
+
 }

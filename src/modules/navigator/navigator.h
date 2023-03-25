@@ -57,7 +57,8 @@ class MODULE_INIT Navigator : public IndiModule
         //void SMLoadblob(IBLOB *bp);
         void SMLoadblob();
         void SMAbort();
-        void startCoarse();
+        void updateSearchList(void);
+
 
         QString mCamera  = "CCD Simulator";
         QString mMount  = "Telescope Simulator";
