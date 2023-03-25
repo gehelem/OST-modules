@@ -1,0 +1,138 @@
+{
+    "search": {
+        "devcat": "Control",
+        "order": "Control0000",
+        "group": "",
+        "permission": 2,
+        "value": "default",
+        "rule":0,
+        "propertyLabel": "",
+        "elements": {
+            "searchbtn": {
+                "elementLabel": "Search object",
+                "value":false
+            }
+        }
+    },
+    "results": {
+        "devcat": "Control",
+        "order": "Control0005",
+        "group": "",
+        "permission": 0,
+        "grid":0,
+        "gridlimit":255,
+        "rule":0,
+        "propertyLabel": "Results",
+        "elements": {
+            "catalog": {
+                "elementLabel": "Catalogue",
+                "order":"10",
+                "value":""
+            },
+            "code": {
+                "elementLabel": "Code",
+                "order":"20",
+                "value":""
+            },
+            "RA": {
+                "elementLabel": "RA",
+                "order":"30",
+                "value":0
+            },
+            "NS": {
+                "elementLabel": "N/S",
+                "order":"50",
+                "value":""
+            },
+            "DEC": {
+                "elementLabel": "DEC",
+                "order":"40",
+                "value":0
+            },
+            "diam": {
+                "elementLabel": "Diameter",
+                "order":"60",
+                "value":0
+            },
+            "mag": {
+                "elementLabel": "Magnitude",
+                "order":"70",
+                "value":0
+            },
+            "name": {
+                "elementLabel": "Name",
+                "order":"80",
+                "value":""
+            },
+            "alias": {
+                "elementLabel": "Alias",
+                "order":"90",
+                "value":""
+            }
+        }
+    },
+    "selection": {
+        "devcat": "Control",
+        "order": "Control0007",
+        "group": "",
+        "permission": 2,
+        "rule":0,
+        "propertyLabel": "Selection",
+        "elements": {
+            "code": {
+                "elementLabel": "Code",
+                "order":"10",
+                "value":""
+            },
+            "RA": {
+                "elementLabel": "RA",
+                "order":"20",
+                "value":0
+            },
+            "NS": {
+                "elementLabel": "N/S",
+                "order":"40",
+                "value":""
+            },
+            "DEC": {
+                "elementLabel": "DEC",
+                "order":"30",
+                "value":0
+            }
+        }
+    },
+    "actions": {
+        "devcat": "Control",
+        "group": "",
+        "order":"Control0010",
+        "permission": 2,
+        "rule":0,
+        "propertyLabel": "Actions",
+        "elements": {
+            "slew": {
+                "elementLabel": "Slew",
+                "order":"10",
+                "value":false
+            },
+            "sync": {
+                "elementLabel": "Sync mount",
+                "order":"20",
+                "value":false
+            },
+            "slewsolv": {
+                "elementLabel": "Slew and solve",
+                "order":"30",
+                "value":false
+            }
+        }
+    },
+    "image": {
+        "devcat": "Control",
+        "group": "",
+        "order":"Control8888",
+        "permission": 0,
+        "propertyLabel": "",
+        "URL": ""
+    }
+
+}
