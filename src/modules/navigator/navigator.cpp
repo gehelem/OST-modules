@@ -270,13 +270,13 @@ void Navigator::convertSelection(void)
     float dec = getOstElementValue("selection", "DEC").toFloat();
     QString ns = getOstElementValue("selection", "NS").toString();
     double jd = ln_get_julian_from_sys();
-
     INDI::IEquatorialCoordinates j2000pos;
     INDI::IEquatorialCoordinates observed;
     j2000pos.declination = dec;
     j2000pos.rightascension = ra;
 
     INDI::J2000toObserved(&j2000pos, jd, &observed);
+    setOstElementValue("selectnow", "jd", "", false); // we'll see that later
     setOstElementValue("selectnow", "code", code, false);
     setOstElementValue("selectnow", "RA", observed.rightascension, false);
     setOstElementValue("selectnow", "DEC", observed.declination, false);
