@@ -133,6 +133,28 @@
         "permission": 0,
         "propertyLabel": "",
         "URL": ""
+    },
+    "popcat": {
+        "devcat": "Control",
+        "order": "Control9999",
+        "group": "",
+        "permission": 2,
+        "value": "messier",
+        "listOfValues":{
+            "messier":"messier",
+            "ngc":"ngc",
+            "ldn":"ldn",
+            "sh2":"sh2",
+            "ic":"ic",
+            "stars":"stars"
+        },
+        "rule":0,
+        "propertyLabel": "Populate catalog",
+        "elements": {
+            "go": {
+                "elementLabel": "GO",
+                "value":false
+            }
+        }
     }
-
 }
