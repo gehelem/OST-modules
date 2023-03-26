@@ -90,26 +90,7 @@ void Navigator::OnMyExternalEvent(const QString &pEventType, const QString  &pEv
                     setOstPropertyAttribute(keyprop, "status", IPS_BUSY, true);
                     if (keyelt == "slew")
                     {
-                        QString dev = getOstElementValue("devices", "mount").toString();
-                        QString cam  = getOstElementValue("devices", "camera").toString();
-                        double ra  = getOstElementValue("selection", "RA").toDouble();
-                        double dec  = getOstElementValue("selection", "DEC").toDouble();
-                        INDI::BaseDevice dp = getDevice(dev.toStdString().c_str());
-                        if (!dp.isValid())
-                        {
-                            sendError("Error - unable to find " + dev + " device. Aborting.");
-                            return;
-                        }
-                        INDI::PropertyNumber prop = dp.getProperty("EQUATORIAL_EOD_COORD");
-                        if (!prop.isValid())
-                        {
-                            sendError("Error - unable to find " + dev + "/" + prop + " property. Aborting.");
-                            return;
-                        }
-                        prop.findWidgetByName("RA")->value = ra;
-                        prop.findWidgetByName("DEC")->value = dec;
-                        sendNewNumber(prop);
-                        sendMessage("Slewing to " + getOstElementValue("selection", "code").toString());
+                        slewToSelection();
                     }
                 }
             }
@@ -124,7 +105,7 @@ void Navigator::OnMyExternalEvent(const QString &pEventType, const QString  &pEv
                 setOstElementValue("selection", "RA", ra, false);
                 setOstElementValue("selection", "DEC", dec, false);
                 setOstElementValue("selection", "NS", ns, true);
-
+                convertSelection();
             }
         }
 
@@ -204,7 +185,6 @@ void Navigator::initIndi()
     enableDirectBlobAccess(getOstElementValue("devices", "camera").toString().toStdString().c_str(), nullptr);
 
 }
-
 void Navigator::OnSucessSEP()
 {
     setOstPropertyAttribute("actions", "status", IPS_OK, true);
@@ -258,4 +238,47 @@ void Navigator::updateSearchList(void)
         pushOstElements("results");
     }
 
+}
+void Navigator::slewToSelection(void)
+{
+    QString dev = getOstElementValue("devices", "mount").toString();
+    QString cam  = getOstElementValue("devices", "camera").toString();
+    double ra  = getOstElementValue("selectnow", "RA").toDouble();
+    double dec  = getOstElementValue("selectnow", "DEC").toDouble();
+    INDI::BaseDevice dp = getDevice(dev.toStdString().c_str());
+    if (!dp.isValid())
+    {
+        sendError("Error - unable to find " + dev + " device. Aborting.");
+        return;
+    }
+    INDI::PropertyNumber prop = dp.getProperty("EQUATORIAL_EOD_COORD");
+    if (!prop.isValid())
+    {
+        sendError("Error - unable to find " + dev + "/" + prop + " property. Aborting.");
+        return;
+    }
+    prop.findWidgetByName("RA")->value = ra;
+    prop.findWidgetByName("DEC")->value = dec;
+    sendNewNumber(prop);
+    sendMessage("Slewing to " + getOstElementValue("selection", "code").toString());
+
+}
+void Navigator::convertSelection(void)
+{
+    QString code = getOstElementValue("selection", "code").toString();
+    float ra = getOstElementValue("selection", "RA").toFloat();
+    float dec = getOstElementValue("selection", "DEC").toFloat();
+    QString ns = getOstElementValue("selection", "NS").toString();
+    double jd = ln_get_julian_from_sys();
+    INDI::IEquatorialCoordinates j2000pos;
+    INDI::IEquatorialCoordinates observed;
+    j2000pos.declination = dec;
+    j2000pos.rightascension = ra;
+
+    INDI::J2000toObserved(&j2000pos, jd, &observed);
+    setOstElementValue("selectnow", "jd", "", false); // we'll see that later
+    setOstElementValue("selectnow", "code", code, false);
+    setOstElementValue("selectnow", "RA", observed.rightascension, false);
+    setOstElementValue("selectnow", "DEC", observed.declination, false);
+    setOstElementValue("selectnow", "NS", ns, true);
 }

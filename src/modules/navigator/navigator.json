@@ -101,6 +101,41 @@
             }
         }
     },
+    "selectnow": {
+        "devcat": "Control",
+        "order": "Control0008",
+        "group": "",
+        "permission": 0,
+        "rule":0,
+        "propertyLabel": "Selection converted to now",
+        "elements": {
+            "jd": {
+                "elementLabel": "Julian day",
+                "order":"05",
+                "value":""
+            },
+            "code": {
+                "elementLabel": "Code",
+                "order":"10",
+                "value":""
+            },
+            "RA": {
+                "elementLabel": "RA",
+                "order":"20",
+                "value":0
+            },
+            "NS": {
+                "elementLabel": "N/S",
+                "order":"40",
+                "value":""
+            },
+            "DEC": {
+                "elementLabel": "DEC",
+                "order":"30",
+                "value":0
+            }
+        }
+    },
     "actions": {
         "devcat": "Control",
         "group": "",
