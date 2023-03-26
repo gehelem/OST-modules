@@ -4,6 +4,11 @@
 #include <fileio.h>
 #include <solver.h>
 
+#include <libastro.h>
+#include <libnova/julian_day.h>
+
+#define PI 3.14159265
+
 #if defined(NAVIGATOR_MODULE)
 #  define MODULE_INIT Q_DECL_EXPORT
 #else
@@ -58,6 +63,8 @@ class MODULE_INIT Navigator : public IndiModule
         void SMLoadblob();
         void SMAbort();
         void updateSearchList(void);
+        void slewToSelection(void);
+        void convertSelection(void);
 
 
         QString mCamera  = "CCD Simulator";
