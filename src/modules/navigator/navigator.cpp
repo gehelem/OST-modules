@@ -22,7 +22,8 @@ Navigator::Navigator(QString name, QString label, QString profile, QVariantMap a
     setOstElementValue("devices", "camera",   mCamera, false);
     createOstElement("devices", "mount", "Mount", false);
     setOstElementValue("devices", "mount",   mMount, true);
-
+    connectIndi();
+    connectAllDevices();
 
 }
 
@@ -70,6 +71,20 @@ void Navigator::OnMyExternalEvent(const QString &pEventType, const QString  &pEv
                         }
                     }
                 }
+                if (keyprop == "popcat")
+                {
+                    if (keyelt == "go")
+                    {
+                        if (setOstElementValue(keyprop, keyelt, true, true))
+                        {
+                            setOstPropertyAttribute(keyprop, "status", IPS_BUSY, true);
+                            /* we should avoid this, and do this in a differnet thread. We'll see later */
+                            populateCatalog(":" + getOstPropertyValue("popcat").toString() + ".txt", getOstPropertyValue("popcat").toString());
+                            setOstPropertyAttribute(keyprop, "status", IPS_OK, true);
+                        }
+                    }
+                }
+
                 if (keyprop == "actions")
                 {
                     setOstPropertyAttribute(keyprop, "status", IPS_BUSY, true);
