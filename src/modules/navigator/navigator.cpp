@@ -132,10 +132,9 @@ void Navigator::newBLOB(INDI::PropertyBlob pblob)
 
 
 }
-
 void Navigator::updateProperty(INDI::Property property)
 {
-    if (mState == "idle") return;
+    //if (mState == "idle") return;
 
     if (strcmp(property.getName(), "CCD1") == 0)
     {
@@ -159,6 +158,15 @@ void Navigator::updateProperty(INDI::Property property)
     {
         //sendMessage("FrameResetDone");
         emit FrameResetDone();
+    }
+    if (
+        (property.getDeviceName() == getOstElementValue("devices", "mount").toString())
+        &&  (property.getName()   == std::string("EQUATORIAL_EOD_COORD"))
+        &&  (property.getState() == IPS_OK)
+    )
+    {
+        sendMessage("Slew finished");
+        setOstPropertyAttribute("actions", "status", IPS_OK, true);
     }
 }
 void Navigator::Shoot()
@@ -241,20 +249,20 @@ void Navigator::updateSearchList(void)
 }
 void Navigator::slewToSelection(void)
 {
-    QString dev = getOstElementValue("devices", "mount").toString();
+    QString mount = getOstElementValue("devices", "mount").toString();
     QString cam  = getOstElementValue("devices", "camera").toString();
     double ra  = getOstElementValue("selectnow", "RA").toDouble();
     double dec  = getOstElementValue("selectnow", "DEC").toDouble();
-    INDI::BaseDevice dp = getDevice(dev.toStdString().c_str());
+    INDI::BaseDevice dp = getDevice(mount.toStdString().c_str());
     if (!dp.isValid())
     {
-        sendError("Error - unable to find " + dev + " device. Aborting.");
+        sendError("Error - unable to find " + mount + " device. Aborting.");
         return;
     }
     INDI::PropertyNumber prop = dp.getProperty("EQUATORIAL_EOD_COORD");
     if (!prop.isValid())
     {
-        sendError("Error - unable to find " + dev + "/" + prop + " property. Aborting.");
+        sendError("Error - unable to find " + mount + "/" + prop + " property. Aborting.");
         return;
     }
     prop.findWidgetByName("RA")->value = ra;
