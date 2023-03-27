@@ -15,7 +15,7 @@
                 ,"value":false
             },
             "batch": {
-                "elementLabel": "Start batch"
+                "elementLabel": "Generate timelapse"
                 ,"value":false
             }
         }
@@ -90,6 +90,12 @@
         "propertyLabel": "Timelapse",
         "video": ""
     },
+    "kheogram": {
+        "devcat": "Results",
+        "group": "",
+        "permission": 0,
+        "propertyLabel": "Kheogram"
+    },
     "log": {
         "devcat": "Results",
         "grid":[],
@@ -101,7 +107,7 @@
         "elements": {
                 "time": {
                     "elementLabel": "Time",
-                    "value":""
+                    "value":0
                 },
                 "snr": {
                     "elementLabel": "SNR",
