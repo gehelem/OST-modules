@@ -1,11 +1,13 @@
 {
     "values": {
         "devcat": "Control",
+        "order":"Control100",
         "group": "",
         "permission": 0,
         "propertyLabel": "Values",
-        "GDY":{
-            "D":"focpos",
+        "grid":[],
+        "GXY":{
+            "X":"focpos",
             "Y":"loopHFRavg"
         },
 
@@ -51,11 +53,34 @@
         }
     },
 
+    "results": {
+        "devcat": "Control",
+        "order":"Control050",
+        "group": "",
+        "permission": 0,
+        "propertyLabel": "Final result",
+        "elements": {
+            "hfr": {
+                "elementLabel": "Average HFR result",
+                "value":0,
+                "format": "99.99"
+            },
+            "pos": {
+                "elementLabel": "Focuser final position",
+                "value":0,
+                "step":1,
+                "format": "9999999"
+            }
+
+        }
+    },
+
     "actions": {
         "devcat": "Control",
+        "order":"Control000",
         "group": "",
         "permission": 2,
-        "rule":2,
+        "rule":1,
         "propertyLabel": "Actions",
         "elements": {
             "coarse": {
@@ -74,7 +99,7 @@
     },
 
     "parameters": {
-        "devcat": "Control",
+        "devcat": "Parameters",
         "group": "",
         "permission": 2,
         "hasprofile":true,
@@ -82,17 +107,17 @@
         "elements": {
             "startpos": {
                 "elementLabel": "Start position",
-                "value":36000,
+                "value":32000,
                 "format": "999999"
             },
             "steps": {
                 "elementLabel": "Steps gap",
-                "value":100,
+                "value":2000,
                 "format": "999999"
             },
             "iterations": {
                 "elementLabel": "Iterations",
-                "value":10,
+                "value":5,
                 "format": "99"
             },
             "loopIterations": {
@@ -114,6 +139,7 @@
     },
     "image": {
         "devcat": "Control",
+        "order":"Control999",
         "group": "",
         "permission": 0,
         "propertyLabel": "Last image",

@@ -1,0 +1,14 @@
+FIND_PATH(OST_INCLUDE_DIR ost/indimodule.h)
+FIND_LIBRARY(OST_LIBRARY_BASE NAMES libostbasemodule.so PATHS /usr/lib/ost)
+FIND_LIBRARY(OST_LIBRARY_INDI NAMES libostindimodule.so PATHS /usr/lib/ost)
+
+# handle the QUIETLY and REQUIRED arguments and set OST_FOUND to TRUE if 
+# all listed variables are TRUE
+INCLUDE(FindPackageHandleStandardArgs)
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(OST DEFAULT_MSG OST_INCLUDE_DIR OST_LIBRARY_BASE OST_LIBRARY_INDI) 
+
+IF(OST_FOUND)
+  SET(OST_LIBRARIES ${OST_LIBRARY_BASE}  ${OST_LIBRARY_INDI})
+ELSE(OST_FOUND)
+  MESSAGE(FATAL_ERROR "OST is not found. Please install it first.")	
+ENDIF(OST_FOUND)

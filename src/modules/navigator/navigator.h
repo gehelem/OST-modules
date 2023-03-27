@@ -1,22 +1,27 @@
-#ifndef INSPECTOR_MODULE_h_
-#define INSPECTOR_MODULE_h_
+#ifndef NAVIGATOR_MODULE_h_
+#define NAVIGATOR_MODULE_h_
 #include <indimodule.h>
 #include <fileio.h>
 #include <solver.h>
 
-#if defined(INSPECTOR_MODULE)
+#include <libastro.h>
+#include <libnova/julian_day.h>
+
+#define PI 3.14159265
+
+#if defined(NAVIGATOR_MODULE)
 #  define MODULE_INIT Q_DECL_EXPORT
 #else
 #  define MODULE_INIT Q_DECL_IMPORT
 #endif
 
-class MODULE_INIT InspectorModule : public IndiModule
+class MODULE_INIT Navigator : public IndiModule
 {
         Q_OBJECT
 
     public:
-        InspectorModule(QString name, QString label, QString profile, QVariantMap availableModuleLibs);
-        ~InspectorModule();
+        Navigator(QString name, QString label, QString profile, QVariantMap availableModuleLibs);
+        ~Navigator();
 
     signals:
 
@@ -42,8 +47,8 @@ class MODULE_INIT InspectorModule : public IndiModule
         void AbortDone();
         void Abort();
     public slots:
-        void OnMyExternalEvent(const QString &eventType, const QString  &eventModule, const QString  &eventKey,
-                               const QVariantMap &eventData) override;
+        void OnMyExternalEvent(const QString &pEventType, const QString  &pEventModule, const QString  &pEventKey,
+                               const QVariantMap &pEventData) override;
         void OnSucessSEP();
 
     private:
@@ -57,31 +62,23 @@ class MODULE_INIT InspectorModule : public IndiModule
         //void SMLoadblob(IBLOB *bp);
         void SMLoadblob();
         void SMAbort();
-        void startCoarse();
+        void updateSearchList(void);
+        void slewToSelection(void);
+        void convertSelection(void);
 
-        QString _camera  = "CCD Simulator";
-        bool    _newblob;
 
-        QPointer<fileio> _image;
-        Solver _solver;
-        FITSImage::Statistic stats;
-
-        int    _iterations = 3;
-        int    _steps = 3000;
-        int    _loopIterations = 2;
-        int    _loopIteration;
-        double _loopHFRavg;
-        double _exposure = 2;
-
-        int    _iteration;
-        double _bestpos;
-        double _bestposfit;
-        double _besthfr;
+        QString mCamera  = "CCD Simulator";
+        QString mMount  = "Telescope Simulator";
         QString mState = "idle";
+
+        QPointer<fileio> pImage;
+        Solver mSolver;
+        FITSImage::Statistic mStats;
+
 
 };
 
-extern "C" MODULE_INIT InspectorModule *initialize(QString name, QString label, QString profile,
+extern "C" MODULE_INIT Navigator *initialize(QString name, QString label, QString profile,
         QVariantMap availableModuleLibs);
 
 #endif

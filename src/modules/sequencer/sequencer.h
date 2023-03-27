@@ -1,22 +1,22 @@
-#ifndef INSPECTOR_MODULE_h_
-#define INSPECTOR_MODULE_h_
+#ifndef SEQUENCER_MODULE_h_
+#define SEQUENCER_MODULE_h_
 #include <indimodule.h>
 #include <fileio.h>
 #include <solver.h>
 
-#if defined(INSPECTOR_MODULE)
+#if defined(SEQUENCER_MODULE)
 #  define MODULE_INIT Q_DECL_EXPORT
 #else
 #  define MODULE_INIT Q_DECL_IMPORT
 #endif
 
-class MODULE_INIT InspectorModule : public IndiModule
+class MODULE_INIT SequencerModule : public IndiModule
 {
         Q_OBJECT
 
     public:
-        InspectorModule(QString name, QString label, QString profile, QVariantMap availableModuleLibs);
-        ~InspectorModule();
+        SequencerModule(QString name, QString label, QString profile, QVariantMap availableModuleLibs);
+        ~SequencerModule();
 
     signals:
 
@@ -47,19 +47,21 @@ class MODULE_INIT InspectorModule : public IndiModule
         void OnSucessSEP();
 
     private:
-        void updateProperty(INDI::Property property) override;
         void newBLOB(INDI::PropertyBlob pblob);
-
-        void initIndi(void);
+        void newProperty(INDI::Property property) override;
+        void updateProperty(INDI::Property property) override;
 
         void Shoot();
         void SMAlert();
         //void SMLoadblob(IBLOB *bp);
         void SMLoadblob();
         void SMAbort();
-        void startCoarse();
+
+        void StartSequence();
+        void StartLine();
 
         QString _camera  = "CCD Simulator";
+        QString _fw  = "Filter Simulator";
         bool    _newblob;
 
         QPointer<fileio> _image;
@@ -73,15 +75,22 @@ class MODULE_INIT InspectorModule : public IndiModule
         double _loopHFRavg;
         double _exposure = 2;
 
-        int    _iteration;
-        double _bestpos;
-        double _bestposfit;
-        double _besthfr;
-        QString mState = "idle";
+        int currentLine = 0;
+        int currentCount = 0;
+        double currentExposure = 0;
+        int currentGain = 0;
+        int currentOffset = 0;
+        QString currentFilter = "";
+        QString currentFrameType = "";
+        QString currentStatus = "";
+
+        QVariantMap mActiveSeq;
+        bool isSequenceRunning = false;
+
 
 };
 
-extern "C" MODULE_INIT InspectorModule *initialize(QString name, QString label, QString profile,
+extern "C" MODULE_INIT SequencerModule *initialize(QString name, QString label, QString profile,
         QVariantMap availableModuleLibs);
 
 #endif
