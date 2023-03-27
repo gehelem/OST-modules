@@ -100,6 +100,7 @@ void Allsky::startLoop()
 {
     _isLooping = true;
     _index = 0;
+    mKheog = QImage();
 
     resetOstElements("log");
 
@@ -197,15 +198,27 @@ void Allsky::newBLOB(INDI::PropertyBlob pblob)
         QImage im = rawImage.convertToFormat(QImage::Format_RGB32);
         im.setColorTable(rawImage.colorTable());
         QRect r;
-        r.setRect(0, 0, im.width(), im.height() / 10);
+        r.setRect(rawImage.width() / 2, 1, 1, rawImage.height());
 
+
+        QImage image1 = mKheog;
+        QImage image2 = im.copy(r);
+        QImage result(mKheog.width() + 1, rawImage.height(), QImage::Format_RGB32);
+        QPainter painter(&result);
+        painter.drawImage(0, 0, image1);
+        painter.drawImage(mKheog.width(), 0, image2);
+        mKheog = result;
+
+        mKheog.save(getWebroot() + "/" + getModuleName() + "-KHEOGRAM" + ".jpeg", "JPG", 100);
+        setOstPropertyAttribute("kheogram", "URL", getModuleName() + "-KHEOGRAM" + ".jpeg", true);
+
+        r.setRect(0, 0, im.width(), im.height() / 10);
         QPainter p;
         p.begin(&im);
         p.setPen(QPen(Qt::red));
         p.setFont(QFont("Times", 15, QFont::Bold));
         p.drawText(r, Qt::AlignLeft, QDateTime::currentDateTime().toString("dd/MM/yyyy hh:mm:ss zzz") );
         p.end();
-
 
 
 
@@ -224,7 +237,8 @@ void Allsky::newBLOB(INDI::PropertyBlob pblob)
                 _isLooping = false;
             }
         }
-        setOstElementValue("log", "time", QDateTime::currentDateTime().toString("dd/MM/yyyy hh:mm:ss zzz"), false);
+        double tt = QDateTime::currentDateTime().toMSecsSinceEpoch();
+        setOstElementValue("log", "time", tt, false);
         setOstElementValue("log", "snr", _image->getStats().SNR, true);
         pushOstElements("log");
 
