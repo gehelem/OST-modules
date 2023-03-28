@@ -1,0 +1,21 @@
+{
+    "selection": {
+        "devcat": "Module",
+        "order": "Module000",
+        "group": "",
+        "permission": 2,
+        "rule":0,
+        "propertyLabel": "Select Indi properties to watch",
+        "grid":0,
+        "gridlimit":255,
+        "hasprofile":true,
+        "elements": {
+            "dpv": {
+                "elementLabel": "Device - Property - Value",
+                "value":"",
+                "listOfValues":{
+                }
+            }
+        }
+    }
+}
