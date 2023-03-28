@@ -21,7 +21,7 @@ Meteo::Meteo(QString name, QString label, QString profile, QVariantMap available
     connectAllDevices();
 
     connect(&mTimer, &QTimer::timeout, this, &Meteo::OnTimer);
-    mTimer.start(2000);
+    mTimer.start(getOstPropertyValue("timer").toDouble() * 1000);
 
 }
 
@@ -43,6 +43,8 @@ void Meteo::OnMyExternalEvent(const QString &pEventType, const QString  &pEventM
             if (pEventData[keyprop].toMap().contains("value"))
             {
                 QVariant val = pEventData[keyprop].toMap()["value"];
+                mTimer.stop();
+                mTimer.start(val.toDouble() * 1000);
                 setOstPropertyValue(keyprop, val, true);
             }
 
