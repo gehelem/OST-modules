@@ -21,17 +21,19 @@ class MODULE_INIT Meteo : public IndiModule
     public slots:
         void OnMyExternalEvent(const QString &pEventType, const QString  &pEventModule, const QString  &pEventKey,
                                const QVariantMap &pEventData) override;
+    private slots:
+        void OnTimer(void);
 
     private:
         void updateProperty(INDI::Property property) override;
 
         void initIndi(void);
+        void declareNewGraph(const QString  &pName);
 
         QString mState = "idle";
         QMap<QString, QString> mAvailableMeasures;
         QMap<QString, QString> mSelectedMeasures;
-
-
+        QTimer mTimer;
 
 };
 
