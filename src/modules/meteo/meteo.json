@@ -1,11 +1,11 @@
 {
     "selection": {
-        "devcat": "Module",
-        "order": "Module000",
+        "devcat": "Control",
+        "order": "Control000",
         "group": "",
         "permission": 2,
         "rule":0,
-        "propertyLabel": "Select Indi properties to watch",
+        "propertyLabel": "Indi widgets to watch",
         "grid":0,
         "gridlimit":255,
         "hasprofile":true,
@@ -15,6 +15,36 @@
                 "value":"",
                 "listOfValues":{
                 }
+            }
+        }
+    },
+    "timer": {
+        "devcat": "Control",
+        "order": "Control100",
+        "group": "",
+        "permission": 2,
+        "value": 60,
+        "rule":0,
+        "propertyLabel": "Refresh every (s)",
+        "elements": {
+            "save": {
+                "elementLabel": "Set",
+                "value":false
+            }
+        }
+    },
+    "limit": {
+        "devcat": "Control",
+        "order": "Control200",
+        "group": "",
+        "permission": 2,
+        "value": 200,
+        "rule":0,
+        "propertyLabel": "Number of values ​​to keep",
+        "elements": {
+            "save": {
+                "elementLabel": "Set",
+                "value":false
             }
         }
     }

@@ -19,7 +19,9 @@ Meteo::Meteo(QString name, QString label, QString profile, QVariantMap available
 
     connectIndi();
     connectAllDevices();
-    qDebug() << "starting with " <<  getOstElementGrid("selection", "dpv");
+
+    connect(&mTimer, &QTimer::timeout, this, &Meteo::OnTimer);
+    mTimer.start(2000);
 
 }
 
@@ -70,15 +72,7 @@ void Meteo::OnMyExternalEvent(const QString &pEventType, const QString  &pEventM
             {
                 newOstPropertyLine(keyprop, pEventData);
                 QString id = getOstElementLineValue(keyprop, "dpv", getOstElementGrid(keyprop, "dpv").size() - 1).toString();
-                QString lab = getOstElementLov("selection", "dpv", id).toString();
-                createOstProperty(id, lab, 0, "Measures", "");
-                createOstElement(id, "time", "Time", false);
-                createOstElement(id, id, lab, false);
-                QVariantMap gdy;
-                gdy["D"] = "time";
-                gdy["Y"] = id;
-                setOstPropertyAttribute(id, "grid", QVariantList(), false);
-                setOstPropertyAttribute(id, "GDY", gdy, true);
+                declareNewGraph(id);
             }
         }
 
@@ -92,20 +86,19 @@ void Meteo::updateProperty(INDI::Property property)
         INDI::PropertyNumber n = property;
         for (unsigned int i = 0; i < n.count(); i++)
         {
-            QString elt = QString(n.getDeviceName()) +  "-" + n.getName() + "-" + n[i].getName();
-            if (!mAvailableMeasures.contains(elt))
+            QString propname = QString(n.getDeviceName()) +  "-" + n.getName() + "-" + n[i].getName();
+            if (!mAvailableMeasures.contains(propname))
             {
                 QString lab = QString(n.getDeviceName()) + "-" +  n.getLabel() + "-" + n[i].getLabel();
-                mAvailableMeasures[elt] = lab;
-                addOstElementLov("selection", "dpv", elt, lab);
-                sendMessage(lab);
+                mAvailableMeasures[propname] = lab;
+                addOstElementLov("selection", "dpv", propname, lab);
+                //sendMessage(lab);
             }
-            if ( getOstElementGrid("selection", "dpv").contains(elt))
+            if ( getOstElementGrid("selection", "dpv").contains(propname))
             {
                 double tt = QDateTime::currentDateTime().toMSecsSinceEpoch();
-                setOstElementValue(elt, "time", tt, false);
-                setOstElementValue(elt, elt,  n[i].getValue(), false);
-                pushOstElements(elt);
+                setOstElementValue(propname, "time", tt, false);
+                setOstElementValue(propname, propname,  n[i].getValue(), false);
             }
         }
     }
@@ -114,4 +107,47 @@ void Meteo::updateProperty(INDI::Property property)
 void Meteo::initIndi()
 {
     connectIndi();
+}
+void Meteo::OnTimer()
+{
+    QVariantList propnames = getOstElementGrid("selection", "dpv");
+    for (int i = 0; i < propnames.count(); i++)
+    {
+        QString propname = propnames[i].toString();
+        declareNewGraph(propname);
+        if (getProperties().contains(propname))
+        {
+            double tt = QDateTime::currentDateTime().toMSecsSinceEpoch();
+            setOstElementValue(propname, "time", tt, false);
+            pushOstElements(propname);
+        }
+
+    }
+
+
+}
+void Meteo::declareNewGraph(const QString  &pName)
+{
+    if (getProperties().contains(pName))
+    {
+        return;
+    }
+    if (!mAvailableMeasures.contains(pName))
+    {
+        sendMessage("Can't follow " + pName + " at the moment");
+        return;
+    }
+    QString lab = mAvailableMeasures[pName];
+    createOstProperty(pName, lab, 0, "Measures", "");
+    createOstElement(pName, "time", "Time", false);
+    setOstElementValue(pName, "time", QDateTime::currentDateTime().toMSecsSinceEpoch(), false);
+    createOstElement(pName, pName, lab, false);
+    setOstElementValue(pName, pName, 0, false);
+    QVariantMap gdy;
+    gdy["D"] = "time";
+    gdy["Y"] = pName;
+    setOstPropertyAttribute(pName, "gridlimit", 1000, false);
+    setOstPropertyAttribute(pName, "grid", QVariantList(), false);
+    setOstPropertyAttribute(pName, "GDY", gdy, true);
+
 }
