@@ -27,8 +27,9 @@ class MODULE_INIT Meteo : public IndiModule
 
         void initIndi(void);
 
-        QString mDevice  = "OpenWeatherMap";
         QString mState = "idle";
+        QMap<QString, QString> mAvailableMeasures;
+        QMap<QString, QString> mSelectedMeasures;
 
 
 

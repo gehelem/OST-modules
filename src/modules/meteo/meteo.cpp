@@ -17,10 +17,9 @@ Meteo::Meteo(QString name, QString label, QString profile, QVariantMap available
     setModuleDescription("Meteo module - work in progress");
     setModuleVersion("0.1");
 
-    createOstElement("devices", "device", "Meteo device", false);
-    setOstElementValue("devices", "device",   mDevice, false);
     connectIndi();
     connectAllDevices();
+    qDebug() << "starting with " <<  getOstElementGrid("selection", "dpv");
 
 }
 
@@ -60,6 +59,27 @@ void Meteo::OnMyExternalEvent(const QString &pEventType, const QString  &pEventM
 
 
             }
+            if (pEventType == "Fldelete" && keyprop == "selection")
+            {
+                double line = pEventData[keyprop].toMap()["line"].toDouble();
+                QString id = pEventData["selection"].toMap()["dpv"].toString();
+                deleteOstPropertyLine(keyprop, line);
+                deleteOstProperty(id);
+            }
+            if (pEventType == "Flcreate" && keyprop == "selection")
+            {
+                newOstPropertyLine(keyprop, pEventData);
+                QString id = getOstElementLineValue(keyprop, "dpv", getOstElementGrid(keyprop, "dpv").size() - 1).toString();
+                QString lab = getOstElementLov("selection", "dpv", id).toString();
+                createOstProperty(id, lab, 0, "Measures", "");
+                createOstElement(id, "time", "Time", false);
+                createOstElement(id, id, lab, false);
+                QVariantMap gdy;
+                gdy["D"] = "time";
+                gdy["Y"] = id;
+                setOstPropertyAttribute(id, "grid", QVariantList(), false);
+                setOstPropertyAttribute(id, "GDY", gdy, true);
+            }
         }
 
     }
@@ -67,17 +87,31 @@ void Meteo::OnMyExternalEvent(const QString &pEventType, const QString  &pEventM
 
 void Meteo::updateProperty(INDI::Property property)
 {
-    //if (mState == "idle") return;
-    if (getOstElementValue("devices", "device").toString() == property.getDeviceName())
+    if (property.getType() == INDI_NUMBER)
     {
-        sendMessage(QString(property.getDeviceName()) + "-" + property.getName());
-
+        INDI::PropertyNumber n = property;
+        for (unsigned int i = 0; i < n.count(); i++)
+        {
+            QString elt = QString(n.getDeviceName()) +  "-" + n.getName() + "-" + n[i].getName();
+            if (!mAvailableMeasures.contains(elt))
+            {
+                QString lab = QString(n.getDeviceName()) + "-" +  n.getLabel() + "-" + n[i].getLabel();
+                mAvailableMeasures[elt] = lab;
+                addOstElementLov("selection", "dpv", elt, lab);
+                sendMessage(lab);
+            }
+            if ( getOstElementGrid("selection", "dpv").contains(elt))
+            {
+                double tt = QDateTime::currentDateTime().toMSecsSinceEpoch();
+                setOstElementValue(elt, "time", tt, false);
+                setOstElementValue(elt, elt,  n[i].getValue(), false);
+                pushOstElements(elt);
+            }
+        }
     }
 
 }
 void Meteo::initIndi()
 {
     connectIndi();
-    connectDevice(getOstElementValue("devices", "device").toString());
-
 }
