@@ -192,6 +192,21 @@ target_link_libraries(ostnavigator PRIVATE
 )
 target_compile_definitions(ostnavigator PRIVATE NAVIGATOR_MODULE)
 
+# meteo module
+add_library(ostmeteo SHARED
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/meteo/meteo.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/meteo/meteo.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/meteo/meteo.qrc
+)
+target_link_libraries(ostmeteo PRIVATE
+    ${OST_LIBRARY_INDI}
+    Qt${QT_VERSION_MAJOR}::Core
+    Qt${QT_VERSION_MAJOR}::Concurrent
+    Qt${QT_VERSION_MAJOR}::Widgets
+    Threads::Threads
+    z
+)
+target_compile_definitions(ostmeteo PRIVATE METEO_MODULE)
 
 
 install(TARGETS
@@ -202,6 +217,7 @@ install(TARGETS
     ostindipanel
     ostfocuser
     ostsequencer
+    ostmeteo
     RUNTIME DESTINATION "/usr/bin"
     LIBRARY DESTINATION "/usr/lib"
 )
