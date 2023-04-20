@@ -187,7 +187,7 @@ void GuiderModule::updateProperty(INDI::Property property)
         newBLOB(property);
     }
     if (
-        (property.getDeviceName() == _camera)
+        (property.getDeviceName() == getOstElementValue("devices", "camera").toString())
         &&  (QString(property.getName()) == "CCD_FRAME_RESET")
         &&  (property.getState() == IPS_OK)
     )
@@ -196,7 +196,7 @@ void GuiderModule::updateProperty(INDI::Property property)
         emit FrameResetDone();
     }
     if (
-        (property.getDeviceName() == _mount) &&
+        (property.getDeviceName() == getOstElementValue("devices", "mount").toString()) &&
         (QString(property.getName())   == "TELESCOPE_TIMED_GUIDE_NS") &&
         (property.getState()  == IPS_IDLE)
 
@@ -206,7 +206,7 @@ void GuiderModule::updateProperty(INDI::Property property)
     }
 
     if (
-        (property.getDeviceName() == _mount) &&
+        (property.getDeviceName() == getOstElementValue("devices", "mount").toString()) &&
         (QString(property.getName())  == "TELESCOPE_TIMED_GUIDE_WE") &&
         (property.getState()  == IPS_IDLE)
 
@@ -216,7 +216,7 @@ void GuiderModule::updateProperty(INDI::Property property)
     }
 
     if (
-        (property.getDeviceName() == _mount) &&
+        (property.getDeviceName() == getOstElementValue("devices", "mount").toString()) &&
         ( (QString(property.getName())   == "TELESCOPE_TIMED_GUIDE_WE") ||
           (QString(property.getName())  == "TELESCOPE_TIMED_GUIDE_NS") ) &&
         (property.getState()  == IPS_IDLE)
@@ -232,7 +232,7 @@ void GuiderModule::updateProperty(INDI::Property property)
 void GuiderModule::newBLOB(INDI::PropertyBlob pblob)
 {
     if (
-        (QString(pblob.getDeviceName()) == _camera)
+        (QString(pblob.getDeviceName()) == getOstElementValue("devices", "camera").toString())
     )
     {
         delete _image;
@@ -386,15 +386,15 @@ void GuiderModule::buildGuideStateMachines(void)
 void GuiderModule::SMInitInit()
 {
     //sendMessage("SMInitInit");
-    if (connectDevice(_camera))
+    if (connectDevice(getOstElementValue("devices", "camera").toString()))
     {
         connectIndi();
-        connectDevice(_camera);
-        connectDevice(_mount);
-        setBLOBMode(B_ALSO, _camera.toStdString().c_str(), nullptr);
-        enableDirectBlobAccess(_camera.toStdString().c_str(), nullptr);
-        frameReset(_camera);
-        sendModNewNumber(_camera, "SIMULATOR_SETTINGS", "SIM_TIME_FACTOR", 1 );
+        connectDevice(getOstElementValue("devices", "camera").toString());
+        connectDevice(getOstElementValue("devices", "mount").toString());
+        setBLOBMode(B_ALSO, getOstElementValue("devices", "camera").toString().toStdString().c_str(), nullptr);
+        enableDirectBlobAccess(getOstElementValue("devices", "camera").toString().toStdString().c_str(), nullptr);
+        frameReset(getOstElementValue("devices", "camera").toString());
+        sendModNewNumber(getOstElementValue("devices", "camera").toString(), "SIMULATOR_SETTINGS", "SIM_TIME_FACTOR", 1 );
         setOstPropertyAttribute("actions", "status", IPS_BUSY, true);
         resetOstElements("drift");
         resetOstElements("guiding");
@@ -409,19 +409,22 @@ void GuiderModule::SMInitInit()
     }
 
     /* get mount DEC */
-    if (!getModNumber(_mount, "EQUATORIAL_EOD_COORD", "DEC", _mountDEC))
+    if (!getModNumber(getOstElementValue("devices", "mount").toString(), "EQUATORIAL_EOD_COORD", "DEC",
+                      _mountDEC))
     {
         emit Abort();
         return;
     }
     /* get mount RA */
-    if (!getModNumber(_mount, "EQUATORIAL_EOD_COORD", "RA", _mountRA))
+    if (!getModNumber(getOstElementValue("devices", "mount").toString(), "EQUATORIAL_EOD_COORD", "RA",
+                      _mountRA))
     {
         emit Abort();
         return;
     }
     /* get mount Pier position  */
-    if (!getModSwitch(_mount, "TELESCOPE_PIER_SIDE", "PIER_WEST", _mountPointingWest))
+    if (!getModSwitch(getOstElementValue("devices", "mount").toString(), "TELESCOPE_PIER_SIDE", "PIER_WEST",
+                      _mountPointingWest))
     {
         emit Abort();
         return;
@@ -502,7 +505,7 @@ void GuiderModule::SMRequestFrameReset()
 {
     //BOOST_LOG_TRIVIAL(debug) << "SMRequestFrameReset";
     //sendMessage("SMRequestFrameReset");
-    if (!frameReset(_camera))
+    if (!frameReset(getOstElementValue("devices", "camera").toString()))
     {
         emit Abort();
         return;
@@ -516,7 +519,7 @@ void GuiderModule::SMRequestExposure()
 {
     //BOOST_LOG_TRIVIAL(debug) << "SMRequestExposure";
     //sendMessage("SMRequestExposure");
-    if (!sendModNewNumber(_camera, "CCD_EXPOSURE", "CCD_EXPOSURE_VALUE", _exposure))
+    if (!sendModNewNumber(getOstElementValue("devices", "camera").toString(), "CCD_EXPOSURE", "CCD_EXPOSURE_VALUE", _exposure))
     {
         emit Abort();
         return;
@@ -795,7 +798,8 @@ void GuiderModule::SMRequestPulses()
     {
         //BOOST_LOG_TRIVIAL(debug) << "********* Pulse  N " << _pulseN;
         _pulseDECfinished = false;
-        if (!sendModNewNumber(_mount, "TELESCOPE_TIMED_GUIDE_NS", "TIMED_GUIDE_N", _pulseN))
+        if (!sendModNewNumber(getOstElementValue("devices", "mount").toString(), "TELESCOPE_TIMED_GUIDE_NS", "TIMED_GUIDE_N",
+                              _pulseN))
         {
             emit abort();
             return;
@@ -806,7 +810,8 @@ void GuiderModule::SMRequestPulses()
     {
         _pulseDECfinished = false;
         //BOOST_LOG_TRIVIAL(debug) << "********* Pulse  S " << _pulseS;
-        if (!sendModNewNumber(_mount, "TELESCOPE_TIMED_GUIDE_NS", "TIMED_GUIDE_S", _pulseS))
+        if (!sendModNewNumber(getOstElementValue("devices", "mount").toString(), "TELESCOPE_TIMED_GUIDE_NS", "TIMED_GUIDE_S",
+                              _pulseS))
         {
             emit abort();
             return;
@@ -817,7 +822,8 @@ void GuiderModule::SMRequestPulses()
     {
         _pulseRAfinished = false;
         //BOOST_LOG_TRIVIAL(debug) << "********* Pulse  E " << _pulseE;
-        if (!sendModNewNumber(_mount, "TELESCOPE_TIMED_GUIDE_WE", "TIMED_GUIDE_E", _pulseE))
+        if (!sendModNewNumber(getOstElementValue("devices", "mount").toString(), "TELESCOPE_TIMED_GUIDE_WE", "TIMED_GUIDE_E",
+                              _pulseE))
         {
             emit abort();
             return;
@@ -828,7 +834,8 @@ void GuiderModule::SMRequestPulses()
     {
         _pulseRAfinished = false;
         //BOOST_LOG_TRIVIAL(debug) << "********* Pulse  W " << _pulseW;
-        if (!sendModNewNumber(_mount, "TELESCOPE_TIMED_GUIDE_WE", "TIMED_GUIDE_W", _pulseW))
+        if (!sendModNewNumber(getOstElementValue("devices", "mount").toString(), "TELESCOPE_TIMED_GUIDE_WE", "TIMED_GUIDE_W",
+                              _pulseW))
         {
             emit abort();
             return;
