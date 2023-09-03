@@ -47,7 +47,12 @@ include_directories(${Qt5_DIR})
 include_directories(${QT5Declarative_INCLUDE_LIBRARIES} )
 include_directories(${QT5Declarative_INCLUDE_DIRS} )
 include_directories(${STELLARSOLVER_INCLUDE_DIR})
+include_directories(${OST_INCLUDE_DIR})
 include_directories(${OST_INCLUDE_DIR}/ost)
+include_directories(${OST_INCLUDE_DIR}/utils)
+include_directories(${OST_INCLUDE_DIR}/model)
+include_directories(${OST_INCLUDE_DIR}/model/value)
+include_directories(${OST_INCLUDE_DIR}/model/property)
 
 message(STATUS "OST_INCLUDE_DIR=${OST_INCLUDE_DIR}")
 
@@ -56,26 +61,26 @@ include(CMakeCommon)
 
 
 
-# Focus module
-#list (APPEND RESOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/focus/focus.qrc)
-#qt5_add_resources (RCC_SOURCES ${RESOURCES})
-add_library(ostfocuser SHARED
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/focus/focus.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/focus/focus.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/focus/focus.qrc
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/focus/polynomialfit.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/focus/polynomialfit.h
-    ${RCC_SOURCES}
-)
-target_link_libraries(ostfocuser PRIVATE
-    ${OST_LIBRARY_INDI}
-    Qt${QT_VERSION_MAJOR}::Core
-    Qt${QT_VERSION_MAJOR}::Concurrent
-    Qt${QT_VERSION_MAJOR}::Widgets
-    Threads::Threads
-    z
-)
-target_compile_definitions(ostfocuser PRIVATE FOCUS_MODULE)
+## Focus module
+##list (APPEND RESOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/focus/focus.qrc)
+##qt5_add_resources (RCC_SOURCES ${RESOURCES})
+#add_library(ostfocuser SHARED
+#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/focus/focus.h
+#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/focus/focus.cpp
+#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/focus/focus.qrc
+#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/focus/polynomialfit.cpp
+#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/focus/polynomialfit.h
+#    ${RCC_SOURCES}
+#)
+#target_link_libraries(ostfocuser PRIVATE
+#    ${OST_LIBRARY_INDI}
+#    Qt${QT_VERSION_MAJOR}::Core
+#    Qt${QT_VERSION_MAJOR}::Concurrent
+#    Qt${QT_VERSION_MAJOR}::Widgets
+#    Threads::Threads
+#    z
+#)
+#target_compile_definitions(ostfocuser PRIVATE FOCUS_MODULE)
 
 
 # Indipanel module
@@ -94,21 +99,21 @@ target_link_libraries(ostindipanel PRIVATE
 target_compile_definitions(ostindipanel PRIVATE INDIPANEL_MODULE)
 
 
-# guider module
-add_library(ostguider SHARED
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/guider/guider.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/guider/guider.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/guider/guider.qrc
-)
-target_link_libraries(ostguider PRIVATE
-    ${OST_LIBRARY_INDI}
-    Qt${QT_VERSION_MAJOR}::Core
-    Qt${QT_VERSION_MAJOR}::Concurrent
-    Qt${QT_VERSION_MAJOR}::Widgets
-    Threads::Threads
-    z
-)
-target_compile_definitions(ostguider PRIVATE GUIDER_MODULE)
+## guider module
+#add_library(ostguider SHARED
+#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/guider/guider.h
+#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/guider/guider.cpp
+#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/guider/guider.qrc
+#)
+#target_link_libraries(ostguider PRIVATE
+#    ${OST_LIBRARY_INDI}
+#    Qt${QT_VERSION_MAJOR}::Core
+#    Qt${QT_VERSION_MAJOR}::Concurrent
+#    Qt${QT_VERSION_MAJOR}::Widgets
+#    Threads::Threads
+#    z
+#)
+#target_compile_definitions(ostguider PRIVATE GUIDER_MODULE)
 
 ## polar module
 #add_library(ostpolar SHARED
@@ -128,96 +133,96 @@ target_compile_definitions(ostguider PRIVATE GUIDER_MODULE)
 #)
 #target_compile_definitions(ostpolar PRIVATE POLAR_MODULE)
 #
-# inspector module
-add_library(ostinspector SHARED
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/inspector/inspector.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/inspector/inspector.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/inspector/inspector.qrc
-)
-target_link_libraries(ostinspector PRIVATE
-    ${OST_LIBRARY_INDI}
-    Qt${QT_VERSION_MAJOR}::Core
-    Qt${QT_VERSION_MAJOR}::Concurrent
-    Qt${QT_VERSION_MAJOR}::Widgets
-    Threads::Threads
-    z
-)
-target_compile_definitions(ostinspector PRIVATE INSPECTOR_MODULE)
+## inspector module
+#add_library(ostinspector SHARED
+#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/inspector/inspector.h
+#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/inspector/inspector.cpp
+#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/inspector/inspector.qrc
+#)
+#target_link_libraries(ostinspector PRIVATE
+#    ${OST_LIBRARY_INDI}
+#    Qt${QT_VERSION_MAJOR}::Core
+#    Qt${QT_VERSION_MAJOR}::Concurrent
+#    Qt${QT_VERSION_MAJOR}::Widgets
+#    Threads::Threads
+#    z
+#)
+#target_compile_definitions(ostinspector PRIVATE INSPECTOR_MODULE)
+#
+## Allsky module
+#add_library(ostallsky SHARED
+#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/allsky/allsky.h
+#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/allsky/allsky.cpp
+#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/allsky/allsky.qrc
+#)
+#target_link_libraries(ostallsky PRIVATE
+#    ${OST_LIBRARY_INDI}
+#    Qt${QT_VERSION_MAJOR}::Core
+#    Qt${QT_VERSION_MAJOR}::Concurrent
+#    Qt${QT_VERSION_MAJOR}::Widgets
+#    Threads::Threads
+#    z
+#)
+#target_compile_definitions(ostallsky PRIVATE ALLSKY_MODULE)
+#
+## sequencer module
+#add_library(ostsequencer SHARED
+#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/sequencer/sequencer.h
+#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/sequencer/sequencer.cpp
+#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/sequencer/sequencer.qrc
+#)
+#target_link_libraries(ostsequencer PRIVATE
+#    ${OST_LIBRARY_INDI}
+#    Qt${QT_VERSION_MAJOR}::Core
+#    Qt${QT_VERSION_MAJOR}::Concurrent
+#    Qt${QT_VERSION_MAJOR}::Widgets
+#    Threads::Threads
+#    z
+#)
+#target_compile_definitions(ostsequencer PRIVATE SEQUENCER_MODULE)
 
-# Allsky module
-add_library(ostallsky SHARED
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/allsky/allsky.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/allsky/allsky.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/allsky/allsky.qrc
-)
-target_link_libraries(ostallsky PRIVATE
-    ${OST_LIBRARY_INDI}
-    Qt${QT_VERSION_MAJOR}::Core
-    Qt${QT_VERSION_MAJOR}::Concurrent
-    Qt${QT_VERSION_MAJOR}::Widgets
-    Threads::Threads
-    z
-)
-target_compile_definitions(ostallsky PRIVATE ALLSKY_MODULE)
-
-# sequencer module
-add_library(ostsequencer SHARED
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/sequencer/sequencer.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/sequencer/sequencer.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/sequencer/sequencer.qrc
-)
-target_link_libraries(ostsequencer PRIVATE
-    ${OST_LIBRARY_INDI}
-    Qt${QT_VERSION_MAJOR}::Core
-    Qt${QT_VERSION_MAJOR}::Concurrent
-    Qt${QT_VERSION_MAJOR}::Widgets
-    Threads::Threads
-    z
-)
-target_compile_definitions(ostsequencer PRIVATE SEQUENCER_MODULE)
-
-# navigator module
-add_library(ostnavigator SHARED
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/navigator/navigator.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/navigator/navigator.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/navigator/navigator.qrc
-)
-target_link_libraries(ostnavigator PRIVATE
-    ${OST_LIBRARY_INDI}
-    Qt${QT_VERSION_MAJOR}::Core
-    Qt${QT_VERSION_MAJOR}::Concurrent
-    Qt${QT_VERSION_MAJOR}::Widgets
-    Threads::Threads
-    z
-)
-target_compile_definitions(ostnavigator PRIVATE NAVIGATOR_MODULE)
-
-# meteo module
-add_library(ostmeteo SHARED
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/meteo/meteo.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/meteo/meteo.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/meteo/meteo.qrc
-)
-target_link_libraries(ostmeteo PRIVATE
-    ${OST_LIBRARY_INDI}
-    Qt${QT_VERSION_MAJOR}::Core
-    Qt${QT_VERSION_MAJOR}::Concurrent
-    Qt${QT_VERSION_MAJOR}::Widgets
-    Threads::Threads
-    z
-)
-target_compile_definitions(ostmeteo PRIVATE METEO_MODULE)
+## navigator module
+#add_library(ostnavigator SHARED
+#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/navigator/navigator.h
+#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/navigator/navigator.cpp
+#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/navigator/navigator.qrc
+#)
+#target_link_libraries(ostnavigator PRIVATE
+#    ${OST_LIBRARY_INDI}
+#    Qt${QT_VERSION_MAJOR}::Core
+#    Qt${QT_VERSION_MAJOR}::Concurrent
+#    Qt${QT_VERSION_MAJOR}::Widgets
+#    Threads::Threads
+#    z
+#)
+#target_compile_definitions(ostnavigator PRIVATE NAVIGATOR_MODULE)
+#
+## meteo module
+#add_library(ostmeteo SHARED
+#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/meteo/meteo.h
+#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/meteo/meteo.cpp
+#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/meteo/meteo.qrc
+#)
+#target_link_libraries(ostmeteo PRIVATE
+#    ${OST_LIBRARY_INDI}
+#    Qt${QT_VERSION_MAJOR}::Core
+#    Qt${QT_VERSION_MAJOR}::Concurrent
+#    Qt${QT_VERSION_MAJOR}::Widgets
+#    Threads::Threads
+#    z
+#)
+#target_compile_definitions(ostmeteo PRIVATE METEO_MODULE)
 
 
 install(TARGETS
-    ostallsky
-    ostinspector
-    ostnavigator
-    ostguider
+#    ostallsky
+#    ostinspector
+#    ostnavigator
+#    ostguider
     ostindipanel
-    ostfocuser
-    ostsequencer
-    ostmeteo
+#    ostfocuser
+#    ostsequencer
+#    ostmeteo
     RUNTIME DESTINATION "/usr/bin"
     LIBRARY DESTINATION "/usr/lib"
 )
