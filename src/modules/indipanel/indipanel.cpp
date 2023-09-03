@@ -10,17 +10,9 @@ IndiPanel::IndiPanel(QString name, QString label, QString profile, QVariantMap a
     : IndiModule(name, label, profile, availableModuleLibs)
 {
     setClassName(QString(metaObject()->className()).toLower());
-    setOstPropertyValue("moduleDescription", "Full indi control panel", true);
-    setOstPropertyValue("moduleName", "indipanel", true);
-    setOstPropertyValue("moduleVersion", 0.11, true);
-
-    connectIndi();
-
-    //setModuleLabel(label);
     setModuleDescription("Full indi control panel");
-    setModuleVersion("0.1");
-
-
+    setModuleVersion("0.11");
+    connectIndi();
 }
 
 IndiPanel::~IndiPanel()
@@ -66,12 +58,12 @@ void IndiPanel::newProperty(INDI::Property pProperty)
     QString devpro = dev + pro;
     //sendMessage("Indipanel new property " + devpro);
     QString mess;
-    if (!createOstProperty(devpro, pProperty.getLabel(), pProperty.getPermission(), pProperty.getDeviceName(),
-                           pProperty.getGroupName()))
-    {
-        sendMessage("Indipanel can't create property ");
-    }
-    setOstPropertyAttribute(devpro, "indi", pProperty.getType(), false);
+
+    OST::PropertyMulti* p = new OST::PropertyMulti(devpro, pProperty.getLabel(),
+            OST::IntToPermission(pProperty.getPermission()),
+            pProperty.getDeviceName(),
+            pProperty.getGroupName(), "", false, false);
+
 
     switch (pProperty.getType())
     {
@@ -93,14 +85,13 @@ void IndiPanel::newProperty(INDI::Property pProperty)
             }
             for (unsigned int i = 0; i < n.count(); i++)
             {
-                createOstElement(devpro, n[i].name, n[i].label, false);
-                setOstElementValue(devpro, n[i].name, n[i].getValue(), false);
-                setOstElementAttribute(devpro, n[i].name, "min", n[i].min, false);
-                setOstElementAttribute(devpro, n[i].name, "max", n[i].max, false);
-                setOstElementAttribute(devpro, n[i].name, "step", n[i].step, false);
-                setOstElementAttribute(devpro, n[i].name, "format", n[i].format, i == n.count() - 1);
-                //setOstElementAttribute(devpro, n[i].name, "aux0"  , n[i].aux0,false);
-                //setOstElementAttribute(devpro, n[i].name, "aux1"  , n[i].aux1,false);
+                OST::ValueFloat* v = new OST::ValueFloat(n[i].label, QString(i), "");
+                v->setValue(n[i].getValue(), false);
+                v->setMin(n[i].min);
+                v->setMax(n[i].max);
+                v->setStep(n[i].step);
+                v->setFormat(n[i].format);
+                p->addValue(n[i].getName(), v);
             }
             break;
         }
@@ -109,12 +100,13 @@ void IndiPanel::newProperty(INDI::Property pProperty)
             INDI::PropertySwitch s = pProperty;
             for (unsigned int i = 0; i < s.count(); i++)
             {
-                createOstElement(devpro, s[i].name, s[i].label, false);
-                if (s[i].s == 0) setOstElementValue(devpro, s[i].name, false, i == s.count() - 1);
-                if (s[i].s == 1) setOstElementValue(devpro, s[i].name, true, i == s.count() - 1);
-                //setOstElementAttribute(devpro,vp->sp[i].name,"aux0",vp->sp[i].aux,false);
+                OST::ValueBool* v = new OST::ValueBool(s[i].label, QString(i), "");
+                if (s[i].s == 0) v->setValue(false, false);
+                if (s[i].s == 1) v->setValue(false, true);
+                p->addValue(s[i].getName(), v);
             }
-            setOstPropertyAttribute(devpro, "rule", s.getRule(), false);
+            p->setRule(OST::IntToRule(s.getRule()));
+
             break;
         }
         case INDI_TEXT:
@@ -122,10 +114,9 @@ void IndiPanel::newProperty(INDI::Property pProperty)
             INDI::PropertyText t = pProperty;
             for (unsigned int i = 0; i < t.count(); i++)
             {
-                createOstElement(devpro, t[i].name, t[i].label,  i == t.count() - 1);
-                setOstElementValue(devpro, t[i].name, t[i].text, i == t.count() - 1);
-                //setOstElementAttribute(devpro,vp->tp[i].name,"aux0",vp->tp[i].aux0,false);
-                //setOstElementAttribute(devpro,vp->tp[i].name,"aux1",vp->tp[i].aux1,false);
+                OST::ValueString* v = new OST::ValueString(t[i].label, QString(i), "");
+                v->setValue(t[i].text, false);
+                p->addValue(t[i].getName(), v);
             }
             break;
         }
@@ -134,9 +125,9 @@ void IndiPanel::newProperty(INDI::Property pProperty)
             INDI::PropertyLight l = pProperty;
             for (unsigned int i = 0; i < l.count(); i++)
             {
-                createOstElement(devpro, l[i].name, l[i].label, i == l.count() - 1);
-                setOstElementValue(devpro, l[i].name, l[i].s, i == l.count() - 1);
-                //setOstElementAttribute(devpro,vp->lp[i].name,"aux0",vp->lp[i].aux,false);
+                OST::ValueLight* v = new OST::ValueLight(l[i].label, QString(i), "");
+                v->setState(OST::IntToState(l[i].getState()));
+                p->addValue(l[i].getName(), v);
             }
             break;
         }
@@ -150,8 +141,8 @@ void IndiPanel::newProperty(INDI::Property pProperty)
             break;
         }
     }
-    setOstPropertyAttribute(devpro, "status", pProperty.getState(), true);
-    //emitPropertyCreation(devpro);
+    p->setState(OST::IntToState(pProperty.getState()));
+    createProperty(devpro, p);
 
 
 }
@@ -160,6 +151,7 @@ void IndiPanel::updateProperty (INDI::Property property)
     QString dev = property.getDeviceName();
     QString pro = property.getName();
     QString devpro = dev + pro;
+    OST::PropertyMulti* p = getProperty(devpro);
     switch (property.getType())
     {
 
@@ -169,11 +161,11 @@ void IndiPanel::updateProperty (INDI::Property property)
 
             for (unsigned int i = 0; i < n.count(); i++)
             {
-                setOstElementValue(devpro, n[i].name, n[i].value, false);
-                setOstElementAttribute(devpro, n[i].name, "min", n[i].min, false);
-                setOstElementAttribute(devpro, n[i].name, "max", n[i].max, false);
-                setOstElementAttribute(devpro, n[i].name, "step", n[i].step, false);
-                setOstElementAttribute(devpro, n[i].name, "format", n[i].format, false);
+                getValueFloat(devpro,n[i].name)->setMin(n[i].min);
+                getValueFloat(devpro,n[i].name)->setMax(n[i].max);
+                getValueFloat(devpro,n[i].name)->setStep(n[i].step);
+                getValueFloat(devpro,n[i].name)->setFormat(n[i].format);
+                getValueFloat(devpro,n[i].name)->setValue(n[i].value,i == n.count() - 1);
             }
             break;
         }
@@ -182,8 +174,8 @@ void IndiPanel::updateProperty (INDI::Property property)
             INDI::PropertySwitch s = property;
             for (unsigned int i = 0; i < s.count(); i++)
             {
-                if (s[i].s == 0) setOstElementValue(devpro, s[i].name, false, i == s.count() - 1);
-                if (s[i].s == 1) setOstElementValue(devpro, s[i].name, true, i == s.count() - 1);
+                if (s[i].s == 0) getValueBool(devpro,s[i].name)->setValue(false,i == s.count() - 1);
+                if (s[i].s == 1) getValueBool(devpro,s[i].name)->setValue(true,i == s.count() - 1);
             }
             break;
         }
@@ -192,7 +184,7 @@ void IndiPanel::updateProperty (INDI::Property property)
             INDI::PropertyText t = property;
             for (unsigned int i = 0; i < t.count(); i++)
             {
-                setOstElementValue(devpro, t[i].name, t[i].text, i == t.count() - 1);
+                getValueString(devpro,t[i].name)->setValue(t[i].text,i == t.count() - 1);
             }
             break;
         }
@@ -201,7 +193,7 @@ void IndiPanel::updateProperty (INDI::Property property)
             INDI::PropertyLight l = property;
             for (unsigned int i = 0; i < l.count(); i++)
             {
-                setOstElementValue(devpro, l[i].name, l[i].s, i == l.count() - 1);
+                getValueLight(devpro,l[i].name)->setState(OST::IntToState(l[i].getState()));
             }
             break;
         }
@@ -215,7 +207,7 @@ void IndiPanel::updateProperty (INDI::Property property)
             break;
         }
     }
-    setOstPropertyAttribute(devpro, "status", property.getState(), true);
+    p->setState(OST::IntToState(property.getState()));
 }
 
 
