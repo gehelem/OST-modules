@@ -40,16 +40,12 @@ void IndiPanel::newDevice(INDI::BaseDevice dp)
 }
 void IndiPanel::removeDevice(INDI::BaseDevice dp)
 {
-    QString dev = dp.getDeviceName();
-    QVariantMap props = getProperties();
-    for(QVariantMap::const_iterator prop = props.begin(); prop != props.end(); ++prop)
+
+    foreach(const QString &key, getStore().keys())
     {
-        if (prop.value().toMap()["devcat"] == dev)
-        {
-            //BOOST_LOG_TRIVIAL(debug) << "indi remove property " << prop.key().toStdString();
-            deleteOstProperty(prop.key());
-        }
+        delete getStore()[key];
     }
+
 }
 void IndiPanel::newProperty(INDI::Property pProperty)
 {
@@ -161,11 +157,11 @@ void IndiPanel::updateProperty (INDI::Property property)
 
             for (unsigned int i = 0; i < n.count(); i++)
             {
-                getValueFloat(devpro,n[i].name)->setMin(n[i].min);
-                getValueFloat(devpro,n[i].name)->setMax(n[i].max);
-                getValueFloat(devpro,n[i].name)->setStep(n[i].step);
-                getValueFloat(devpro,n[i].name)->setFormat(n[i].format);
-                getValueFloat(devpro,n[i].name)->setValue(n[i].value,i == n.count() - 1);
+                getValueFloat(devpro, n[i].name)->setMin(n[i].min);
+                getValueFloat(devpro, n[i].name)->setMax(n[i].max);
+                getValueFloat(devpro, n[i].name)->setStep(n[i].step);
+                getValueFloat(devpro, n[i].name)->setFormat(n[i].format);
+                getValueFloat(devpro, n[i].name)->setValue(n[i].value, i == n.count() - 1);
             }
             break;
         }
@@ -174,8 +170,8 @@ void IndiPanel::updateProperty (INDI::Property property)
             INDI::PropertySwitch s = property;
             for (unsigned int i = 0; i < s.count(); i++)
             {
-                if (s[i].s == 0) getValueBool(devpro,s[i].name)->setValue(false,i == s.count() - 1);
-                if (s[i].s == 1) getValueBool(devpro,s[i].name)->setValue(true,i == s.count() - 1);
+                if (s[i].s == 0) getValueBool(devpro, s[i].name)->setValue(false, i == s.count() - 1);
+                if (s[i].s == 1) getValueBool(devpro, s[i].name)->setValue(true, i == s.count() - 1);
             }
             break;
         }
@@ -184,7 +180,7 @@ void IndiPanel::updateProperty (INDI::Property property)
             INDI::PropertyText t = property;
             for (unsigned int i = 0; i < t.count(); i++)
             {
-                getValueString(devpro,t[i].name)->setValue(t[i].text,i == t.count() - 1);
+                getValueString(devpro, t[i].name)->setValue(t[i].text, i == t.count() - 1);
             }
             break;
         }
@@ -193,7 +189,7 @@ void IndiPanel::updateProperty (INDI::Property property)
             INDI::PropertyLight l = property;
             for (unsigned int i = 0; i < l.count(); i++)
             {
-                getValueLight(devpro,l[i].name)->setState(OST::IntToState(l[i].getState()));
+                getValueLight(devpro, l[i].name)->setState(OST::IntToState(l[i].getState()));
             }
             break;
         }
@@ -236,33 +232,39 @@ void IndiPanel::OnMyExternalEvent(const QString &eventType, const QString  &even
     Q_UNUSED(eventModule);
     Q_UNUSED(eventKey);
     //BOOST_LOG_TRIVIAL(debug) << "OnMyExternalEvent - recv : " << getName().toStdString() << "-" << eventType.toStdString() << "-" << eventKey.toStdString();
+    QVariantMap m = getPropertiesDump().toVariantMap();
     foreach(const QString &keyprop, eventData.keys())
     {
+        if (!m.contains(keyprop))
+        {
+            sendError ("OnMyExternalEvent - property " + keyprop + " does not exist");
+            return;
+        }
         QString prop = keyprop;
-        QVariantMap ostprop = getProperties()[keyprop].toMap();
-        QString devcat = ostprop["devcat"].toString();
+        QVariantMap ostprop = m[keyprop].toMap();
+        QString devcat = ostprop["level1"].toString();
         //BOOST_LOG_TRIVIAL(debug) << "DEVCAT - recv : "  << devcat.toStdString();
         prop.replace(devcat, "");
         if (!(devcat == "Indi"))
         {
             foreach(const QString &keyelt, eventData[keyprop].toMap()["elements"].toMap().keys())
             {
-                //BOOST_LOG_TRIVIAL(debug) << "OnMyExternalEvent - recv : " << getName().toStdString() << "-" << eventType.toStdString() << "-" << prop.toStdString() << "-" << keyelt.toStdString() << "-" << eventData[keyprop].toMap()["indi"].toInt();
-                //setOstElementValue(keyprop,keyelt,eventData[keyprop].toMap()["elements"].toMap()[keyelt].toMap()["value"],true);
-                if (eventData[keyprop].toMap()["indi"].toInt() == INDI_TEXT)
+                if (!m[keyprop].toMap()["elements"].toMap().contains(keyelt))
                 {
-                    //sendMessage("INDI_TEXT");
+                    sendError ("OnMyExternalEvent - property " + keyprop + ", element " + keyelt + " does not exist");
+                    return;
+                }
+                if (getStore()[keyprop]->getValue(keyelt)->getType() == "string")
+                {
                     sendModNewText(devcat, prop, keyelt, eventData[keyprop].toMap()["elements"].toMap()[keyelt].toMap()["value"].toString());
                 }
-                if (eventData[keyprop].toMap()["indi"].toInt() == INDI_NUMBER)
+                if (getStore()[keyprop]->getValue(keyelt)->getType() == "int"
+                        || getStore()[keyprop]->getValue(keyelt)->getType() == "float")
                 {
-                    //sendMessage("INDI_NUMBER = " + keyprop + "//" + keyelt + " = " +
-                    //            eventData[keyprop].toMap()["elements"].toMap()[keyelt].toMap()["value"].toFloat());
                     sendModNewNumber(devcat, prop, keyelt, eventData[keyprop].toMap()["elements"].toMap()[keyelt].toMap()["value"].toFloat());
                 }
-                if (eventData[keyprop].toMap()["indi"].toInt() == INDI_SWITCH)
+                if (getStore()[keyprop]->getValue(keyelt)->getType() == "bool")
                 {
-                    //sendMessage("INDI_SWITCH");
                     keyelt.toStdString();
                     if ( eventData[keyprop].toMap()["elements"].toMap()[keyelt].toMap()["value"].toBool()) sendModNewSwitch(devcat, prop,
                                 keyelt, ISS_ON);
