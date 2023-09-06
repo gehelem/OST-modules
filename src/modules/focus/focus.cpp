@@ -21,18 +21,18 @@ FocusModule::FocusModule(QString name, QString label, QString profile, QVariantM
     setModuleVersion("0.1");
     //setModuleType("focus");
 
-    createOstElement("devices", "camera", "Camera", true);
-    createOstElement("devices", "focuser", "Focuser", true);
-    createOstElement("devices", "mount", "Mount", true);
+    createOstElementText("devices", "camera", "Camera", true);
+    createOstElementText("devices", "focuser", "Focuser", true);
+    createOstElementText("devices", "mount", "Mount", true);
     setOstElementValue("devices", "camera",   _camera, false);
     setOstElementValue("devices", "focuser",  _focuser, false);
     setOstElementValue("devices", "mount",    _mount, true);
-    _startpos =          getOstElementValue("parameters", "startpos").toInt();
-    _steps =             getOstElementValue("parameters", "steps").toInt();
-    _iterations =        getOstElementValue("parameters", "iterations").toInt();
-    _loopIterations =    getOstElementValue("parameters", "loopIterations").toInt();
-    _exposure =          getOstElementValue("parameters", "exposure").toInt();
-    _backlash =          getOstElementValue("parameters", "backlash").toInt();
+    _startpos =          getValueInt("parameters", "startpos")->value();
+    _steps =             getValueInt("parameters", "steps")->value();
+    _iterations =        getValueInt("parameters", "iterations")->value();
+    _loopIterations =    getValueInt("parameters", "loopIterations")->value();
+    _exposure =          getValueInt("parameters", "exposure")->value();
+    _backlash =          getValueInt("parameters", "backlash")->value();
 
 }
 
@@ -110,7 +110,7 @@ void FocusModule::OnMyExternalEvent(const QString &eventType, const QString  &ev
                     {
                         if (setOstElementValue(keyprop, keyelt, false, false))
                         {
-                            setOstPropertyAttribute(keyprop, "status", IPS_BUSY, true);
+                            getProperty(keyprop)->setState(OST::Busy);
                             startCoarse();
                         }
                     }
@@ -118,7 +118,7 @@ void FocusModule::OnMyExternalEvent(const QString &eventType, const QString  &ev
                     {
                         if (setOstElementValue(keyprop, keyelt, false, false))
                         {
-                            setOstPropertyAttribute(keyprop, "status", IPS_OK, true);
+                            getProperty(keyprop)->setState(OST::Ok);
                             emit abort();
                         }
                     }
@@ -126,7 +126,7 @@ void FocusModule::OnMyExternalEvent(const QString &eventType, const QString  &ev
                     {
                         if (setOstElementValue(keyprop, keyelt, false, false))
                         {
-                            setOstPropertyAttribute(keyprop, "status", IPS_OK, true);
+                            getProperty(keyprop)->setState(OST::Ok);
                         }
                     }
 
@@ -137,7 +137,7 @@ void FocusModule::OnMyExternalEvent(const QString &eventType, const QString  &ev
                     {
                         if (setOstElementValue(keyprop, keyelt, val, false))
                         {
-                            setOstPropertyAttribute(keyprop, "status", IPS_OK, true);
+                            getProperty(keyprop)->setState(OST::Ok);
                             _camera = val.toString();
                         }
                     }
@@ -145,7 +145,7 @@ void FocusModule::OnMyExternalEvent(const QString &eventType, const QString  &ev
                     {
                         if (setOstElementValue(keyprop, keyelt, val, false))
                         {
-                            setOstPropertyAttribute(keyprop, "status", IPS_OK, true);
+                            getProperty(keyprop)->setState(OST::Ok);
                             _focuser = val.toString();
                         }
                     }
@@ -214,11 +214,14 @@ void FocusModule::newBLOB(INDI::PropertyBlob b)
         _image->loadBlob(b);
         //setBLOBMode(B_NEVER, _camera.toStdString().c_str(), nullptr);
 
-        setOstPropertyAttribute("image", "status", IPS_OK, true);
+        getProperty("image")->setState(OST::Ok);
 
         QImage rawImage = _image->getRawQImage();
         rawImage.save( getWebroot() + "/" + QString(b.getDeviceName()) + ".jpeg", "JPG", 100);
-        setOstPropertyAttribute("image", "URL", QString(b.getDeviceName()) + ".jpeg", true);
+        OST::ImgData dta;
+        dta.mUrlJpeg = QString(b.getDeviceName()) + ".jpeg";
+        dta.mUrlFits = QString(b.getDeviceName()) + ".FITS";
+        getValueImg("image", "image1")->setValue(dta, true);
 
         if (_machine.isRunning())
         {
@@ -238,7 +241,7 @@ void FocusModule::SMAbort()
 
 void FocusModule::startCoarse()
 {
-    resetOstElements("values");
+    getStore()["values"]->clearGrid();
     connectIndi();
     connectDevice(_camera);
     setBLOBMode(B_ALSO, _camera.toStdString().c_str(), nullptr);
@@ -252,12 +255,12 @@ void FocusModule::startCoarse()
     _besthfr = 99;
     _bestposfit = 99;
 
-    _startpos =          getOstElementValue("parameters", "startpos").toInt();
-    _steps =             getOstElementValue("parameters", "steps").toInt();
-    _iterations =        getOstElementValue("parameters", "iterations").toInt();
-    _loopIterations =    getOstElementValue("parameters", "loopIterations").toInt();
-    _exposure =          getOstElementValue("parameters", "exposure").toInt();
-    _backlash =          getOstElementValue("parameters", "backlash").toInt();
+    _startpos =          getValueInt("parameters", "startpos")->value();
+    _steps =             getValueInt("parameters", "steps")->value();
+    _iterations =        getValueInt("parameters", "iterations")->value();
+    _loopIterations =    getValueInt("parameters", "loopIterations")->value();
+    _exposure =          getValueInt("parameters", "exposure")->value();
+    _backlash =          getValueInt("parameters", "backlash")->value();
 
     /*_grid->clear();
     _propertyStore.update(_grid);
@@ -475,7 +478,7 @@ void FocusModule::SMCompute()
     setOstElementValue("values", "focpos",    _startpos + _iteration * _steps, false);
     setOstElementValue("values", "iteration", _iteration, true);
 
-    pushOstElements("values");
+    getStore()["values"]->push();
 
     /*_grid->append(_startpos + _iteration*_steps,_loopHFRavg);
     _propertyStore.update(_grid);
@@ -596,5 +599,5 @@ void FocusModule::SMFocusDone()
 {
     sendMessage("Focus done");
     setOstElementValue("results", "hfr", _solver.HFRavg, false);
-    setOstPropertyAttribute("actions", "status", IPS_OK, true);
+    getProperty("actions")->setState(OST::Ok);
 }

@@ -1,51 +1,55 @@
 {
     "values": {
+        "hasArray":true,
         "devcat": "Control",
         "order":"Control100",
         "group": "",
         "permission": 0,
-        "propertyLabel": "Values",
-        "grid":[],
-        "GXY":{
-            "X":"focpos",
-            "Y":"loopHFRavg"
-        },
-
-        "array":{
-            "key": "iteration",
-            "columns":["focpos","loopHFRavg"],
-            "type":"grid"
-        },
+        "label": "Values",
         "elements": {
+            "graph": {
+                "type": "graph",
+                "graphtype":"XY",
+                "params":{
+                    "X":"focpos",
+                    "Y":"loopHFRavg"
+                }
+            },
             "loopHFRavg": {
-                "elementLabel": "Average HFR",
+                "type":"float",
+                "label": "Average HFR",
                 "value":0,
                 "format": "99.99"
             },
             "focpos": {
-                "elementLabel": "Focuser position",
+                "type":"int",
+                "label": "Focuser position",
                 "value":0,
                 "step":1,
                 "format": "9999999"
             },
             "bestpos": {
-                "elementLabel": "Best position",
+                "type":"int",
+                "label": "Best position",
                 "value":0,
                 "step":1,
                 "format": "9999999"
             },
             "bestposfit": {
-                "elementLabel": "Pol. fit position",
+                "type":"float",
+                "label": "Pol. fit position",
                 "value":0,
                 "format": "9999999.99"
             },
             "imgHFR": {
-                "elementLabel": "Last imgage HFR",
+                "type":"float",
+                "label": "Last imgage HFR",
                 "value":0,
                 "format": "99.99"
             },
             "iteration": {
-                "elementLabel": "Iteration",
+                "type":"int",
+                "label": "Iteration",
                 "value":0,
                 "step":1,
                 "format": "9999"
@@ -58,15 +62,17 @@
         "order":"Control050",
         "group": "",
         "permission": 0,
-        "propertyLabel": "Final result",
+        "label": "Final result",
         "elements": {
             "hfr": {
-                "elementLabel": "Average HFR result",
+                "type":"float",
+                "label": "Average HFR result",
                 "value":0,
                 "format": "99.99"
             },
             "pos": {
-                "elementLabel": "Focuser final position",
+                "type":"float",
+                "label": "Focuser final position",
                 "value":0,
                 "step":1,
                 "format": "9999999"
@@ -81,18 +87,24 @@
         "group": "",
         "permission": 2,
         "rule":1,
-        "propertyLabel": "Actions",
+        "label": "Actions",
         "elements": {
             "coarse": {
-                "elementLabel": "Autofocus"
+                "autoupdate":false,
+                "type":"bool",
+                "label": "Autofocus"
                 ,"value":false
             },
             "loop": {
-                "elementLabel": "Infinite loop"
+                "autoupdate":false,
+                "type":"bool",
+                "label": "Infinite loop"
                 ,"value":false
             },
             "abort": {
-                "elementLabel": "Abort"
+                "autoupdate":false,
+                "type":"bool",
+                "label": "Abort"
                 ,"value":false
             }
         }
@@ -103,35 +115,47 @@
         "group": "",
         "permission": 2,
         "hasprofile":true,
-        "propertyLabel": "Parameters",
+        "label": "Parameters",
         "elements": {
             "startpos": {
-                "elementLabel": "Start position",
+                "autoupdate":true,
+                "type":"int",
+                "label": "Start position",
                 "value":32000,
                 "format": "999999"
             },
             "steps": {
-                "elementLabel": "Steps gap",
+                "autoupdate":true,
+                "type":"int",
+                "label": "Steps gap",
                 "value":2000,
                 "format": "999999"
             },
             "iterations": {
-                "elementLabel": "Iterations",
+                "autoupdate":true,
+                "type":"int",
+                "label": "Iterations",
                 "value":5,
                 "format": "99"
             },
             "loopIterations": {
-                "elementLabel": "Average over",
+                "autoupdate":true,
+                "type":"int",
+                "label": "Average over",
                 "value":3,
                 "format": "99"
             },
             "exposure": {
-                "elementLabel": "Exposure",
+                "autoupdate":true,
+                "type":"int",
+                "label": "Exposure",
                 "value":2,
                 "format": "99.99"
             },
             "backlash": {
-                "elementLabel": "Backlash overshoot",
+                "autoupdate":true,
+                "type":"int",
+                "label": "Backlash overshoot",
                 "value":100,
                 "format": "99999"
             }
@@ -142,8 +166,15 @@
         "order":"Control999",
         "group": "",
         "permission": 0,
-        "propertyLabel": "Last image",
-        "URL": ""
+        "label": "Last image",
+        "elements": {
+            "image1": {
+                "type": "img",
+                "label": "First image",
+                "urljpeg":"./dummy.jpg"
+            }
+        }
+
     }
 
 }
