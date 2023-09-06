@@ -47,12 +47,7 @@ include_directories(${Qt5_DIR})
 include_directories(${QT5Declarative_INCLUDE_LIBRARIES} )
 include_directories(${QT5Declarative_INCLUDE_DIRS} )
 include_directories(${STELLARSOLVER_INCLUDE_DIR})
-include_directories(${OST_INCLUDE_DIR})
 include_directories(${OST_INCLUDE_DIR}/ost)
-include_directories(${OST_INCLUDE_DIR}/utils)
-include_directories(${OST_INCLUDE_DIR}/model)
-include_directories(${OST_INCLUDE_DIR}/model/value)
-include_directories(${OST_INCLUDE_DIR}/model/property)
 
 message(STATUS "OST_INCLUDE_DIR=${OST_INCLUDE_DIR}")
 
@@ -61,26 +56,26 @@ include(CMakeCommon)
 
 
 
-## Focus module
-##list (APPEND RESOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/focus/focus.qrc)
-##qt5_add_resources (RCC_SOURCES ${RESOURCES})
-#add_library(ostfocuser SHARED
-#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/focus/focus.h
-#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/focus/focus.cpp
-#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/focus/focus.qrc
-#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/focus/polynomialfit.cpp
-#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/focus/polynomialfit.h
-#    ${RCC_SOURCES}
-#)
-#target_link_libraries(ostfocuser PRIVATE
-#    ${OST_LIBRARY_INDI}
-#    Qt${QT_VERSION_MAJOR}::Core
-#    Qt${QT_VERSION_MAJOR}::Concurrent
-#    Qt${QT_VERSION_MAJOR}::Widgets
-#    Threads::Threads
-#    z
-#)
-#target_compile_definitions(ostfocuser PRIVATE FOCUS_MODULE)
+# Focus module
+#list (APPEND RESOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/focus/focus.qrc)
+#qt5_add_resources (RCC_SOURCES ${RESOURCES})
+add_library(ostfocuser SHARED
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/focus/focus.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/focus/focus.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/focus/focus.qrc
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/focus/polynomialfit.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/focus/polynomialfit.h
+    ${RCC_SOURCES}
+)
+target_link_libraries(ostfocuser PRIVATE
+    ${OST_LIBRARY_INDI}
+    Qt${QT_VERSION_MAJOR}::Core
+    Qt${QT_VERSION_MAJOR}::Concurrent
+    Qt${QT_VERSION_MAJOR}::Widgets
+    Threads::Threads
+    z
+)
+target_compile_definitions(ostfocuser PRIVATE FOCUS_MODULE)
 
 
 # Indipanel module
