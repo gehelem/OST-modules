@@ -110,7 +110,6 @@ void Sequencer::OnMyExternalEvent(const QString &eventType, const QString  &even
 
 void Sequencer::newBLOB(INDI::PropertyBlob pblob)
 {
-    sendMessage("Newblob");
 
     if (
         (QString(pblob.getDeviceName()) == _camera)
@@ -214,7 +213,7 @@ void Sequencer::updateProperty(INDI::Property property)
         &&  (property.getState()  == IPS_OK)
     )
     {
-        sendMessage("FrameResetDone");
+        //sendMessage("FrameResetDone");
         emit FrameResetDone();
     }
 
@@ -232,8 +231,6 @@ void Sequencer::updateProperty(INDI::Property property)
 
 void Sequencer::Shoot()
 {
-    sendMessage("Shoot");
-
     double exp = getValueFloat("sequence", "exposure")->grid.getGrid()[0];
     sendModNewNumber(_camera, "CCD_EXPOSURE", "CCD_EXPOSURE_VALUE",
                      //getOstElementGrid("sequence", "exposure")[0].toDouble());
@@ -304,7 +301,6 @@ void Sequencer::OnSucessSEP()
 
 void Sequencer::StartSequence()
 {
-    sendMessage("StartSequence " + _camera);
     currentLine = -1;
     isSequenceRunning = true;
 
@@ -316,10 +312,8 @@ void Sequencer::StartSequence()
         sendModNewNumber(_camera, "SIMULATOR_SETTINGS", "SIM_TIME_FACTOR", 0.01 );
         getProperty("actions")->setState(OST::Busy);
 
-        sendMessage("StartSequence grid size" + QString::number(getOstElementGrid("sequence", "status").count()));
         for (int i = 0; i < getOstElementGrid("sequence", "status").count(); i++)
         {
-            sendMessage("update " + QString::number(i));
             getValueString("sequence", "status")->setValue("Queued", true, i);
         }
 
@@ -335,7 +329,6 @@ void Sequencer::StartLine()
 {
 
     currentLine++;
-    sendMessage("StartLine  " + QString::number(currentLine));
     if (currentLine >= getOstElementGrid("sequence", "count").count())
     {
         sendMessage("Sequence completed");
@@ -348,7 +341,6 @@ void Sequencer::StartLine()
     {
 
         currentCount = getValueInt("sequence", "count")->grid.getGrid()[currentLine];
-        sendMessage("StartLine  " + QString::number(currentLine) + " taking " + currentCount);
         currentExposure = getValueFloat("sequence", "exposure")->grid.getGrid()[currentLine];
         getValueString("sequence", "status")->setValue("Running" + QString::number(currentCount), true, currentLine);
 
