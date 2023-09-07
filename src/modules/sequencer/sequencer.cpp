@@ -345,7 +345,7 @@ void Sequencer::StartLine()
         getValueString("sequence", "status")->setValue("Running" + QString::number(currentCount), true, currentLine);
 
         int i = getValueInt("sequence", "filter")->grid.getGrid()[currentLine];
-        currentFilter = getValueInt("sequence", "filter")->lov.getList()[currentLine];
+        currentFilter = getValueInt("sequence", "filter")->lov.getList()[i];
         sendModNewNumber(_fw, "FILTER_SLOT", "FILTER_SLOT_VALUE", i);
     }
 }
