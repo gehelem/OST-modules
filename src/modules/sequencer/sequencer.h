@@ -10,13 +10,13 @@
 #  define MODULE_INIT Q_DECL_IMPORT
 #endif
 
-class MODULE_INIT SequencerModule : public IndiModule
+class MODULE_INIT Sequencer: public IndiModule
 {
         Q_OBJECT
 
     public:
-        SequencerModule(QString name, QString label, QString profile, QVariantMap availableModuleLibs);
-        ~SequencerModule();
+        Sequencer(QString name, QString label, QString profile, QVariantMap availableModuleLibs);
+        ~Sequencer();
 
     signals:
 
@@ -90,7 +90,7 @@ class MODULE_INIT SequencerModule : public IndiModule
 
 };
 
-extern "C" MODULE_INIT SequencerModule *initialize(QString name, QString label, QString profile,
+extern "C" MODULE_INIT Sequencer *initialize(QString name, QString label, QString profile,
         QVariantMap availableModuleLibs);
 
 #endif
