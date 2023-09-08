@@ -152,7 +152,7 @@ void Sequencer::newBLOB(INDI::PropertyBlob pblob)
         //sendMessage("RVC frame " + QString::number(currentLine) + "/" + QString::number(currentCount));
         if(currentCount == 0)
         {
-            getValueString("sequence", "status")->setValue("Finished", true, currentLine);
+            getValueString("sequence", "status")->gridUpdate("Finished", currentLine, true);
             StartLine();
         }
         else
@@ -169,12 +169,12 @@ void Sequencer::newProperty(INDI::Property property)
         &&  (QString(property.getName())   == "FILTER_NAME")
     )
     {
-        getValueInt("sequence", "filter")->lov.clear();
+        getValueInt("sequence", "filter")->lovClear();
         INDI::PropertyText txt = property;
         for (unsigned int i = 0; i < txt.count(); i++ )
         {
             txt[i].getText();
-            getValueInt("sequence", "filter")->lov.add(i + 1, txt[i].getText());
+            getValueInt("sequence", "filter")->lovAdd(i + 1, txt[i].getText());
             qDebug() << QString::number(i + 1) << "/" << txt[i].getText();
         }
     }
@@ -231,13 +231,13 @@ void Sequencer::updateProperty(INDI::Property property)
 
 void Sequencer::Shoot()
 {
-    double exp = getValueFloat("sequence", "exposure")->grid.getGrid()[0];
+    double exp = getValueFloat("sequence", "exposure")->getGrid()[0];
     sendModNewNumber(_camera, "CCD_EXPOSURE", "CCD_EXPOSURE_VALUE",
                      //getOstElementGrid("sequence", "exposure")[0].toDouble());
                      exp);
-    double i = getValueInt("sequence", "count")->grid.getGrid()[currentLine];
-    getValueString("sequence", "status")->setValue("Running "  + QString::number(
-                i - currentCount) + "/" + QString::number(i), true, currentLine);
+    double i = getValueInt("sequence", "count")->getGrid()[currentLine];
+    getValueString("sequence", "status")->gridUpdate("Running "  + QString::number(
+                i - currentCount) + "/" + QString::number(i), currentLine, true);
 }
 
 void Sequencer::OnSucessSEP()
@@ -314,7 +314,7 @@ void Sequencer::StartSequence()
 
         for (int i = 0; i < getOstElementGrid("sequence", "status").count(); i++)
         {
-            getValueString("sequence", "status")->setValue("Queued", true, i);
+            getValueString("sequence", "status")->gridUpdate("Queued", i, true);
         }
 
         StartLine();
@@ -340,12 +340,12 @@ void Sequencer::StartLine()
     else
     {
 
-        currentCount = getValueInt("sequence", "count")->grid.getGrid()[currentLine];
-        currentExposure = getValueFloat("sequence", "exposure")->grid.getGrid()[currentLine];
-        getValueString("sequence", "status")->setValue("Running" + QString::number(currentCount), true, currentLine);
+        currentCount = getValueInt("sequence", "count")->getGrid()[currentLine];
+        currentExposure = getValueFloat("sequence", "exposure")->getGrid()[currentLine];
+        getValueString("sequence", "status")->gridUpdate("Running" + QString::number(currentCount), currentLine, true);
 
-        int i = getValueInt("sequence", "filter")->grid.getGrid()[currentLine];
-        currentFilter = getValueInt("sequence", "filter")->lov.getList()[i];
+        int i = getValueInt("sequence", "filter")->getGrid()[currentLine];
+        //currentFilter = getValueInt("sequence", "filter")->getLov()[i];
         sendModNewNumber(_fw, "FILTER_SLOT", "FILTER_SLOT_VALUE", i);
     }
 }
