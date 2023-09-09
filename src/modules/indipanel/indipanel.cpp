@@ -122,7 +122,7 @@ void IndiPanel::newProperty(INDI::Property pProperty)
             for (unsigned int i = 0; i < l.count(); i++)
             {
                 OST::ValueLight* v = new OST::ValueLight(l[i].label, QString(i), "");
-                v->setState(OST::IntToState(l[i].getState()));
+                v->setValue(OST::IntToState(l[i].getState()), true);
                 p->addValue(l[i].getName(), v);
             }
             break;
@@ -189,7 +189,7 @@ void IndiPanel::updateProperty (INDI::Property property)
             INDI::PropertyLight l = property;
             for (unsigned int i = 0; i < l.count(); i++)
             {
-                getValueLight(devpro, l[i].name)->setState(OST::IntToState(l[i].getState()));
+                getValueLight(devpro, l[i].name)->setValue(OST::IntToState(l[i].getState()), true);
             }
             break;
         }
