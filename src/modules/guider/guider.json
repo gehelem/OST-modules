@@ -202,11 +202,11 @@
         "order":"Parameters000",
         "permission": 2,
         "hasprofile":true,
-        "autoUpdate":true,
         "label": "Common Parameters",
         "elements": {
             "exposure": {
                 "type":"float",
+                "autoupdate":true,
                 "label": "Exposure (s)",
                 "value":0.5,
                 "format": "99.99"
@@ -219,17 +219,18 @@
         "order":"Parameters100",
         "permission": 2,
         "hasprofile":true,
-        "autoUpdate":true,
         "label": "Calibration Parameters",
         "elements": {
             "pulse": {
                 "type":"int",
+                "autoupdate":true,
                 "label": "Calibration pulse (ms)",
                 "value":1000,
                 "format": "99"
             },
             "calsteps": {
                 "type":"int",
+                "autoupdate":true,
                 "label": "Iterations / axis",
                 "value":2,
                 "format": "99"
@@ -244,29 +245,32 @@
         "permission": 2,
         "rule":2,
         "hasprofile":true,
-        "autoUpdate":true,
         "label": "Guide parameters",
         "elements": {
             "pulsemax": {
                 "type":"int",
+                "autoupdate":true,
                 "label": "Max pulse (ms)",
                 "value":2000,
                 "format": "99"
             },
             "pulsemin": {
                 "type":"int",
+                "autoupdate":true,
                 "label": "Min pulse (ms)",
                 "value":20,
                 "format": "99"
             },
             "raAgr": {
                 "type":"float",
+                "autoupdate":true,
                 "label": "RA Agressivity",
                 "value":0.8,
                 "format": "99.99"
             },
             "deAgr": {
                 "type":"float",
+                "autoupdate":true,
                 "label": "DEC Agressivity",
                 "value":0.8,
                 "format": "99"
@@ -280,17 +284,18 @@
         "permission": 2,
         "rule":2,
         "hasprofile":true,
-        "autoUpdate":true,
         "label": "Reverse guiding corrections",
         "elements": {
             "revRA": {
                 "type":"bool",
                 "label": "RA",
+                "autoupdate":true,
                 "value":false
             },
             "revDE": {
                 "type":"bool",
                 "label": "DEC",
+                "autoupdate":true,
                 "value":false
             }
         }
@@ -302,26 +307,29 @@
             "order":"Parameters400",
             "rule":2,
             "hasprofile":true,
-            "autoUpdate":true,
             "label": "Disable guiding corrections",
             "elements": {
                 "disRA+": {
+                    "autoupdate":true,
                     "type":"bool",
                     "label": "RA+",
                     "value":false
                 },
                 "disRA-": {
+                    "autoupdate":true,
                     "type":"bool",
                     "label": "RA-",
                     "value":false
                 },
                 "disDE+": {
                     "type":"bool",
+                    "autoupdate":true,
                     "label": "DE+",
                     "value":false
                 },
                 "disDE-": {
                     "type":"bool",
+                    "autoupdate":true,
                     "label": "DE-",
                     "value":false
                 }
