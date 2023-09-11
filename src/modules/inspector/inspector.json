@@ -5,19 +5,22 @@
         "order":"Control0000",
         "permission": 2,
         "rule":0,
-        "propertyLabel": "Actions",
+        "label": "Actions",
         "elements": {
             "loop": {
-                "elementLabel": "Infinite loop"
-                ,"value":false
+                "label": "Infinite loop",
+                "type":"bool",
+                "value":false
             },
             "abort": {
-                "elementLabel": "Abort"
-                ,"value":false
+                "label": "Abort",
+                "type":"bool",
+                "value":false
             },
             "shoot": {
-                "elementLabel": "Single shoot"
-                ,"value":false
+                "label": "Single shoot",
+                "type":"bool",
+                "value":false
             }
         }
     },
@@ -27,50 +30,60 @@
         "rule":0,
         "elements": {
                 "width": {
-                    "elementLabel": "Width",
+                    "label": "Width",
+                    "type":"int",
                     "value":0
                 },
                 "height": {
-                    "elementLabel": "Height",
+                    "label": "Height",
+                    "type":"int",
                     "value":0
                 },
                 "min": {
-                    "elementLabel": "Min ADU",
+                    "label": "Min ADU",
+                    "type":"int",
                     "value":0
                 },
                 "max": {
-                    "elementLabel": "Max ADU",
+                    "label": "Max ADU",
+                    "type":"int",
                     "value":0
                 },
                 "mean": {
-                    "elementLabel": "Mean ADU",
+                    "label": "Mean ADU",
+                    "type":"float",
                     "value":0
                 },
                 "median": {
-                    "elementLabel": "Median ADU",
+                    "label": "Median ADU",
+                    "type":"float",
                     "value":0
                 },
                 "stddev": {
-                    "elementLabel": "StdDev",
+                    "label": "StdDev",
+                    "type":"float",
                     "value":0
                 },
                 "snr": {
-                    "elementLabel": "SNR",
+                    "label": "SNR",
+                    "type":"float",
                     "value":0
                 },
                 "imgHFR": {
-                    "elementLabel": "Image HFR",
+                    "label": "Image HFR",
+                    "type":"float",
                     "value":0
                 },
                 "starscount": {
-                    "elementLabel": "Stars found",
+                    "label": "Stars found",
+                    "type":"int",
                     "value":0
                 }
 
         },
         "group": "",
         "permission": 0,
-        "propertyLabel": "Last image statistics"
+        "label": "Last image statistics"
     },
     "parameters": {
         "devcat": "Control",
@@ -78,10 +91,12 @@
         "group": "",
         "permission": 2,
         "hasprofile":true,
-        "propertyLabel": "Parameters",
+        "label": "Parameters",
         "elements": {
             "exposure": {
-                "elementLabel": "Exposure",
+                "label": "Exposure",
+                "autoupdate":true,
+                "type":"float",
                 "value":10,
                 "format": "99.99"
             }
@@ -92,37 +107,58 @@
         "group": "",
         "order":"Control8888",
         "permission": 0,
-        "propertyLabel": "Last image",
-        "URL": ""
+        "label": "Last image",
+        "elements": {
+            "image1": {
+                "type": "img",
+                "label": "First image",
+                "urljpeg":"./dummy.jpg"
+            }
+        }
     },
     "imagemap": {
         "devcat": "Control",
         "group": "",
         "order":"Control1111",
         "permission": 0,
-        "propertyLabel": "Image map",
-        "URL": ""
+        "label": "Image map",
+        "elements": {
+            "image1": {
+                "type": "img",
+                "label": "First image",
+                "urljpeg":"./dummy.jpg"
+            }
+        }
     },
     "histogram": {
         "devcat": "Results",
         "rule":0,
         "grid":[],
         "gridlimit":65535,
-        "GDY":{
-            "D":"i",
-            "Y":"n"
-        },
+        "hasArray":true,
+        "showArray":false,
         "elements": {
+                "graph": {
+                    "type": "graph",
+                    "label": "graph",
+                    "graphtype":"XY",
+                    "params":{
+                        "X":"i",
+                        "Y":"n"
+                    }
+                },
                 "i": {
-                    "elementLabel": "I"
+                    "label": "I",
+                    "type": "float"
                 },
                 "n": {
-                    "elementLabel": "N"
+                    "label": "N",
+                    "type": "int"
                 }
         },
         "group": "",
         "permission": 0,
-        "propertyLabel": "Histogram"
+        "label": "Histogram"
     }
 
 }

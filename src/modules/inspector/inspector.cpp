@@ -18,12 +18,12 @@ InspectorModule::InspectorModule(QString name, QString label, QString profile, Q
     setModuleDescription("Inspector module - work in progress");
     setModuleVersion("0.1");
 
-    createOstElement("devices", "camera", "Camera", true);
+    createOstElementText("devices", "camera", "Camera", true);
     setOstElementValue("devices", "camera",   _camera, false);
 
     //saveAttributesToFile("inspector.json");
-    _camera = getOstElementValue("devices", "camera").toString();
-    _exposure = getOstElementValue("parameters", "exposure").toFloat();
+    _camera = getString("devices", "camera");
+    _exposure = getFloat("parameters", "exposure");
 }
 
 InspectorModule::~InspectorModule()
@@ -50,8 +50,8 @@ void InspectorModule::OnMyExternalEvent(const QString &eventType, const QString 
                     {
                         if (setOstElementValue(keyprop, keyelt, eventData[keyprop].toMap()["elements"].toMap()[keyelt].toMap()["value"], false))
                         {
-                            setOstPropertyAttribute(keyprop, "status", IPS_OK, true);
-                            _camera = getOstElementValue("devices", "camera").toString();
+                            getProperty(keyprop)->setState(OST::Ok);
+                            _camera = getString("devices", "camera");
                         }
                     }
                 }
@@ -62,8 +62,8 @@ void InspectorModule::OnMyExternalEvent(const QString &eventType, const QString 
                     {
                         if (setOstElementValue(keyprop, keyelt, eventData[keyprop].toMap()["elements"].toMap()[keyelt].toMap()["value"], false))
                         {
-                            setOstPropertyAttribute(keyprop, "status", IPS_OK, true);
-                            _exposure = getOstElementValue("parameters", "exposure").toFloat();
+                            getProperty(keyprop)->setState(OST::Ok);
+                            _exposure = getFloat("parameters", "exposure");
                         }
                     }
                 }
@@ -93,7 +93,7 @@ void InspectorModule::OnMyExternalEvent(const QString &eventType, const QString 
                         {
                             emit Abort();
                             mState = "idle";
-                            setOstPropertyAttribute("actions", "status", IPS_OK, true);
+                            getProperty("actions")->setState(OST::Ok);
                         }
                     }
                 }
@@ -109,7 +109,7 @@ void InspectorModule::newBLOB(INDI::PropertyBlob pblob)
         (QString(pblob.getDeviceName()) == _camera) && (mState != "idle")
     )
     {
-        setOstPropertyAttribute("actions", "status", IPS_OK, true);
+        getProperty("actions")->setState(OST::Ok);
         delete _image;
         _image = new fileio();
         _image->loadBlob(pblob);
@@ -166,11 +166,11 @@ void InspectorModule::Shoot()
     {
         frameReset(_camera);
         sendModNewNumber(_camera, "CCD_EXPOSURE", "CCD_EXPOSURE_VALUE", _exposure);
-        setOstPropertyAttribute("actions", "status", IPS_BUSY, true);
+        getProperty("actions")->setState(OST::Busy);
     }
     else
     {
-        setOstPropertyAttribute("actions", "status", IPS_ALERT, true);
+        getProperty("actions")->setState(OST::Error);
     }
 }
 void InspectorModule::initIndi()
@@ -185,7 +185,7 @@ void InspectorModule::initIndi()
 
 void InspectorModule::OnSucessSEP()
 {
-    setOstPropertyAttribute("actions", "status", IPS_OK, true);
+    getProperty("actions")->setState(OST::Ok);
     setOstElementValue("imagevalues", "imgHFR", _solver.HFRavg, false);
     setOstElementValue("imagevalues", "starscount", _solver.stars.size(), true);
 
@@ -200,7 +200,9 @@ void InspectorModule::OnSucessSEP()
     immap.setColorTable(rawImage.colorTable());
 
     im.save(getWebroot()  + "/" + getModuleName() + ".jpeg", "JPG", 100);
-    setOstPropertyAttribute("image", "URL", getModuleName() + ".jpeg", true);
+    OST::ImgData dta;
+    dta.mUrlJpeg = getModuleName() + ".jpeg";
+    getValueImg("image", "image1")->setValue(dta, true);
 
     //QRect r;
     //r.setRect(0,0,im.width(),im.height());
@@ -223,18 +225,20 @@ void InspectorModule::OnSucessSEP()
     }
     p.end();
 
-    resetOstElements("histogram");
+    getProperty("histogram")->clearGrid();
     QVector<double> his = _image->getHistogramFrequency(0);
     for( int i = 1; i < his.size(); i++)
     {
         //qDebug() << "HIS " << i << "-"  << _image->getCumulativeFrequency(0)[i] << "-"  << _image->getHistogramIntensity(0)[i] << "-"  << _image->getHistogramFrequency(0)[i];
         setOstElementValue("histogram", "i", i, false);
         setOstElementValue("histogram", "n", his[i], false);
-        pushOstElements("histogram");
+        getProperty("histogram")->push();
     }
 
     immap.save(getWebroot() + "/" + getModuleName() + "map.jpeg", "JPG", 100);
-    setOstPropertyAttribute("imagemap", "URL", getModuleName() + "map.jpeg", true);
+    OST::ImgData dta2;
+    dta2.mUrlJpeg = getModuleName() + "map.jpeg";
+    getValueImg("imagemap", "image1")->setValue(dta2, true);
 
     if (mState == "single")
     {

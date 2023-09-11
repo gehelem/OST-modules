@@ -20,11 +20,11 @@ Allsky::Allsky(QString name, QString label, QString profile, QVariantMap availab
     setModuleVersion("0.1");
 
 
-    createOstElement("devices", "camera", "Camera", true);
+    createOstElementText("devices", "camera", "Camera", true);
     setOstElementValue("devices", "camera",   _camera, false);
 
     //saveAttributesToFile("allsky.json");
-    _camera = getOstElementValue("devices", "camera").toString();
+    _camera = getString("devices", "camera");
 
     _process = new QProcess(this);
     connect(_process, &QProcess::readyReadStandardOutput, this, &Allsky::processOutput);
@@ -58,8 +58,8 @@ void Allsky::OnMyExternalEvent(const QString &eventType, const QString  &eventMo
                     {
                         if (setOstElementValue(keyprop, keyelt, eventData[keyprop].toMap()["elements"].toMap()[keyelt].toMap()["value"], false))
                         {
-                            setOstPropertyAttribute(keyprop, "status", IPS_OK, true);
-                            _camera = getOstElementValue("devices", "camera").toString();
+                            getProperty(keyprop)->setState(OST::Ok);
+                            _camera = getString("devices", "camera");
                         }
                     }
                 }
@@ -77,7 +77,8 @@ void Allsky::OnMyExternalEvent(const QString &eventType, const QString  &eventMo
                     {
                         if (setOstElementValue(keyprop, keyelt, true, false))
                         {
-                            setOstPropertyAttribute("actions", "status", IPS_BUSY, true);
+                            getProperty("actions")->setState(OST::Busy);
+
                             startLoop();
                         }
                     }
@@ -87,7 +88,7 @@ void Allsky::OnMyExternalEvent(const QString &eventType, const QString  &eventMo
                         {
                             _isLooping = false;
                             setOstElementValue(keyprop, "loop", false, false);
-                            setOstPropertyAttribute("actions", "status", IPS_OK, true);
+                            getProperty("actions")->setState(OST::Ok);
 
                         }
                     }
@@ -102,7 +103,7 @@ void Allsky::startLoop()
     _index = 0;
     mKheog = QImage();
 
-    resetOstElements("log");
+    getProperty("log")->clearGrid();
 
     QDir dir0(getWebroot() + "/" + getModuleName() + "/batch/", {"*"});
     for(const QString &filename : dir0.entryList())
@@ -113,17 +114,16 @@ void Allsky::startLoop()
     QDir dir;
     dir.mkdir(getWebroot() + "/" + getModuleName());
     dir.mkdir(getWebroot() + "/" + getModuleName() + "/batch/");
-    _camera = getOstElementValue("devices", "camera").toString();
+    _camera = getString("devices", "camera");
     connectIndi();
     connectDevice(_camera);
     setBLOBMode(B_ALSO, _camera.toStdString().c_str(), nullptr);
     //sendModNewNumber(_camera,"SIMULATOR_SETTINGS","SIM_TIME_FACTOR",0.01 );
     setBLOBMode(B_ALSO, _camera.toStdString().c_str(), nullptr);
     enableDirectBlobAccess(_camera.toStdString().c_str(), nullptr);
-    if (!sendModNewNumber(_camera, "CCD_EXPOSURE", "CCD_EXPOSURE_VALUE", getOstElementValue("parameters",
-                          "exposure").toDouble()))
+    if (!sendModNewNumber(_camera, "CCD_EXPOSURE", "CCD_EXPOSURE_VALUE", getFloat("parameters", "exposure")))
     {
-        setOstPropertyAttribute("actions", "status", IPS_ALERT, true);
+        getProperty("actions")->setState(OST::Error);
     }
 }
 void Allsky::startBatch()
@@ -154,8 +154,7 @@ void Allsky::startBatch()
 void Allsky::processFinished(int exitCode, QProcess::ExitStatus exitStatus)
 {
     Q_UNUSED(exitStatus);
-
-    setOstPropertyAttribute("timelapse", "video", getModuleName() + "/batch/" + getModuleName() + ".mp4", true);
+    getValueVideo("timelapse", "video1")->setValue(getModuleName() + "/batch/" + getModuleName() + ".mp4", true);
     sendMessage("PROCESS FINISHED (" + QString::number(exitCode) + ")");
 }
 void Allsky::processOutput()
@@ -175,7 +174,7 @@ void Allsky::newBLOB(INDI::PropertyBlob pblob)
         (QString(pblob.getDeviceName()) == _camera)
     )
     {
-        setOstPropertyAttribute("actions", "status", IPS_OK, true);
+        getProperty("actions")->setState(OST::Ok);
         delete _image;
         _image = new fileio();
         _image->loadBlob(pblob);
@@ -210,7 +209,9 @@ void Allsky::newBLOB(INDI::PropertyBlob pblob)
         mKheog = result;
 
         mKheog.save(getWebroot() + "/" + getModuleName() + "-KHEOGRAM" + ".jpeg", "JPG", 100);
-        setOstPropertyAttribute("kheogram", "URL", getModuleName() + "-KHEOGRAM" + ".jpeg", true);
+        OST::ImgData kh;
+        kh.mUrlJpeg = getModuleName() + "-KHEOGRAM" + ".jpeg";
+        getValueImg("kheogram", "image1")->setValue(kh, true);
 
         r.setRect(0, 0, im.width(), im.height() / 10);
         QPainter p;
@@ -223,25 +224,26 @@ void Allsky::newBLOB(INDI::PropertyBlob pblob)
 
 
         im.save(getWebroot() + "/" + getModuleName() + QString(pblob.getDeviceName()) + ".jpeg", "JPG", 100);
-        setOstPropertyAttribute("image", "URL", getModuleName() + QString(pblob.getDeviceName()) + ".jpeg", true);
+        OST::ImgData dta;
+        dta.mUrlJpeg = getModuleName() + QString(pblob.getDeviceName()) + ".jpeg";
+        getValueImg("image", "image1")->setValue(dta, true);
+
         QString _n = QStringLiteral("%1").arg(_index, 10, 10, QLatin1Char('0'));
         im.save(getWebroot() + "/" + getModuleName() + "/batch/" + _n + ".jpeg", "JPG", 100);
 
-        setOstPropertyAttribute("actions", "status", IPS_BUSY, true);
+        getProperty("actions")->setState(OST::Busy);
         if (_isLooping)
         {
-            if (!sendModNewNumber(_camera, "CCD_EXPOSURE", "CCD_EXPOSURE_VALUE", getOstElementValue("parameters",
-                                  "exposure").toDouble()))
+            if (!sendModNewNumber(_camera, "CCD_EXPOSURE", "CCD_EXPOSURE_VALUE", getFloat("parameters", "exposure")))
             {
-                setOstPropertyAttribute("actions", "status", IPS_ALERT, true);
+                getProperty("actions")->setState(OST::Error);
                 _isLooping = false;
             }
         }
         double tt = QDateTime::currentDateTime().toMSecsSinceEpoch();
         setOstElementValue("log", "time", tt, false);
         setOstElementValue("log", "snr", _image->getStats().SNR, true);
-        pushOstElements("log");
-
+        getProperty("log")->push();
 
     }
 
