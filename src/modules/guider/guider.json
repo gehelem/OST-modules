@@ -139,6 +139,7 @@
         "elements": {
                 "graph": {
                     "type": "graph",
+                    "label": "graph",
                     "graphtype":"DY",
                     "params":{
                         "D":"time",

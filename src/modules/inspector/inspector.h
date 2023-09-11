@@ -10,13 +10,13 @@
 #  define MODULE_INIT Q_DECL_IMPORT
 #endif
 
-class MODULE_INIT InspectorModule : public IndiModule
+class MODULE_INIT Inspector : public IndiModule
 {
         Q_OBJECT
 
     public:
-        InspectorModule(QString name, QString label, QString profile, QVariantMap availableModuleLibs);
-        ~InspectorModule();
+        Inspector(QString name, QString label, QString profile, QVariantMap availableModuleLibs);
+        ~Inspector();
 
     signals:
 
@@ -78,10 +78,14 @@ class MODULE_INIT InspectorModule : public IndiModule
         double _bestposfit;
         double _besthfr;
         QString mState = "idle";
+        double upperLeftHFR;
+        double lowerLeftHFR;
+        double upperRightHFR;
+        double lowerRightHFR;
 
 };
 
-extern "C" MODULE_INIT InspectorModule *initialize(QString name, QString label, QString profile,
+extern "C" MODULE_INIT Inspector *initialize(QString name, QString label, QString profile,
         QVariantMap availableModuleLibs);
 
 #endif
