@@ -669,7 +669,6 @@ void Guider::SMComputeCal()
             setOstElementValue("values", "calPulseS", _calPulseS, false);
             setOstElementValue("values", "calPulseE", _calPulseE, false);
             setOstElementValue("values", "calPulseW", _calPulseW, true);
-
             emit CalibrationDone();
             _trigFirst = _trigCurrent;
             return;
@@ -691,6 +690,12 @@ void Guider::SMComputeCal()
     {
         _pulseS = _pulse;
     }
+    double _driftRA =  _dxFirst * cos(_calCcdOrientation) + _dyFirst * sin(_calCcdOrientation);
+    double _driftDE = -_dxFirst * sin(_calCcdOrientation) + _dyFirst * cos(_calCcdOrientation);
+    setOstElementValue("drift", "RA", _driftRA, false);
+    setOstElementValue("drift", "DEC", _driftDE, false);
+    getProperty("drift")->push();
+
 
     emit ComputeCalDone();
 }
