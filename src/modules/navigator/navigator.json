@@ -26,7 +26,7 @@
         "group": "",
         "permission": 0,
         "grid":0,
-        "gridlimit":255,
+        "arrayLimit":255,
         "hasArray":true,
         "rule":0,
         "label": "Results",

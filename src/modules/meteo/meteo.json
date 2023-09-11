@@ -6,8 +6,7 @@
         "permission": 2,
         "rule":0,
         "propertyLabel": "Indi widgets to watch",
-        "grid":0,
-        "gridlimit":255,
+        "arrayLimit":255,
         "hasprofile":true,
         "elements": {
             "dpv": {

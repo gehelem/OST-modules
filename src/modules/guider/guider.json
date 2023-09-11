@@ -55,7 +55,6 @@
         "order":"Control350",
         "permission": 0,
         "label": "Drift",
-        "grid":0,
         "hasArray":true,
         "showArray":false,
         "elements": {
@@ -85,7 +84,6 @@
         "order":"Control100",
         "permission": 0,
         "label": "Guiding graph",
-        "grid":0,
         "hasArray":true,
         "showArray":false,
         "elements": {
@@ -129,11 +127,9 @@
     },
     "snr": {
         "devcat": "Control",
-        "grid":[],
-        "gridlimit":50,
+        "arrayLimit":50,
         "order":"Control300",
         "rule":0,
-        "grid":0,
         "hasArray":true,
         "showArray":false,
         "elements": {

@@ -133,8 +133,7 @@
     "histogram": {
         "devcat": "Results",
         "rule":0,
-        "grid":[],
-        "gridlimit":65535,
+        "arrayLimit":255,
         "hasArray":true,
         "showArray":false,
         "elements": {
