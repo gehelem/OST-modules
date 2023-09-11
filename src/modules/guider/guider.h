@@ -41,13 +41,13 @@ struct MatchedPair
     double dy; // y drift
 };
 
-class MODULE_INIT GuiderModule  : public IndiModule
+class MODULE_INIT Guider  : public IndiModule
 {
         Q_OBJECT
 
     public:
-        GuiderModule(QString name, QString label, QString profile, QVariantMap availableModuleLibs);
-        ~GuiderModule();
+        Guider (QString name, QString label, QString profile, QVariantMap availableModuleLibs);
+        ~Guider();
 
     signals:
         void InitDone();
@@ -158,7 +158,7 @@ class MODULE_INIT GuiderModule  : public IndiModule
         void SMAbort();
 };
 
-extern "C" MODULE_INIT GuiderModule *initialize(QString name, QString label, QString profile,
+extern "C" MODULE_INIT Guider *initialize(QString name, QString label, QString profile,
         QVariantMap availableModuleLibs);
 
 #endif

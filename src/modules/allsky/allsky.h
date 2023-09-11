@@ -36,8 +36,7 @@ class MODULE_INIT Allsky : public IndiModule
         bool _isLooping = false;
         long _index;
         QProcess *_process;
-
-
+        QImage mKheog;
 
 };
 

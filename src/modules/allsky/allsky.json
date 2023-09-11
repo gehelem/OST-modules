@@ -4,18 +4,21 @@
         "group": "",
         "permission": 2,
         "rule":2,
-        "propertyLabel": "Actions",
+        "label": "Actions",
         "elements": {
             "loop": {
-                "elementLabel": "Infinite loop"
+                "type":"bool",
+                "label": "Infinite loop"
                 ,"value":false
             },
             "abort": {
-                "elementLabel": "Abort"
+                "type":"bool",
+                "label": "Abort"
                 ,"value":false
             },
             "batch": {
-                "elementLabel": "Start batch"
+                "type":"bool",
+                "label": "Generate timelapse"
                 ,"value":false
             }
         }
@@ -25,52 +28,61 @@
         "rule":0,
         "elements": {
                 "width": {
-                    "elementLabel": "Width",
+                    "label": "Width",
+                    "type":"int",
                     "value":0
                 },
                 "height": {
-                    "elementLabel": "Height",
+                    "label": "Height",
+                    "type":"int",
                     "value":0
                 },
                 "min": {
-                    "elementLabel": "Min ADU",
+                    "label": "Min ADU",
+                    "type":"int",
                     "value":0
                 },
                 "max": {
-                    "elementLabel": "Max ADU",
+                    "label": "Max ADU",
+                    "type":"int",
                     "value":0
                 },
                 "mean": {
-                    "elementLabel": "Mean ADU",
+                    "label": "Mean ADU",
+                    "type":"float",
                     "value":0
                 },
                 "median": {
-                    "elementLabel": "Median ADU",
+                    "label": "Median ADU",
+                    "type":"float",
                     "value":0
                 },
                 "stddev": {
-                    "elementLabel": "StdDev",
+                    "label": "StdDev",
+                    "type":"float",
                     "value":0
                 },
                 "snr": {
-                    "elementLabel": "SNR",
-                    "step": 0.0001,
+                    "label": "SNR",
+                    "type":"float",
                     "value":0
                 }
         },
         "group": "",
         "permission": 0,
-        "propertyLabel": "Last image statistics"
+        "label": "Last image statistics"
     },
     "parameters": {
         "devcat": "Control",
         "group": "",
         "permission": 2,
         "hasprofile":true,
-        "propertyLabel": "Parameters",
+        "label": "Parameters",
         "elements": {
             "exposure": {
-                "elementLabel": "Exposure",
+                "label": "Exposure",
+                "autoupdate":true,
+                "type":"float",
                 "value":10,
                 "format": "99.99"
             }
@@ -80,36 +92,70 @@
         "devcat": "Results",
         "group": "",
         "permission": 0,
-        "propertyLabel": "Last image",
-        "URL": ""
+        "label": "Last image",
+        "elements": {
+            "image1": {
+                "type": "img",
+                "label": "First image",
+                "urljpeg":"./dummy.jpg"
+            }
+        }
     },
     "timelapse": {
         "devcat": "Results",
         "group": "",
         "permission": 0,
-        "propertyLabel": "Timelapse",
-        "video": ""
+        "label": "Timelapse",
+        "elements": {
+            "video1": {
+                "type": "video",
+                "label": "Timelapse"
+            }
+        }
+
+    },
+    "kheogram": {
+        "devcat": "Results",
+        "group": "",
+        "permission": 0,
+        "label": "Kheogram",
+        "elements": {
+            "image1": {
+                "type": "img",
+                "label": "Kheogram",
+                "urljpeg":"./dummy.jpg"
+            }
+        }
+
     },
     "log": {
         "devcat": "Results",
         "grid":[],
         "rule":0,
-        "GDY":{
-            "D":"time",
-            "Y":"snr"
-        },
+        "hasArray":true,
+        "showArray":false,
         "elements": {
                 "time": {
-                    "elementLabel": "Time",
-                    "value":""
+                    "label": "Time",
+                    "type": "float",
+                    "value":0
                 },
                 "snr": {
-                    "elementLabel": "SNR",
+                    "label": "SNR",
+                    "type": "float",
                     "value":0
+                },
+                "graph": {
+                    "type": "graph",
+                    "graphtype":"DY",
+                    "params":{
+                        "D":"time",
+                        "Y":"snr"
+                    }
                 }
         },
         "group": "",
         "permission": 0,
-        "propertyLabel": "Log"
+        "label": "Log"
     }
 }

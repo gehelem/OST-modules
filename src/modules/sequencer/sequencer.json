@@ -5,14 +5,16 @@
         "permission": 2,
         "order":0,
         "rule":1,
-        "propertyLabel": "Actions",
+        "label": "Actions",
         "elements": {
             "run": {
-                "elementLabel": "Run sequence"
+                "type":"bool",
+                "label": "Run sequence"
                 ,"value":false
             },
             "abort": {
-                "elementLabel": "Abort"
+                "type":"bool",
+                "label": "Abort"
                 ,"value":false
             }
         }
@@ -22,137 +24,139 @@
         "rule":0,
         "elements": {
                 "width": {
-                    "elementLabel": "Width",
+                    "type":"int",
+                    "label": "Width",
                     "value":0
                 },
                 "height": {
-                    "elementLabel": "Height",
+                    "type":"int",
+                    "label": "Height",
                     "value":0
                 },
                 "min": {
-                    "elementLabel": "Min ADU",
+                    "type":"int",
+                    "label": "Min ADU",
                     "value":0
                 },
                 "max": {
-                    "elementLabel": "Max ADU",
+                    "type":"int",
+                    "label": "Max ADU",
                     "value":0
                 },
                 "mean": {
-                    "elementLabel": "Mean ADU",
+                    "type":"float",
+                    "label": "Mean ADU",
                     "value":0
                 },
                 "median": {
-                    "elementLabel": "Median ADU",
+                    "type":"float",
+                    "label": "Median ADU",
                     "value":0
                 },
                 "stddev": {
-                    "elementLabel": "StdDev",
+                    "type":"float",
+                    "label": "StdDev",
                     "value":0
                 },
                 "snr": {
-                    "elementLabel": "SNR",
+                    "type":"float",
+                    "label": "SNR",
                     "value":0
                 },
                 "imgHFR": {
-                    "elementLabel": "Image HFR",
+                    "type":"float",
+                    "label": "Image HFR",
                     "value":0
                 },
                 "starscount": {
-                    "elementLabel": "Stars found",
+                    "type":"int",
+                    "label": "Stars found",
                     "value":0
                 }
 
         },
         "group": "",
         "permission": 0,
-        "propertyLabel": "Last image statistics"
+        "label": "Last image statistics"
     },
     "sequence": {
+        "hasArray":true,
         "devcat": "Control",
         "group": "",
         "permission": 2,
         "order":1,
         "grid":0,
         "hasprofile":true,
-        "propertyLabel": "Sequence",
+        "label": "Sequence",
         "elements": {
             "frametype": {
-                "elementLabel": "Frame type",
+                "type":"string",
+                "label": "Frame type",
                 "value":"L",
-                "listOfValues":{
-                    "L":"Light",
-                    "B":"Bias",
-                    "D":"Dark",
-                    "F":"Flat"
-                }
+                "gridvalues":[],
+                "listOfValues":[
+                    ["L","Light"],
+                    ["B","Bias"],
+                    ["D","Dark"],
+                    ["F","Flat"]
+                ]
             },
             "filter": {
-                "elementLabel": "Filter",
-                "value":"L",
-                "listOfValues":{
-                    "L":"Luminance",
-                    "R":"Red",
-                    "V":"Green",
-                    "B":"Blue"
-                }
+                "type":"int",
+                "label": "Filter",
+                "gridvalues":[],
+                "listOfValues":[
+                ]
             },
             "exposure": {
-                "elementLabel": "Exposure",
+                "type":"float",
+                "label": "Exposure",
                 "value":10,
-                "format": "99.99"
+                "gridvalues":[],
+                "format": "99"
             },
             "count": {
-                "elementLabel": "Count",
+                "type":"int",
+                "label": "Count",
                 "value":5,
-                "format": "99.99"
+                "gridvalues":[],
+                "format": "99"
             },
             "gain": {
-                "elementLabel": "Gain",
+                "type":"int",
+                "label": "Gain",
                 "value":5,
+                "gridvalues":[],
                 "format": "99"
             },
             "offset": {
-                "elementLabel": "Offset",
+                "type":"int",
+                "label": "Offset",
                 "value":5,
+                "gridvalues":[],
                 "format": "99"
+            },
+            "status": {
+                "type":"string",
+                "label": "Status",
+                "value":"idle",
+                "gridvalues":[]
+
             }
-
-
         }
     },
     "image": {
         "devcat": "Results",
         "group": "",
         "permission": 0,
-        "propertyLabel": "Last image",
-        "URL": ""
-    },
-    "imagemap": {
-        "devcat": "Results",
-        "group": "",
-        "permission": 0,
-        "propertyLabel": "Image map",
-        "URL": ""
-    },
-    "histogram": {
-        "devcat": "Results",
-        "rule":0,
-        "grid":0,
-        "GXY":{
-            "X":"i",
-            "Y":"n"
-        },
+        "label": "Last image",
         "elements": {
-                "i": {
-                    "elementLabel": "I"
-                },
-                "n": {
-                    "elementLabel": "N"
-                }
-        },
-        "group": "",
-        "permission": 0,
-        "propertyLabel": "Histogram"
-    }
+            "image1": {
+                "type": "img",
+                "label": "First image",
+                "urljpeg":"./dummy.jpg"
+            }
+        }
 
+    }
 }

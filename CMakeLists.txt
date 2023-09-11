@@ -160,13 +160,45 @@ target_link_libraries(ostallsky PRIVATE
 )
 target_compile_definitions(ostallsky PRIVATE ALLSKY_MODULE)
 
-## sequencer module
-#add_library(ostsequencer SHARED
-#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/sequencer/sequencer.h
-#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/sequencer/sequencer.cpp
-#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/sequencer/sequencer.qrc
+# sequencer module
+add_library(ostsequencer SHARED
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/sequencer/sequencer.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/sequencer/sequencer.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/sequencer/sequencer.qrc
+)
+target_link_libraries(ostsequencer PRIVATE
+    ${OST_LIBRARY_INDI}
+    Qt${QT_VERSION_MAJOR}::Core
+    Qt${QT_VERSION_MAJOR}::Concurrent
+    Qt${QT_VERSION_MAJOR}::Widgets
+    Threads::Threads
+    z
+)
+target_compile_definitions(ostsequencer PRIVATE SEQUENCER_MODULE)
+
+# navigator module
+add_library(ostnavigator SHARED
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/navigator/navigator.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/navigator/navigator.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/navigator/navigator.qrc
+)
+target_link_libraries(ostnavigator PRIVATE
+    ${OST_LIBRARY_INDI}
+    Qt${QT_VERSION_MAJOR}::Core
+    Qt${QT_VERSION_MAJOR}::Concurrent
+    Qt${QT_VERSION_MAJOR}::Widgets
+    Threads::Threads
+    z
+)
+target_compile_definitions(ostnavigator PRIVATE NAVIGATOR_MODULE)
+
+## meteo module
+#add_library(ostmeteo SHARED
+#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/meteo/meteo.h
+#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/meteo/meteo.cpp
+#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/meteo/meteo.qrc
 #)
-#target_link_libraries(ostsequencer PRIVATE
+#target_link_libraries(ostmeteo PRIVATE
 #    ${OST_LIBRARY_INDI}
 #    Qt${QT_VERSION_MAJOR}::Core
 #    Qt${QT_VERSION_MAJOR}::Concurrent
@@ -174,17 +206,19 @@ target_compile_definitions(ostallsky PRIVATE ALLSKY_MODULE)
 #    Threads::Threads
 #    z
 #)
-#target_compile_definitions(ostsequencer PRIVATE SEQUENCER_MODULE)
-
+#target_compile_definitions(ostmeteo PRIVATE METEO_MODULE)
 
 
 install(TARGETS
     ostallsky
     ostinspector
+    ostnavigator
     ostguider
     ostindipanel
     ostfocuser
-#    ostsequencer
+    ostsequencer
+#    ostmeteo
+#    ostpolar
     RUNTIME DESTINATION "/usr/bin"
     LIBRARY DESTINATION "/usr/lib"
 )
