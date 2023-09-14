@@ -1,4 +1,5 @@
 {
+"properties":{
     "actions": {
         "devcat": "Control",
         "group": "",
@@ -159,4 +160,5 @@
         }
 
     }
+}
 }

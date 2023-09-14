@@ -24,6 +24,8 @@ Inspector::Inspector(QString name, QString label, QString profile, QVariantMap a
     //saveAttributesToFile("inspector.json");
     _camera = getString("devices", "camera");
     _exposure = getFloat("parameters", "exposure");
+    getValueString("devices", "camera")->setGlobalLov("DRIVER_INTERFACE-CCD_INTERFACE");
+    getValueString("devices", "camera")->setDirectEdit(true);
 }
 
 Inspector::~Inspector()
