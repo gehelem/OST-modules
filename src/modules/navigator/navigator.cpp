@@ -44,27 +44,14 @@ void Navigator::OnMyExternalEvent(const QString &pEventType, const QString  &pEv
         {
             foreach(const QString &keyelt, pEventData[keyprop].toMap()["elements"].toMap().keys())
             {
-                if (keyprop == "devices")
+                if (pEventType == "Fposticon")
                 {
-                    if ((keyelt == "camera") || (keyelt == "mount"))
+                    if ((keyprop == "search") && (keyelt == "name"))
                     {
-                        if (setOstElementValue(keyprop, keyelt, pEventData[keyprop].toMap()["elements"].toMap()[keyelt].toMap()["value"], false))
-                        {
-                            getProperty(keyprop)->setState(OST::Ok);
-                        }
+                        updateSearchList();
                     }
                 }
 
-                if (keyprop == "search")
-                {
-                    if (keyelt == "searchbtn")
-                    {
-                        if (setOstElementValue(keyprop, keyelt, true, true))
-                        {
-                            updateSearchList();
-                        }
-                    }
-                }
                 if (keyprop == "popcat")
                 {
                     if (keyelt == "go")

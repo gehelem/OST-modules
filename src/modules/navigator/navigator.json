@@ -6,18 +6,15 @@
         "group": "",
         "permission": 2,
         "rule":0,
-        "label": "",
+        "label": "Search object",
         "elements": {
             "name": {
                 "autoupdate":true,
+                "directedit":true,
                 "type": "string",
-                "label": "name",
+                "posticon": "forward",
+                "label": "",
                 "value":"M13"
-            },
-            "searchbtn": {
-                "type": "bool",
-                "label": "Search object",
-                "value":false
             }
         }
     },
@@ -98,24 +95,32 @@
         "elements": {
             "code": {
                 "type": "string",
+                "autoupdate":true,
+                "directedit":true,
                 "label": "Code",
                 "order":"10",
                 "value":""
             },
             "RA": {
                 "type": "float",
+                "autoupdate":true,
+                "directedit":true,
                 "label": "RA",
                 "order":"20",
                 "value":0
             },
             "NS": {
                 "type": "string",
+                "autoupdate":true,
+                "directedit":true,
                 "label": "N/S",
                 "order":"40",
                 "value":""
             },
             "DEC": {
                 "type": "float",
+                "autoupdate":true,
+                "directedit":true,
                 "label": "DEC",
                 "order":"30",
                 "value":0
