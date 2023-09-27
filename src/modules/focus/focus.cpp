@@ -25,7 +25,6 @@ FocusModule::FocusModule(QString name, QString label, QString profile, QVariantM
     _steps =             getValueInt("parameters", "steps")->value();
     _iterations =        getValueInt("parameters", "iterations")->value();
     _loopIterations =    getValueInt("parameters", "loopIterations")->value();
-    _exposure =          getValueInt("parameters", "exposure")->value();
     _backlash =          getValueInt("parameters", "backlash")->value();
 
     defineMeAsFocuser();
@@ -39,8 +38,6 @@ FocusModule::~FocusModule()
 void FocusModule::OnMyExternalEvent(const QString &eventType, const QString  &eventModule, const QString  &eventKey,
                                     const QVariantMap &eventData)
 {
-    //BOOST_LOG_TRIVIAL(debug) << "OnMyExternalEvent FocusModule - recv : " << getModuleName().toStdString() << "-" <<
-    //                         eventType.toStdString() << "-" << eventKey.toStdString();
     Q_UNUSED(eventType);
     Q_UNUSED(eventKey);
 
@@ -50,56 +47,7 @@ void FocusModule::OnMyExternalEvent(const QString &eventType, const QString  &ev
         {
             foreach(const QString &keyelt, eventData[keyprop].toMap()["elements"].toMap().keys())
             {
-                //BOOST_LOG_TRIVIAL(debug) << "OnMyExternalEvent - recv : " << getModuleName().toStdString() << "-" << eventType.toStdString()
-                //                         <<
-                //                         "-" << keyprop.toStdString() << "-" << keyelt.toStdString();
                 QVariant val = eventData[keyprop].toMap()["elements"].toMap()[keyelt].toMap()["value"];
-                if (keyprop == "parameters")
-                {
-                    if (keyelt == "startpos")
-                    {
-                        if (setOstElementValue(keyprop, keyelt, val, true))
-                        {
-                            _startpos = val.toInt();
-                        }
-                    }
-                    if (keyelt == "steps")
-                    {
-                        if (setOstElementValue(keyprop, keyelt, val, true))
-                        {
-                            _steps = val.toInt();
-                        }
-                    }
-                    if (keyelt == "iterations")
-                    {
-                        if (setOstElementValue(keyprop, keyelt, val, true))
-                        {
-                            _iterations = val.toInt();
-                        }
-                    }
-                    if (keyelt == "loopIterations")
-                    {
-                        if (setOstElementValue(keyprop, keyelt, val, true))
-                        {
-                            _loopIterations = val.toInt();
-                        }
-                    }
-                    if (keyelt == "exposure")
-                    {
-                        if (setOstElementValue(keyprop, keyelt, val, true))
-                        {
-                            _exposure = val.toInt();
-                        }
-                    }
-                    if (keyelt == "backlash")
-                    {
-                        if (setOstElementValue(keyprop, keyelt, val, true))
-                        {
-                            _backlash = val.toInt();
-                        }
-                    }
-
-                }
                 if (keyprop == "actions")
                 {
                     if (keyelt == "autofocus")
@@ -127,25 +75,6 @@ void FocusModule::OnMyExternalEvent(const QString &eventType, const QString  &ev
                     }
 
                 }
-                if (keyprop == "devices")
-                {
-                    if (keyelt == "focuscamera")
-                    {
-                        if (setOstElementValue(keyprop, keyelt, val, false))
-                        {
-                            getProperty(keyprop)->setState(OST::Ok);
-                            _camera = val.toString();
-                        }
-                    }
-                    if (keyelt == "focusfocuser")
-                    {
-                        if (setOstElementValue(keyprop, keyelt, val, false))
-                        {
-                            getProperty(keyprop)->setState(OST::Ok);
-                            _focuser = val.toString();
-                        }
-                    }
-                }
             }
         }
     }
@@ -154,7 +83,7 @@ void FocusModule::OnMyExternalEvent(const QString &eventType, const QString  &ev
 void FocusModule::updateProperty(INDI::Property p)
 {
     if (
-        (QString(p.getDeviceName()) == _camera )
+        (QString(p.getDeviceName()) == getString("devices", "focuscamera") )
         &&  (p.getState() == IPS_ALERT)
     )
     {
@@ -162,7 +91,7 @@ void FocusModule::updateProperty(INDI::Property p)
         emit cameraAlert();
     }
     if (
-        (QString(p.getDeviceName()) == _focuser)
+        (QString(p.getDeviceName()) == getString("devices", "focusfocuser"))
         &&  (QString(p.getName())   == "ABS_FOCUS_POSITION")
     )
     {
@@ -180,7 +109,7 @@ void FocusModule::updateProperty(INDI::Property p)
         }
     }
     if (
-        (QString(p.getDeviceName()) == _camera)
+        (QString(p.getDeviceName()) == getString("devices", "focuscamera"))
         &&  (QString(p.getName())   == "CCD_FRAME_RESET")
         &&  (p.getState() == IPS_OK)
     )
@@ -202,13 +131,13 @@ void FocusModule::newBLOB(INDI::PropertyBlob b)
 {
     if
     (
-        (QString(b.getDeviceName()) == _camera)
+        (QString(b.getDeviceName()) == getString("devices", "focuscamera"))
     )
     {
         delete _image;
         _image = new fileio();
         _image->loadBlob(b);
-        //setBLOBMode(B_NEVER, _camera.toStdString().c_str(), nullptr);
+        //setBLOBMode(B_NEVER, getString("devices","focuscamera").toStdString().c_str(), nullptr);
 
         getProperty("image")->setState(OST::Ok);
 
@@ -239,10 +168,13 @@ void FocusModule::startCoarse()
 {
     getStore()["values"]->clearGrid();
     connectIndi();
-    connectDevice(_camera);
-    setBLOBMode(B_ALSO, _camera.toStdString().c_str(), nullptr);
-    sendModNewNumber(_camera, "SIMULATOR_SETTINGS", "SIM_TIME_FACTOR", 0.01 );
-    enableDirectBlobAccess(_camera.toStdString().c_str(), nullptr);
+    connectDevice(getString("devices", "focuscamera"));
+    setBLOBMode(B_ALSO, getString("devices", "focuscamera").toStdString().c_str(), nullptr);
+    if (getString("devices", "focuscamera") == "CCD Simulator")
+    {
+        sendModNewNumber(getString("devices", "focuscamera"), "SIMULATOR_SETTINGS", "SIM_TIME_FACTOR", 0.01 );
+    }
+    enableDirectBlobAccess(getString("devices", "focuscamera").toStdString().c_str(), nullptr);
 
     _posvector.clear();
     _hfdvector.clear();
@@ -255,7 +187,6 @@ void FocusModule::startCoarse()
     _steps =             getValueInt("parameters", "steps")->value();
     _iterations =        getValueInt("parameters", "iterations")->value();
     _loopIterations =    getValueInt("parameters", "loopIterations")->value();
-    _exposure =          getValueInt("parameters", "exposure")->value();
     _backlash =          getValueInt("parameters", "backlash")->value();
 
     /*_grid->clear();
@@ -376,7 +307,7 @@ void FocusModule::SMRequestFrameReset()
     //sendMessage("SMRequestFrameReset");
 
 
-    //setBLOBMode(B_ALSO, _camera.toStdString().c_str(), nullptr);
+    //setBLOBMode(B_ALSO, getString("devices","focuscamera").toStdString().c_str(), nullptr);
 
     /*qDebug() << "conf count" << _machine.configuration().count();
     QSet<QAbstractState *>::iterator i;
@@ -385,7 +316,7 @@ void FocusModule::SMRequestFrameReset()
         qDebug() << (*i)->objectName();
     }*/
 
-    if (!frameReset(_camera))
+    if (!frameReset(getString("devices", "focuscamera")))
     {
         RequestFrameResetDone();
         usleep(1000);
@@ -398,7 +329,8 @@ void FocusModule::SMRequestFrameReset()
 void FocusModule::SMRequestBacklash()
 {
     //sendMessage("SMRequestBacklash");
-    if (!sendModNewNumber(_focuser, "ABS_FOCUS_POSITION", "FOCUS_ABSOLUTE_POSITION", _startpos - _backlash))
+    if (!sendModNewNumber(getString("devices", "focusfocuser"), "ABS_FOCUS_POSITION", "FOCUS_ABSOLUTE_POSITION",
+                          _startpos - _backlash))
     {
         emit abort();
         return;
@@ -409,7 +341,7 @@ void FocusModule::SMRequestBacklash()
 void FocusModule::SMRequestGotoStart()
 {
     //sendMessage("SMRequestGotoStart");
-    if (!sendModNewNumber(_focuser, "ABS_FOCUS_POSITION", "FOCUS_ABSOLUTE_POSITION", _startpos))
+    if (!sendModNewNumber(getString("devices", "focusfocuser"), "ABS_FOCUS_POSITION", "FOCUS_ABSOLUTE_POSITION", _startpos))
     {
         emit abort();
         return;
@@ -420,12 +352,13 @@ void FocusModule::SMRequestGotoStart()
 void FocusModule::SMRequestExposure()
 {
     //sendMessage("SMRequestExposure");
-    if (!sendModNewNumber(_camera, "CCD_EXPOSURE", "CCD_EXPOSURE_VALUE", _exposure))
+    if (!sendModNewNumber(getString("devices", "focuscamera"), "CCD_EXPOSURE", "CCD_EXPOSURE_VALUE", getValueFloat("parameters",
+                          "exposure")->value()))
     {
         emit abort();
         return;
     }
-    //setBLOBMode(B_ALSO, _camera.toStdString().c_str(), nullptr);
+    //setBLOBMode(B_ALSO, getString("devices","focuscamera").toStdString().c_str(), nullptr);
     emit RequestExposureDone();
 
 }
@@ -494,7 +427,8 @@ void FocusModule::SMCompute()
 void FocusModule::SMRequestGotoNext()
 {
     //sendMessage("SMRequestGotoNext");
-    if (!sendModNewNumber(_focuser, "ABS_FOCUS_POSITION", "FOCUS_ABSOLUTE_POSITION", _startpos + _iteration * _steps))
+    if (!sendModNewNumber(getString("devices", "focusfocuser"), "ABS_FOCUS_POSITION", "FOCUS_ABSOLUTE_POSITION",
+                          _startpos + _iteration * _steps))
     {
         emit abort();
         return;
@@ -505,7 +439,8 @@ void FocusModule::SMRequestGotoNext()
 void FocusModule::SMRequestBacklashBest()
 {
     //sendMessage("SMRequestBacklashBest");
-    if (!sendModNewNumber(_focuser, "ABS_FOCUS_POSITION", "FOCUS_ABSOLUTE_POSITION", _bestpos - _backlash))
+    if (!sendModNewNumber(getString("devices", "focusfocuser"), "ABS_FOCUS_POSITION", "FOCUS_ABSOLUTE_POSITION",
+                          _bestpos - _backlash))
     {
         emit abort();
         return;
@@ -517,7 +452,7 @@ void FocusModule::SMRequestGotoBest()
 {
     //sendMessage("SMRequestGotoBest");
     if (_bestposfit == 99 ) _bestposfit = _bestpos;
-    if (!sendModNewNumber(_focuser, "ABS_FOCUS_POSITION", "FOCUS_ABSOLUTE_POSITION", _bestposfit))
+    if (!sendModNewNumber(getString("devices", "focusfocuser"), "ABS_FOCUS_POSITION", "FOCUS_ABSOLUTE_POSITION", _bestposfit))
     {
         emit abort();
         return;
@@ -528,13 +463,14 @@ void FocusModule::SMRequestGotoBest()
 void FocusModule::SMRequestExposureBest()
 {
     //sendMessage("SMRequestExposureBest");
-    if (!sendModNewNumber(_camera, "CCD_EXPOSURE", "CCD_EXPOSURE_VALUE", _exposure))
+    if (!sendModNewNumber(getString("devices", "focuscamera"), "CCD_EXPOSURE", "CCD_EXPOSURE_VALUE", getValueFloat("parameters",
+                          "exposure")->value()))
     {
         emit abort();
         return;
     }
     double mFinalPos = 0;
-    if (!getModNumber(_focuser, "ABS_FOCUS_POSITION", "FOCUS_ABSOLUTE_POSITION", mFinalPos))
+    if (!getModNumber(getString("devices", "focusfocuser"), "ABS_FOCUS_POSITION", "FOCUS_ABSOLUTE_POSITION", mFinalPos))
     {
         emit abort();
         return;
