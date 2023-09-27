@@ -16,15 +16,9 @@ Sequencer::Sequencer(QString name, QString label, QString profile, QVariantMap a
     setModuleDescription("Sequencer module");
     setModuleVersion("0.1");
 
+    defineMeAsSequencer();
+    refreshFilterLov();
 
-    createOstElementText("devices", "camera", "Camera", true);
-    createOstElementText("devices", "fw", "Filter wheel", true);
-    setOstElementValue("devices", "camera",   _camera, false);
-    setOstElementValue("devices", "fw",   _fw, false);
-
-    //saveAttributesToFile("inspector.json");
-    _camera = getString("devices", "camera");
-    //_exposure = getFloat("parameters", "exposure");
 }
 
 Sequencer::~Sequencer()
@@ -41,47 +35,17 @@ void Sequencer::OnMyExternalEvent(const QString &eventType, const QString  &even
         {
             foreach(const QString &keyelt, eventData[keyprop].toMap()["elements"].toMap().keys())
             {
-                //setOstElementValue(keyprop, keyelt, eventData[keyprop].toMap()["elements"].toMap()[keyelt].toMap()["value"], true);
-                if (keyprop == "devices")
-                {
-                    if (keyelt == "camera")
-                    {
-                        if (setOstElementValue(keyprop, keyelt, eventData[keyprop].toMap()["elements"].toMap()[keyelt].toMap()["value"], false))
-                        {
-                            getProperty(keyprop)->setState(OST::Ok);
-                            _camera = getString("devices", "camera");
-                        }
-                    }
-                }
 
-                if (keyprop == "parameters")
-                {
-                    if (keyelt == "exposure")
-                    {
-                        if (setOstElementValue(keyprop, keyelt, eventData[keyprop].toMap()["elements"].toMap()[keyelt].toMap()["value"], false))
-                        {
-                            getProperty(keyprop)->setState(OST::Ok);
-                            _exposure = getFloat("parameters", "exposure");
-                        }
-                    }
-                }
                 if (keyprop == "actions")
                 {
-                    if (keyelt == "run")
+                    if (keyelt == "startsequence")
                     {
-                        if (setOstElementValue(keyprop, keyelt, true, true))
-                        {
-                            StartSequence();
-                        }
+                        StartSequence();
                     }
-                    if (keyelt == "abort")
+                    if (keyelt == "abortsequence")
                     {
-                        if (setOstElementValue(keyprop, keyelt, false, false))
-                        {
-                            emit Abort();
-                            isSequenceRunning = false;
-
-                        }
+                        emit Abort();
+                        isSequenceRunning = false;
                     }
                 }
 
@@ -112,7 +76,7 @@ void Sequencer::newBLOB(INDI::PropertyBlob pblob)
 {
 
     if (
-        (QString(pblob.getDeviceName()) == _camera)
+        (QString(pblob.getDeviceName()) == getString("devices", "sequencercamera"))
         && isSequenceRunning
     )
     {
@@ -143,10 +107,10 @@ void Sequencer::newBLOB(INDI::PropertyBlob pblob)
         QString tt = QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss_zzz");
         _image->saveAsFITSSimple(getWebroot() + "/" + getModuleName() + "-" + currentFilter + "-" + tt + ".FITS");
 
-        OST::ImgData dta;
+        OST::ImgData dta = _image->ImgStats();
         dta.mUrlJpeg = getModuleName() + ".jpeg";
         dta.mUrlFits = getModuleName() + "-" + currentFilter + "-" + tt + ".FITS";
-        getValueImg("image", "image1")->setValue(dta, true);
+        getValueImg("image", "image")->setValue(dta, true);
 
         currentCount--;
         //sendMessage("RVC frame " + QString::number(currentLine) + "/" + QString::number(currentCount));
@@ -165,21 +129,14 @@ void Sequencer::newBLOB(INDI::PropertyBlob pblob)
 void Sequencer::newProperty(INDI::Property property)
 {
     if (
-        (property.getDeviceName()  == _fw)
+        (property.getDeviceName()  == getString("devices", "sequencerfilter"))
         &&  (QString(property.getName())   == "FILTER_NAME")
     )
     {
-        getValueInt("sequence", "filter")->lovClear();
-        INDI::PropertyText txt = property;
-        for (unsigned int i = 0; i < txt.count(); i++ )
-        {
-            txt[i].getText();
-            getValueInt("sequence", "filter")->lovAdd(i + 1, txt[i].getText());
-            qDebug() << QString::number(i + 1) << "/" << txt[i].getText();
-        }
+        refreshFilterLov();
     }
     if (
-        (property.getDeviceName()  == _fw)
+        (property.getDeviceName()  == getString("devices", "sequencerfilter"))
         &&  (QString(property.getName())   == "FILTER_SLOT")
         &&  (property.getState() == IPS_OK)
         && isSequenceRunning
@@ -198,7 +155,7 @@ void Sequencer::updateProperty(INDI::Property property)
         newBLOB(property);
     }
     if (
-        (property.getDeviceName() == _camera)
+        (property.getDeviceName() == getString("devices", "sequencercamera"))
         &&  (property.getState() == IPS_ALERT)
     )
     {
@@ -208,7 +165,7 @@ void Sequencer::updateProperty(INDI::Property property)
 
 
     if (
-        (property.getDeviceName()  == _camera)
+        (property.getDeviceName()  == getString("devices", "sequencercamera"))
         &&  (QString(property.getName())   == "CCD_FRAME_RESET")
         &&  (property.getState()  == IPS_OK)
     )
@@ -218,7 +175,7 @@ void Sequencer::updateProperty(INDI::Property property)
     }
 
     if (
-        (property.getDeviceName()  == _fw)
+        (property.getDeviceName()  == getString("devices", "sequencerfilter"))
         &&  (QString(property.getName())   == "FILTER_SLOT")
         &&  (property.getState() == IPS_OK)
         && isSequenceRunning
@@ -232,7 +189,7 @@ void Sequencer::updateProperty(INDI::Property property)
 void Sequencer::Shoot()
 {
     double exp = getValueFloat("sequence", "exposure")->getGrid()[0];
-    sendModNewNumber(_camera, "CCD_EXPOSURE", "CCD_EXPOSURE_VALUE",
+    sendModNewNumber(getString("devices", "sequencercamera"), "CCD_EXPOSURE", "CCD_EXPOSURE_VALUE",
                      //getOstElementGrid("sequence", "exposure")[0].toDouble());
                      exp);
     double i = getValueInt("sequence", "count")->getGrid()[currentLine];
@@ -305,11 +262,14 @@ void Sequencer::StartSequence()
     isSequenceRunning = true;
 
     connectIndi();
-    if (connectDevice(_camera))
+    if (connectDevice(getString("devices", "sequencercamera")))
     {
-        setBLOBMode(B_ALSO, _camera.toStdString().c_str(), nullptr);
-        frameReset(_camera);
-        sendModNewNumber(_camera, "SIMULATOR_SETTINGS", "SIM_TIME_FACTOR", 0.01 );
+        setBLOBMode(B_ALSO, getString("devices", "sequencercamera").toStdString().c_str(), nullptr);
+        frameReset(getString("devices", "sequencercamera"));
+        if (getString("devices", "sequencercamera") == "CCD Simulator")
+        {
+            sendModNewNumber(getString("devices", "sequencercamera"), "SIMULATOR_SETTINGS", "SIM_TIME_FACTOR", 0.01 );
+        }
         getProperty("actions")->setState(OST::Busy);
 
         for (int i = 0; i < getOstElementGrid("sequence", "status").count(); i++)
@@ -346,6 +306,32 @@ void Sequencer::StartLine()
 
         int i = getValueInt("sequence", "filter")->getGrid()[currentLine];
         currentFilter = getValueInt("sequence", "filter")->getLov()[i];
-        sendModNewNumber(_fw, "FILTER_SLOT", "FILTER_SLOT_VALUE", i);
+        sendModNewNumber(getString("devices", "sequencerfilter"), "FILTER_SLOT", "FILTER_SLOT_VALUE", i);
     }
+}
+void Sequencer::refreshFilterLov()
+{
+
+    INDI::BaseDevice dp = getDevice(getString("devices", "sequencerfilter").toStdString().c_str());
+
+    if (!dp.isValid())
+    {
+        sendError("Unable to find " + getString("devices", "sequencerfilter") + " device.");
+        return;
+    }
+    INDI::PropertyText txt = dp.getText("FILTER_NAME");
+    if (!txt.isValid())
+    {
+        sendError("Unable to find " + getString("devices", "sequencerfilter")  + "/" + "FILTER_NAME" + " property.");
+        return;
+    }
+
+    getValueInt("sequence", "filter")->lovClear();
+    for (unsigned int i = 0; i < txt.count(); i++ )
+    {
+        txt[i].getText();
+        getValueInt("sequence", "filter")->lovAdd(i + 1, txt[i].getText());
+        qDebug() << QString::number(i + 1) << "/" << txt[i].getText();
+    }
+
 }

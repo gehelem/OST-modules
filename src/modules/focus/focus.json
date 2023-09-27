@@ -124,7 +124,7 @@
             "exposure": {
                 "autoupdate":true,
                 "directedit":true,
-                "type":"int",
+                "type":"float",
                 "label": "Exposure",
                 "value":2,
                 "format": "99.99"

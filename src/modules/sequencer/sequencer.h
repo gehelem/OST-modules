@@ -60,8 +60,8 @@ class MODULE_INIT Sequencer: public IndiModule
         void StartSequence();
         void StartLine();
 
-        QString _camera  = "CCD Simulator";
-        QString _fw  = "Filter Simulator";
+        void refreshFilterLov();
+
         bool    _newblob;
 
         QPointer<fileio> _image;
@@ -73,7 +73,6 @@ class MODULE_INIT Sequencer: public IndiModule
         int    _loopIterations = 2;
         int    _loopIteration;
         double _loopHFRavg;
-        double _exposure = 2;
 
         int currentLine = 0;
         int currentCount = 0;

@@ -89,16 +89,12 @@ class MODULE_INIT FocusModule : public IndiModule
         void startCoarse();
 
 
-        QString _camera  = "CCD Simulator";
-        QString _focuser = "Focuser Simulator";
-        QString _mount = "Telescope Simulator";
         bool    _newblob;
 
         int    _startpos = 30000;
         int    _backlash = 100;
         int    _iterations = 3;
         int    _steps = 3000;
-        int    _exposure = 2;
         int    _loopIterations = 2;
         int    _loopIteration;
         double _loopHFRavg;
