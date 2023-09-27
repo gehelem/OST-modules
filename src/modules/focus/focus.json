@@ -82,36 +82,6 @@
 
         }
     },
-
-    "actions": {
-        "devcat": "Control",
-        "order":"Control000",
-        "group": "",
-        "permission": 2,
-        "rule":1,
-        "label": "Actions",
-        "elements": {
-            "coarse": {
-                "autoupdate":false,
-                "type":"bool",
-                "label": "Autofocus"
-                ,"value":false
-            },
-            "loop": {
-                "autoupdate":false,
-                "type":"bool",
-                "label": "Infinite loop"
-                ,"value":false
-            },
-            "abort": {
-                "autoupdate":false,
-                "type":"bool",
-                "label": "Abort"
-                ,"value":false
-            }
-        }
-    },
-
     "parameters": {
         "devcat": "Parameters",
         "group": "",
@@ -168,22 +138,6 @@
                 "format": "99999"
             }
         }
-    },
-    "image": {
-        "devcat": "Control",
-        "order":"Control999",
-        "group": "",
-        "permission": 0,
-        "label": "Last image",
-        "elements": {
-            "image1": {
-                "type": "img",
-                "label": "First image",
-                "urljpeg":"./dummy.jpg"
-            }
-        }
-
     }
-
 }
 }
