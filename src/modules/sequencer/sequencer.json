@@ -1,85 +1,5 @@
 {
 "properties":{
-    "actions": {
-        "devcat": "Control",
-        "group": "",
-        "permission": 2,
-        "order":0,
-        "rule":1,
-        "label": "Actions",
-        "elements": {
-            "run": {
-                "type":"bool",
-                "label": "Run sequence"
-                ,"value":false
-            },
-            "abort": {
-                "type":"bool",
-                "label": "Abort"
-                ,"value":false
-            }
-        }
-    },
-    "imagevalues": {
-        "devcat": "Results",
-        "rule":0,
-        "elements": {
-                "width": {
-                    "type":"int",
-                    "label": "Width",
-                    "value":0
-                },
-                "height": {
-                    "type":"int",
-                    "label": "Height",
-                    "value":0
-                },
-                "min": {
-                    "type":"int",
-                    "label": "Min ADU",
-                    "value":0
-                },
-                "max": {
-                    "type":"int",
-                    "label": "Max ADU",
-                    "value":0
-                },
-                "mean": {
-                    "type":"float",
-                    "label": "Mean ADU",
-                    "value":0
-                },
-                "median": {
-                    "type":"float",
-                    "label": "Median ADU",
-                    "value":0
-                },
-                "stddev": {
-                    "type":"float",
-                    "label": "StdDev",
-                    "value":0
-                },
-                "snr": {
-                    "type":"float",
-                    "label": "SNR",
-                    "value":0
-                },
-                "imgHFR": {
-                    "type":"float",
-                    "label": "Image HFR",
-                    "value":0
-                },
-                "starscount": {
-                    "type":"int",
-                    "label": "Stars found",
-                    "value":0
-                }
-
-        },
-        "group": "",
-        "permission": 0,
-        "label": "Last image statistics"
-    },
     "sequence": {
         "hasArray":true,
         "devcat": "Control",
@@ -145,20 +65,6 @@
 
             }
         }
-    },
-    "image": {
-        "devcat": "Results",
-        "group": "",
-        "permission": 0,
-        "label": "Last image",
-        "elements": {
-            "image1": {
-                "type": "img",
-                "label": "First image",
-                "urljpeg":"./dummy.jpg"
-            }
-        }
-
     }
 }
 }
