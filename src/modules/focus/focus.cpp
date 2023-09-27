@@ -21,18 +21,14 @@ FocusModule::FocusModule(QString name, QString label, QString profile, QVariantM
     setModuleVersion("0.1");
     //setModuleType("focus");
 
-    createOstElementText("devices", "camera", "Camera", true);
-    createOstElementText("devices", "focuser", "Focuser", true);
-    createOstElementText("devices", "mount", "Mount", true);
-    setOstElementValue("devices", "camera",   _camera, false);
-    setOstElementValue("devices", "focuser",  _focuser, false);
-    setOstElementValue("devices", "mount",    _mount, true);
     _startpos =          getValueInt("parameters", "startpos")->value();
     _steps =             getValueInt("parameters", "steps")->value();
     _iterations =        getValueInt("parameters", "iterations")->value();
     _loopIterations =    getValueInt("parameters", "loopIterations")->value();
     _exposure =          getValueInt("parameters", "exposure")->value();
     _backlash =          getValueInt("parameters", "backlash")->value();
+
+    defineMeAsFocuser();
 
 }
 
@@ -106,7 +102,7 @@ void FocusModule::OnMyExternalEvent(const QString &eventType, const QString  &ev
                 }
                 if (keyprop == "actions")
                 {
-                    if (keyelt == "coarse")
+                    if (keyelt == "autofocus")
                     {
                         if (setOstElementValue(keyprop, keyelt, false, false))
                         {
@@ -114,7 +110,7 @@ void FocusModule::OnMyExternalEvent(const QString &eventType, const QString  &ev
                             startCoarse();
                         }
                     }
-                    if (keyelt == "abort")
+                    if (keyelt == "abortfocus")
                     {
                         if (setOstElementValue(keyprop, keyelt, false, false))
                         {
@@ -133,7 +129,7 @@ void FocusModule::OnMyExternalEvent(const QString &eventType, const QString  &ev
                 }
                 if (keyprop == "devices")
                 {
-                    if (keyelt == "camera")
+                    if (keyelt == "focuscamera")
                     {
                         if (setOstElementValue(keyprop, keyelt, val, false))
                         {
@@ -141,7 +137,7 @@ void FocusModule::OnMyExternalEvent(const QString &eventType, const QString  &ev
                             _camera = val.toString();
                         }
                     }
-                    if (keyelt == "focuser")
+                    if (keyelt == "focusfocuser")
                     {
                         if (setOstElementValue(keyprop, keyelt, val, false))
                         {
@@ -217,11 +213,11 @@ void FocusModule::newBLOB(INDI::PropertyBlob b)
         getProperty("image")->setState(OST::Ok);
 
         QImage rawImage = _image->getRawQImage();
-        rawImage.save( getWebroot() + "/" + QString(b.getDeviceName()) + ".jpeg", "JPG", 100);
-        OST::ImgData dta;
-        dta.mUrlJpeg = QString(b.getDeviceName()) + ".jpeg";
-        dta.mUrlFits = QString(b.getDeviceName()) + ".FITS";
-        getValueImg("image", "image1")->setValue(dta, true);
+        rawImage.save( getWebroot() + "/" + getModuleName() + QString(b.getDeviceName()) + ".jpeg", "JPG", 100);
+        OST::ImgData dta = _image->ImgStats();
+        dta.mUrlJpeg = getModuleName() + QString(b.getDeviceName()) + ".jpeg";
+        dta.mUrlFits = getModuleName() + QString(b.getDeviceName()) + ".FITS";
+        getValueImg("image", "image")->setValue(dta, true);
 
         if (_machine.isRunning())
         {
