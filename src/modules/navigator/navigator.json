@@ -85,48 +85,6 @@
             }
         }
     },
-    "selection": {
-        "devcat": "Control",
-        "order": "Control0007",
-        "group": "",
-        "permission": 2,
-        "rule":0,
-        "label": "Selection",
-        "elements": {
-            "code": {
-                "type": "string",
-                "autoupdate":true,
-                "directedit":true,
-                "label": "Code",
-                "order":"10",
-                "value":""
-            },
-            "RA": {
-                "type": "float",
-                "autoupdate":true,
-                "directedit":true,
-                "label": "RA",
-                "order":"20",
-                "value":0
-            },
-            "NS": {
-                "type": "string",
-                "autoupdate":true,
-                "directedit":true,
-                "label": "N/S",
-                "order":"40",
-                "value":""
-            },
-            "DEC": {
-                "type": "float",
-                "autoupdate":true,
-                "directedit":true,
-                "label": "DEC",
-                "order":"30",
-                "value":0
-            }
-        }
-    },
     "selectnow": {
         "devcat": "Control",
         "order": "Control0008",
@@ -164,48 +122,6 @@
                 "label": "DEC",
                 "order":"30",
                 "value":0
-            }
-        }
-    },
-    "actions": {
-        "devcat": "Control",
-        "group": "",
-        "order":"Control0010",
-        "permission": 2,
-        "rule":0,
-        "label": "Actions",
-        "elements": {
-            "slew": {
-                "type": "bool",
-                "label": "Slew",
-                "order":"10",
-                "value":false
-            },
-            "sync": {
-                "type": "bool",
-                "label": "Sync mount",
-                "order":"20",
-                "value":false
-            },
-            "slewsolv": {
-                "type": "bool",
-                "label": "Slew and solve",
-                "order":"30",
-                "value":false
-            }
-        }
-    },
-    "image": {
-        "devcat": "Control",
-        "group": "",
-        "order":"Control8888",
-        "permission": 0,
-        "label": "",
-        "elements": {
-            "image1": {
-                "type": "img",
-                "label": "Navimage",
-                "urljpeg":"./dummy.jpg"
             }
         }
     },

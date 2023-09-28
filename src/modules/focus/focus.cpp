@@ -352,7 +352,20 @@ void FocusModule::SMRequestGotoStart()
 void FocusModule::SMRequestExposure()
 {
     //sendMessage("SMRequestExposure");
-    if (!sendModNewNumber(getString("devices", "focuscamera"), "CCD_EXPOSURE", "CCD_EXPOSURE_VALUE", getValueFloat("parameters",
+    if (!sendModNewNumber(getString("devices", "focuscamera"), "CCD_GAIN", "GAIN", getValueInt("parms",
+                          "gain")->value()))
+    {
+        emit abort();
+        return;
+    }
+    if (!sendModNewNumber(getString("devices", "focuscamera"), "CCD_OFFSET", "OFFSET", getValueInt("parms",
+                          "offset")->value()))
+    {
+        emit abort();
+        return;
+    }
+
+    if (!sendModNewNumber(getString("devices", "focuscamera"), "CCD_EXPOSURE", "CCD_EXPOSURE_VALUE", getValueFloat("parms",
                           "exposure")->value()))
     {
         emit abort();
@@ -374,7 +387,11 @@ void FocusModule::SMFindStars()
 
 void FocusModule::OnSucessSEP()
 {
-    setOstElementValue("values", "imgHFR", _solver.HFRavg, true);
+    OST::ImgData dta = getValueImg("image", "image")->value();
+    dta.HFRavg = _solver.HFRavg;
+    dta.starsCount = _solver.stars.size();
+    getValueImg("image", "image")->setValue(dta, true);
+
     emit FindStarsDone();
 }
 
@@ -463,7 +480,7 @@ void FocusModule::SMRequestGotoBest()
 void FocusModule::SMRequestExposureBest()
 {
     //sendMessage("SMRequestExposureBest");
-    if (!sendModNewNumber(getString("devices", "focuscamera"), "CCD_EXPOSURE", "CCD_EXPOSURE_VALUE", getValueFloat("parameters",
+    if (!sendModNewNumber(getString("devices", "focuscamera"), "CCD_EXPOSURE", "CCD_EXPOSURE_VALUE", getValueFloat("parms",
                           "exposure")->value()))
     {
         emit abort();
@@ -484,6 +501,11 @@ void FocusModule::SMComputeResult()
     //sendMessage("SMComputeResult");
     setOstElementValue("values", "imgHFR", _solver.HFRavg, true);
     setOstElementValue("results", "hfr", _solver.HFRavg, true);
+    OST::ImgData dta = getValueImg("image", "image")->value();
+    dta.HFRavg = _solver.HFRavg;
+    dta.starsCount = _solver.stars.size();
+    getValueImg("image", "image")->setValue(dta, true);
+
     // what should i do here ?
     emit ComputeResultDone();
 }

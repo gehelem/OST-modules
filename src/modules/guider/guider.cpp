@@ -16,29 +16,11 @@ Guider::Guider(QString name, QString label, QString profile, QVariantMap availab
     setModuleDescription("Guider module - work in progress");
     setModuleVersion("0.1");
 
-    createOstElementText("devices", "camera", "Camera", true);
-    createOstElementText("devices", "mount", "Mount", true);
-    setOstElementValue("devices", "camera",   _camera, false);
-    setOstElementValue("devices", "mount",    _mount, true);
-
-
-    //    _grid = new GridProperty(_modulename,"Control","root","grid","Grid property label",0,0,"PXY","Set","DX","DY","","");
-    //    emit propertyCreated(_grid,&_modulename);
-    //    _propertyStore.add(_grid);
-    //
-    //    _states = new LightProperty(_modulename,"Control","root","states","State",0,0);
-    //    _states->addLight(new LightValue("idle"  ,"Idle","hint",1));
-    //    _states->addLight(new LightValue("cal"   ,"Calibrating","hint",0));
-    //    _states->addLight(new LightValue("guide" ,"Guiding","hint",0));
-    //    _states->addLight(new LightValue("error" ,"Error","hint",0));
-    //    emit propertyCreated(_states,&_modulename);
-    //    _propertyStore.add(_states);
-
     buildInitStateMachines();
     buildCalStateMachines();
     buildGuideStateMachines();
 
-
+    defineMeAsGuider();
 
 }
 
@@ -60,64 +42,6 @@ void Guider::OnMyExternalEvent(const QString &eventType, const QString  &eventMo
             foreach(const QString &keyelt, eventData[keyprop].toMap()["elements"].toMap().keys())
             {
                 QVariant val = eventData[keyprop].toMap()["elements"].toMap()[keyelt].toMap()["value"];
-                if (keyprop == "commonParams")
-                {
-                    if (keyelt == "exposure")
-                    {
-                        if (setOstElementValue(keyprop, keyelt, val, true))
-                        {
-                            _exposure = val.toDouble();
-                        }
-                    }
-                }
-                if (keyprop == "calParams")
-                {
-                    if (keyelt == "pulse")
-                    {
-                        if (setOstElementValue(keyprop, keyelt, val, true))
-                        {
-                            _pulse = val.toInt();
-                        }
-                    }
-                    if (keyelt == "calsteps")
-                    {
-                        if (setOstElementValue(keyprop, keyelt, val, true))
-                        {
-                            _calSteps = val.toInt();
-                        }
-                    }
-                }
-                if (keyprop == "guideParams")
-                {
-                    if (keyelt == "pulsemax")
-                    {
-                        if (setOstElementValue(keyprop, keyelt, val, true))
-                        {
-                            _pulseMax = val.toInt();
-                        }
-                    }
-                    if (keyelt == "pulsemin")
-                    {
-                        if (setOstElementValue(keyprop, keyelt, val, true))
-                        {
-                            _pulseMin = val.toInt();
-                        }
-                    }
-                    if (keyelt == "raAgr")
-                    {
-                        if (setOstElementValue(keyprop, keyelt, val, true))
-                        {
-                            _raAgr = val.toDouble();
-                        }
-                    }
-                    if (keyelt == "deAgr")
-                    {
-                        if (setOstElementValue(keyprop, keyelt, val, true))
-                        {
-                            _deAgr = val.toDouble();
-                        }
-                    }
-                }
                 if (keyprop == "revCorrections"  && (keyelt == "revRA" || keyelt == "revDE" ))
                 {
                     setOstElementValue(keyprop, keyelt, val, true);
@@ -141,7 +65,7 @@ void Guider::OnMyExternalEvent(const QString &eventType, const QString  &eventMo
                             _SMInit.start();
                         }
                     }
-                    if (keyelt == "abort")
+                    if (keyelt == "abortguider")
                     {
                         if (setOstElementValue(keyprop, keyelt, false, false))
                         {
@@ -150,7 +74,7 @@ void Guider::OnMyExternalEvent(const QString &eventType, const QString  &eventMo
                             emit Abort();
                         }
                     }
-                    if (keyelt == "calibration")
+                    if (keyelt == "calibrate")
                     {
                         if (setOstElementValue(keyprop, keyelt, false, false))
                         {
@@ -188,7 +112,7 @@ void Guider::updateProperty(INDI::Property property)
         newBLOB(property);
     }
     if (
-        (property.getDeviceName() == getString("devices", "camera"))
+        (property.getDeviceName() == getString("devices", "guidecamera"))
         &&  (QString(property.getName()) == "CCD_FRAME_RESET")
         &&  (property.getState() == IPS_OK)
     )
@@ -197,7 +121,7 @@ void Guider::updateProperty(INDI::Property property)
         emit FrameResetDone();
     }
     if (
-        (property.getDeviceName() == getString("devices", "mount")) &&
+        (property.getDeviceName() == getString("devices", "guider")) &&
         (QString(property.getName())   == "TELESCOPE_TIMED_GUIDE_NS") &&
         (property.getState()  == IPS_IDLE)
 
@@ -207,7 +131,7 @@ void Guider::updateProperty(INDI::Property property)
     }
 
     if (
-        (property.getDeviceName() == getString("devices", "mount")) &&
+        (property.getDeviceName() == getString("devices", "guider")) &&
         (QString(property.getName())  == "TELESCOPE_TIMED_GUIDE_WE") &&
         (property.getState()  == IPS_IDLE)
 
@@ -217,7 +141,7 @@ void Guider::updateProperty(INDI::Property property)
     }
 
     if (
-        (property.getDeviceName() == getString("devices", "mount")) &&
+        (property.getDeviceName() == getString("devices", "guider")) &&
         ( (QString(property.getName())   == "TELESCOPE_TIMED_GUIDE_WE") ||
           (QString(property.getName())  == "TELESCOPE_TIMED_GUIDE_NS") ) &&
         (property.getState()  == IPS_IDLE)
@@ -233,7 +157,7 @@ void Guider::updateProperty(INDI::Property property)
 void Guider::newBLOB(INDI::PropertyBlob pblob)
 {
     if (
-        (QString(pblob.getDeviceName()) == getString("devices", "camera"))
+        (QString(pblob.getDeviceName()) == getString("devices", "guidecamera"))
     )
     {
         delete _image;
@@ -245,9 +169,9 @@ void Guider::newBLOB(INDI::PropertyBlob pblob)
         im.setColorTable(rawImage.colorTable());
 
         im.save(getWebroot() + "/" + getModuleName() + ".jpeg", "JPG", 100);
-        OST::ImgData dta;
+        OST::ImgData dta = _image->ImgStats();
         dta.mUrlJpeg = getModuleName() + ".jpeg";
-        getValueImg("image", "image1")->setValue(dta, true);
+        getValueImg("image", "image")->setValue(dta, true);
 
 
         //BOOST_LOG_TRIVIAL(debug) << "Emit Exposure done";
@@ -390,15 +314,18 @@ void Guider::buildGuideStateMachines(void)
 void Guider::SMInitInit()
 {
     //sendMessage("SMInitInit");
-    if (connectDevice(getString("devices", "camera")))
+    if (connectDevice(getString("devices", "guidecamera")))
     {
         connectIndi();
-        connectDevice(getString("devices", "camera"));
-        connectDevice(getString("devices", "mount"));
-        setBLOBMode(B_ALSO, getString("devices", "camera").toStdString().c_str(), nullptr);
-        enableDirectBlobAccess(getString("devices", "camera").toStdString().c_str(), nullptr);
-        frameReset(getString("devices", "camera"));
-        sendModNewNumber(getString("devices", "camera"), "SIMULATOR_SETTINGS", "SIM_TIME_FACTOR", 1 );
+        connectDevice(getString("devices", "guidecamera"));
+        connectDevice(getString("devices", "guider"));
+        setBLOBMode(B_ALSO, getString("devices", "guidecamera").toStdString().c_str(), nullptr);
+        enableDirectBlobAccess(getString("devices", "guidecamera").toStdString().c_str(), nullptr);
+        frameReset(getString("devices", "guidecamera"));
+        if (getString("devices", "guidecamera") == "CCD Simulator")
+        {
+            sendModNewNumber(getString("devices", "guidecamera"), "SIMULATOR_SETTINGS", "SIM_TIME_FACTOR", 1 );
+        }
         getProperty("actions")->setState(OST::Busy);
         getProperty("drift")->clearGrid();
         getProperty("guiding")->clearGrid();
@@ -413,21 +340,21 @@ void Guider::SMInitInit()
     }
 
     /* get mount DEC */
-    if (!getModNumber(getString("devices", "mount"), "EQUATORIAL_EOD_COORD", "DEC",
+    if (!getModNumber(getString("devices", "guider"), "EQUATORIAL_EOD_COORD", "DEC",
                       _mountDEC))
     {
         emit Abort();
         return;
     }
     /* get mount RA */
-    if (!getModNumber(getString("devices", "mount"), "EQUATORIAL_EOD_COORD", "RA",
+    if (!getModNumber(getString("devices", "guider"), "EQUATORIAL_EOD_COORD", "RA",
                       _mountRA))
     {
         emit Abort();
         return;
     }
     /* get mount Pier position  */
-    if (!getModSwitch(getString("devices", "mount"), "TELESCOPE_PIER_SIDE", "PIER_WEST",
+    if (!getModSwitch(getString("devices", "guider"), "TELESCOPE_PIER_SIDE", "PIER_WEST",
                       _mountPointingWest))
     {
         emit Abort();
@@ -509,7 +436,7 @@ void Guider::SMRequestFrameReset()
 {
     //BOOST_LOG_TRIVIAL(debug) << "SMRequestFrameReset";
     //sendMessage("SMRequestFrameReset");
-    if (!frameReset(getString("devices", "camera")))
+    if (!frameReset(getString("devices", "guidecamera")))
     {
         emit Abort();
         return;
@@ -523,7 +450,8 @@ void Guider::SMRequestExposure()
 {
     //BOOST_LOG_TRIVIAL(debug) << "SMRequestExposure";
     //sendMessage("SMRequestExposure");
-    if (!sendModNewNumber(getString("devices", "camera"), "CCD_EXPOSURE", "CCD_EXPOSURE_VALUE", _exposure))
+    if (!sendModNewNumber(getString("devices", "guidecamera"), "CCD_EXPOSURE", "CCD_EXPOSURE_VALUE", getFloat("parms",
+                          "exposure")))
     {
         emit Abort();
         return;
@@ -807,7 +735,7 @@ void Guider::SMRequestPulses()
     {
         //BOOST_LOG_TRIVIAL(debug) << "********* Pulse  N " << _pulseN;
         _pulseDECfinished = false;
-        if (!sendModNewNumber(getString("devices", "mount"), "TELESCOPE_TIMED_GUIDE_NS", "TIMED_GUIDE_N",
+        if (!sendModNewNumber(getString("devices", "guider"), "TELESCOPE_TIMED_GUIDE_NS", "TIMED_GUIDE_N",
                               _pulseN))
         {
             emit abort();
@@ -819,7 +747,7 @@ void Guider::SMRequestPulses()
     {
         _pulseDECfinished = false;
         //BOOST_LOG_TRIVIAL(debug) << "********* Pulse  S " << _pulseS;
-        if (!sendModNewNumber(getString("devices", "mount"), "TELESCOPE_TIMED_GUIDE_NS", "TIMED_GUIDE_S",
+        if (!sendModNewNumber(getString("devices", "guider"), "TELESCOPE_TIMED_GUIDE_NS", "TIMED_GUIDE_S",
                               _pulseS))
         {
             emit abort();
@@ -831,7 +759,7 @@ void Guider::SMRequestPulses()
     {
         _pulseRAfinished = false;
         //BOOST_LOG_TRIVIAL(debug) << "********* Pulse  E " << _pulseE;
-        if (!sendModNewNumber(getString("devices", "mount"), "TELESCOPE_TIMED_GUIDE_WE", "TIMED_GUIDE_E",
+        if (!sendModNewNumber(getString("devices", "guider"), "TELESCOPE_TIMED_GUIDE_WE", "TIMED_GUIDE_E",
                               _pulseE))
         {
             emit abort();
@@ -843,7 +771,7 @@ void Guider::SMRequestPulses()
     {
         _pulseRAfinished = false;
         //BOOST_LOG_TRIVIAL(debug) << "********* Pulse  W " << _pulseW;
-        if (!sendModNewNumber(getString("devices", "mount"), "TELESCOPE_TIMED_GUIDE_WE", "TIMED_GUIDE_W",
+        if (!sendModNewNumber(getString("devices", "guider"), "TELESCOPE_TIMED_GUIDE_WE", "TIMED_GUIDE_W",
                               _pulseW))
         {
             emit abort();
@@ -878,6 +806,10 @@ void Guider::SMFindStars()
 void Guider::OnSucessSEP()
 {
     //BOOST_LOG_TRIVIAL(debug) << "OnSucessSEP";
+    OST::ImgData dta = getValueImg("image", "image")->value();
+    dta.HFRavg = _solver.HFRavg;
+    dta.starsCount = _solver.stars.size();
+    getValueImg("image", "image")->setValue(dta, true);
 
     //sendMessage("SEP finished");
     disconnect(&_solver, &Solver::successSEP, this, &Guider::OnSucessSEP);

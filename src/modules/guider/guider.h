@@ -80,7 +80,6 @@ class MODULE_INIT Guider  : public IndiModule
         Solver _solver;
         FITSImage::Statistic stats;
 
-        double _exposure = 0.5;
         int    _pulse  = 1000;
         int    _pulseMax  = 2000;
         int    _pulseMin  = 20;

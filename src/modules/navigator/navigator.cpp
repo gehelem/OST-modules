@@ -18,10 +18,8 @@ Navigator::Navigator(QString name, QString label, QString profile, QVariantMap a
     setModuleDescription("Navigator module - work in progress");
     setModuleVersion("0.1");
 
-    createOstElementText("devices", "camera", "Camera", false);
-    setOstElementValue("devices", "camera",   mCamera, false);
-    createOstElementText("devices", "mount", "Mount", false);
-    setOstElementValue("devices", "mount",   mMount, true);
+    defineMeAsNavigator();
+
     connectIndi();
     connectAllDevices();
 
@@ -59,7 +57,7 @@ void Navigator::OnMyExternalEvent(const QString &pEventType, const QString  &pEv
                         if (setOstElementValue(keyprop, keyelt, true, true))
                         {
                             getProperty(keyprop)->setState(OST::Busy);
-                            /* we should avoid this, and do this in a differnet thread. We'll see later */
+                            /* we should avoid this, and do this in a different thread. We'll see later */
                             populateCatalog(":" + getString("popcat", "catlg") + ".txt", getString("popcat", "catlg"));
                             getProperty(keyprop)->setState(OST::Ok);
                         }
@@ -69,7 +67,7 @@ void Navigator::OnMyExternalEvent(const QString &pEventType, const QString  &pEv
                 if (keyprop == "actions")
                 {
                     getProperty(keyprop)->setState(OST::Busy);
-                    if (keyelt == "slew")
+                    if (keyelt == "gototarget")
                     {
                         slewToSelection();
                     }
@@ -82,10 +80,9 @@ void Navigator::OnMyExternalEvent(const QString &pEventType, const QString  &pEv
                 float ra = getValueFloat("results", "RA")->getGrid()[line];
                 float dec = getValueFloat("results", "DEC")->getGrid()[line];
                 QString ns = getValueString("results", "NS")->getGrid()[line];
-                setOstElementValue("selection", "code", code, false);
-                setOstElementValue("selection", "RA", ra, false);
-                setOstElementValue("selection", "DEC", dec, false);
-                setOstElementValue("selection", "NS", ns, true);
+                setOstElementValue("actions", "targetname", code, false);
+                setOstElementValue("actions", "targetra", ra, false);
+                setOstElementValue("actions", "targetde", dec, false);
                 convertSelection();
             }
         }
@@ -97,7 +94,7 @@ void Navigator::newBLOB(INDI::PropertyBlob pblob)
 {
 
     if (
-        (QString(pblob.getDeviceName()) == getString("devices", "camera")) && (mState != "idle")
+        (QString(pblob.getDeviceName()) == getString("devices", "navigatorcamera")) && (mState != "idle")
     )
     {
         getProperty("actions")->setState(OST::Ok);
@@ -122,7 +119,7 @@ void Navigator::updateProperty(INDI::Property property)
         newBLOB(property);
     }
     if (
-        (property.getDeviceName() == getString("devices", "camera"))
+        (property.getDeviceName() == getString("devices", "navigatorcamera"))
         &&  (property.getState() == IPS_ALERT)
     )
     {
@@ -132,7 +129,7 @@ void Navigator::updateProperty(INDI::Property property)
 
 
     if (
-        (property.getDeviceName() == getString("devices", "camera"))
+        (property.getDeviceName() == getString("devices", "navigatorcamera"))
         &&  (property.getName()   == std::string("CCD_FRAME_RESET"))
         &&  (property.getState() == IPS_OK)
     )
@@ -141,7 +138,7 @@ void Navigator::updateProperty(INDI::Property property)
         emit FrameResetDone();
     }
     if (
-        (property.getDeviceName() == getString("devices", "mount"))
+        (property.getDeviceName() == getString("devices", "navigatormount"))
         &&  (property.getName()   == std::string("EQUATORIAL_EOD_COORD"))
         &&  (property.getState() == IPS_OK)
     )
@@ -152,10 +149,10 @@ void Navigator::updateProperty(INDI::Property property)
 }
 void Navigator::Shoot()
 {
-    if (connectDevice(getString("devices", "camera")))
+    if (connectDevice(getString("devices", "navigatorcamera")))
     {
-        frameReset(getString("devices", "camera"));
-        sendModNewNumber(getString("devices", "camera"), "CCD_EXPOSURE", "CCD_EXPOSURE_VALUE",
+        frameReset(getString("devices", "navigatorcamera"));
+        sendModNewNumber(getString("devices", "navigatorcamera"), "CCD_EXPOSURE", "CCD_EXPOSURE_VALUE",
                          getFloat("parameters", "exposure"));
         getProperty("actions")->setState(OST::Busy);
     }
@@ -167,11 +164,11 @@ void Navigator::Shoot()
 void Navigator::initIndi()
 {
     connectIndi();
-    connectDevice(getString("devices", "camera"));
-    connectDevice(getString("devices", "mount"));
-    setBLOBMode(B_ALSO, getString("devices", "camera").toStdString().c_str(), nullptr);
-    sendModNewNumber(getString("devices", "camera"), "SIMULATOR_SETTINGS", "SIM_TIME_FACTOR", 0.01 );
-    enableDirectBlobAccess(getString("devices", "camera").toStdString().c_str(), nullptr);
+    connectDevice(getString("devices", "navigatorcamera"));
+    connectDevice(getString("devices", "navigatormount"));
+    setBLOBMode(B_ALSO, getString("devices", "navigatorcamera").toStdString().c_str(), nullptr);
+    sendModNewNumber(getString("devices", "navigatorcamera"), "SIMULATOR_SETTINGS", "SIM_TIME_FACTOR", 0.01 );
+    enableDirectBlobAccess(getString("devices", "navigatorcamera").toStdString().c_str(), nullptr);
 
 }
 void Navigator::OnSucessSEP()
@@ -232,8 +229,8 @@ void Navigator::updateSearchList(void)
 }
 void Navigator::slewToSelection(void)
 {
-    QString mount = getString("devices", "mount");
-    QString cam  = getString("devices", "camera");
+    QString mount = getString("devices", "navigatormount");
+    QString cam  = getString("devices", "navigatorcamera");
     double ra  = getFloat("selectnow", "RA");
     double dec  = getFloat("selectnow", "DEC");
     INDI::BaseDevice dp = getDevice(mount.toStdString().c_str());
@@ -251,15 +248,14 @@ void Navigator::slewToSelection(void)
     prop.findWidgetByName("RA")->value = ra;
     prop.findWidgetByName("DEC")->value = dec;
     sendNewNumber(prop);
-    sendMessage("Slewing to " + getString("selection", "code"));
+    sendMessage("Slewing to " + getString("actions", "targetname"));
 
 }
 void Navigator::convertSelection(void)
 {
-    QString code = getString("selection", "code");
-    float ra = getFloat("selection", "RA");
-    float dec = getFloat("selection", "DEC");
-    QString ns = getString("selection", "NS");
+    QString code = getString("actions", "targetname");
+    float ra = getFloat("actions", "targetra");
+    float dec = getFloat("actions", "targetde");
     double jd = ln_get_julian_from_sys();
     INDI::IEquatorialCoordinates j2000pos;
     INDI::IEquatorialCoordinates observed;
@@ -271,5 +267,4 @@ void Navigator::convertSelection(void)
     setOstElementValue("selectnow", "code", code, false);
     setOstElementValue("selectnow", "RA", observed.rightascension, false);
     setOstElementValue("selectnow", "DEC", observed.declination, false);
-    setOstElementValue("selectnow", "NS", ns, true);
 }

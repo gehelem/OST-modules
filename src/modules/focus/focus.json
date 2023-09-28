@@ -121,14 +121,6 @@
                 "value":3,
                 "format": "99"
             },
-            "exposure": {
-                "autoupdate":true,
-                "directedit":true,
-                "type":"float",
-                "label": "Exposure",
-                "value":2,
-                "format": "99.99"
-            },
             "backlash": {
                 "autoupdate":true,
                 "directedit":true,
