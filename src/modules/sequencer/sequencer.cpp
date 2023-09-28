@@ -48,6 +48,13 @@ void Sequencer::OnMyExternalEvent(const QString &eventType, const QString  &even
                         isSequenceRunning = false;
                     }
                 }
+                if (keyprop == "devices")
+                {
+                    if (keyelt == "sequencerfilter")
+                    {
+                        refreshFilterLov();
+                    }
+                }
 
             }
             if (eventType == "Fldelete")
@@ -84,24 +91,14 @@ void Sequencer::newBLOB(INDI::PropertyBlob pblob)
         _image = new fileio();
         _image->loadBlob(pblob);
         stats = _image->getStats();
-        setOstElementValue("imagevalues", "width", _image->getStats().width, false);
-        setOstElementValue("imagevalues", "height", _image->getStats().height, false);
-        setOstElementValue("imagevalues", "min", _image->getStats().min[0], false);
-        setOstElementValue("imagevalues", "max", _image->getStats().max[0], false);
-        setOstElementValue("imagevalues", "mean", _image->getStats().mean[0], false);
-        setOstElementValue("imagevalues", "median", _image->getStats().median[0], false);
-        setOstElementValue("imagevalues", "stddev", _image->getStats().stddev[0], false);
-        setOstElementValue("imagevalues", "snr", _image->getStats().SNR, true);
-        /*sendMessage("SMFindStars");
+        sendMessage("Couting stars ...");
         _solver.ResetSolver(stats, _image->getImageBuffer());
         connect(&_solver, &Solver::successSEP, this, &Sequencer::OnSucessSEP);
-        _solver.FindStars(_solver.stellarSolverProfiles[0]);*/
+        _solver.FindStars(_solver.stellarSolverProfiles[0]);
 
         QImage rawImage = _image->getRawQImage();
         QImage im = rawImage.convertToFormat(QImage::Format_RGB32);
         im.setColorTable(rawImage.colorTable());
-        QImage immap = rawImage.convertToFormat(QImage::Format_RGB32);
-        immap.setColorTable(rawImage.colorTable());
         im.save( getWebroot() + "/" + getModuleName() + ".jpeg", "JPG", 100);
 
         QString tt = QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss_zzz");
@@ -199,60 +196,10 @@ void Sequencer::Shoot()
 
 void Sequencer::OnSucessSEP()
 {
-    getProperty("actions")->setState(OST::Ok);
-    setOstElementValue("imagevalues", "imgHFR", _solver.HFRavg, false);
-    setOstElementValue("imagevalues", "starscount", _solver.stars.size(), true);
-
-
-
-    //image->saveMapToJpeg(_webroot+"/"+_modulename+".jpeg",100,_solver.stars);
-    QList<fileio::Record> rec = _image->getRecords();
-    QImage rawImage = _image->getRawQImage();
-    QImage im = rawImage.convertToFormat(QImage::Format_RGB32);
-    im.setColorTable(rawImage.colorTable());
-    QImage immap = rawImage.convertToFormat(QImage::Format_RGB32);
-    immap.setColorTable(rawImage.colorTable());
-
-    im.save( getWebroot() + "/" + getModuleName() + ".jpeg", "JPG", 100);
-    OST::ImgData dta;
-    dta.mUrlJpeg = getModuleName() + ".jpeg";
-    getValueImg("image", "image1")->setValue(dta, true);
-
-    //QRect r;
-    //r.setRect(0,0,im.width(),im.height());
-
-    /*QPainter p;
-    p.begin(&immap);
-    p.setPen(QPen(Qt::red));
-    //p.setFont(QFont("Times", 15, QFont::Normal));
-    //p.drawText(r, Qt::AlignLeft, QDateTime::currentDateTime().toString("dd/MM/yyyy hh:mm:ss zzz") );
-    p.setPen(QPen(Qt::green));
-    foreach( FITSImage::Star s, _solver.stars )
-    {
-        qDebug() << "draw " << s.x << "/" << s.y;
-        int x = s.x;
-        int y = s.y;
-        int a = s.a;
-        int b = s.b;
-        qDebug() << "draw " << x << "/" << y;
-        p.drawEllipse(QPoint(x, y), a * 5, b * 5);
-    }
-    p.end();
-
-    resetOstElements("histogram");
-    QVector<double> his = _image->getHistogramFrequency(0);
-    for( int i = 1; i < his.size(); i++)
-    {
-        //qDebug() << "HIS " << i << "-"  << _image->getCumulativeFrequency(0)[i] << "-"  << _image->getHistogramIntensity(0)[i] << "-"  << _image->getHistogramFrequency(0)[i];
-        setOstElementValue("histogram", "i", i, false);
-        setOstElementValue("histogram", "n", his[i], false);
-        pushOstElements("histogram");
-    }
-
-    immap.save(getWebroot() + "/" + getModuleName() + "map.jpeg", "JPG", 100);
-    setOstPropertyAttribute("imagemap", "URL", getModuleName() + "map.jpeg", true);
-
-    emit FindStarsDone();*/
+    OST::ImgData dta = _image->ImgStats();
+    dta.HFRavg = _solver.HFRavg;
+    dta.starsCount = _solver.stars.size();
+    getValueImg("image", "image")->setValue(dta, true);
 }
 
 
@@ -311,7 +258,6 @@ void Sequencer::StartLine()
 }
 void Sequencer::refreshFilterLov()
 {
-
     INDI::BaseDevice dp = getDevice(getString("devices", "sequencerfilter").toStdString().c_str());
 
     if (!dp.isValid())
@@ -331,7 +277,6 @@ void Sequencer::refreshFilterLov()
     {
         txt[i].getText();
         getValueInt("sequence", "filter")->lovAdd(i + 1, txt[i].getText());
-        qDebug() << QString::number(i + 1) << "/" << txt[i].getText();
     }
 
 }
