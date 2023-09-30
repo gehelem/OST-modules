@@ -59,7 +59,6 @@ class MODULE_INIT Inspector : public IndiModule
         void SMAbort();
         void startCoarse();
 
-        QString _camera  = "CCD Simulator";
         bool    _newblob;
 
         QPointer<fileio> _image;
@@ -71,7 +70,6 @@ class MODULE_INIT Inspector : public IndiModule
         int    _loopIterations = 2;
         int    _loopIteration;
         double _loopHFRavg;
-        double _exposure = 2;
 
         int    _iteration;
         double _bestpos;

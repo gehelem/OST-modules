@@ -136,7 +136,7 @@ void FocusModule::newBLOB(INDI::PropertyBlob b)
     {
         delete _image;
         _image = new fileio();
-        _image->loadBlob(b);
+        _image->loadBlob(b, 64);
         //setBLOBMode(B_NEVER, getString("devices","focuscamera").toStdString().c_str(), nullptr);
 
         getProperty("image")->setState(OST::Ok);

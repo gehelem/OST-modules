@@ -162,7 +162,7 @@ void Guider::newBLOB(INDI::PropertyBlob pblob)
     {
         delete _image;
         _image = new fileio();
-        _image->loadBlob(pblob);
+        _image->loadBlob(pblob, 64);
         stats = _image->getStats();
         QImage rawImage = _image->getRawQImage();
         QImage im = rawImage.convertToFormat(QImage::Format_RGB32);
