@@ -43,7 +43,7 @@ void IndiPanel::removeDevice(INDI::BaseDevice dp)
 
     foreach(const QString &key, getStore().keys())
     {
-        delete getStore()[key];
+        delete getStore()[key]; // this is wrong, we should test level1/devcat before deletion
     }
 
 }

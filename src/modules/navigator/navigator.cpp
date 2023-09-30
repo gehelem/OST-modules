@@ -100,7 +100,7 @@ void Navigator::newBLOB(INDI::PropertyBlob pblob)
         getProperty("actions")->setState(OST::Ok);
         delete pImage;
         pImage = new fileio();
-        pImage->loadBlob(pblob);
+        pImage->loadBlob(pblob, 64);
         mStats = pImage->getStats();
         mSolver.ResetSolver(mStats, pImage->getImageBuffer());
         connect(&mSolver, &Solver::successSEP, this, &Navigator::OnSucessSEP);

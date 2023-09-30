@@ -89,7 +89,7 @@ void Sequencer::newBLOB(INDI::PropertyBlob pblob)
     {
         delete _image;
         _image = new fileio();
-        _image->loadBlob(pblob);
+        _image->loadBlob(pblob, 64);
         stats = _image->getStats();
         sendMessage("Couting stars ...");
         _solver.ResetSolver(stats, _image->getImageBuffer());
