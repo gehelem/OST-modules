@@ -20,6 +20,7 @@ add_compile_options(-fPIC)
 #endforeach()
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 
+
 #find_package(Qt5Core)
 find_package(CFITSIO REQUIRED)
 find_package(INDI REQUIRED)
