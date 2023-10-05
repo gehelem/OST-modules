@@ -15,8 +15,11 @@ Navigator::Navigator(QString name, QString label, QString profile, QVariantMap a
     loadOstPropertiesFromFile(":navigator.json");
     setClassName(QString(metaObject()->className()).toLower());
 
-    setModuleDescription("Navigator module - work in progress");
+    setModuleDescription("Navigator module");
     setModuleVersion("0.1");
+
+    giveMeADevice("camera", "Camera", INDI::BaseDevice::CCD_INTERFACE);
+    giveMeADevice("mount", "Mount", INDI::BaseDevice::TELESCOPE_INTERFACE);
 
     defineMeAsNavigator();
 
@@ -69,6 +72,8 @@ void Navigator::OnMyExternalEvent(const QString &pEventType, const QString  &pEv
                     getProperty(keyprop)->setState(OST::Busy);
                     if (keyelt == "gototarget")
                     {
+                        mState = "running";
+                        initIndi();
                         slewToSelection();
                     }
                 }
@@ -94,17 +99,36 @@ void Navigator::newBLOB(INDI::PropertyBlob pblob)
 {
 
     if (
-        (QString(pblob.getDeviceName()) == getString("devices", "navigatorcamera")) && (mState != "idle")
+        (QString(pblob.getDeviceName()) == getString("devices", "camera")) && (mState != "idle")
     )
     {
-        getProperty("actions")->setState(OST::Ok);
-        delete pImage;
-        pImage = new fileio();
-        pImage->loadBlob(pblob, 64);
-        mStats = pImage->getStats();
-        mSolver.ResetSolver(mStats, pImage->getImageBuffer());
-        connect(&mSolver, &Solver::successSEP, this, &Navigator::OnSucessSEP);
-        mSolver.FindStars(mSolver.stellarSolverProfiles[0]);
+        double ra, dec;
+        if (
+            !getModNumber(getString("devices", "mount"), "EQUATORIAL_EOD_COORD", "DEC", dec)
+            || !getModNumber(getString("devices", "mount"), "EQUATORIAL_EOD_COORD", "RA", ra)
+        )
+        {
+            sendMessage("Can't find mount device " + getString("devices", "mount") + " solve aborted");
+        }
+        else
+        {
+            getProperty("actions")->setState(OST::Idle);
+            delete pImage;
+            pImage = new fileio();
+            pImage->loadBlob(pblob, 64);
+            mStats = pImage->getStats();
+            QStringList folders;
+            folders.append("/usr/share/astrometry");
+            mSolver.stellarSolver.setIndexFolderPaths(folders);
+            mSolver.ResetSolver(mStats, pImage->getImageBuffer());
+            mSolver.stellarSolver.setSearchPositionInDegrees(ra * 360 / 24, dec);
+            connect(&mSolver, &Solver::successSolve, this, &Navigator::OnSucessSolve);
+            connect(&mSolver, &Solver::solverLog, this, &Navigator::OnSolverLog);
+            mSolver.SolveStars(mSolver.stellarSolverProfiles[0]);
+        }
+
+
+
     }
 
 
@@ -119,7 +143,7 @@ void Navigator::updateProperty(INDI::Property property)
         newBLOB(property);
     }
     if (
-        (property.getDeviceName() == getString("devices", "navigatorcamera"))
+        (property.getDeviceName() == getString("devices", "camera"))
         &&  (property.getState() == IPS_ALERT)
     )
     {
@@ -129,7 +153,7 @@ void Navigator::updateProperty(INDI::Property property)
 
 
     if (
-        (property.getDeviceName() == getString("devices", "navigatorcamera"))
+        (property.getDeviceName() == getString("devices", "camera"))
         &&  (property.getName()   == std::string("CCD_FRAME_RESET"))
         &&  (property.getState() == IPS_OK)
     )
@@ -138,56 +162,78 @@ void Navigator::updateProperty(INDI::Property property)
         emit FrameResetDone();
     }
     if (
-        (property.getDeviceName() == getString("devices", "navigatormount"))
+        (property.getDeviceName() == getString("devices", "mount"))
         &&  (property.getName()   == std::string("EQUATORIAL_EOD_COORD"))
         &&  (property.getState() == IPS_OK)
     )
     {
         sendMessage("Slew finished");
-        getProperty("actions")->setState(OST::Ok);
+        Shoot();
     }
 }
 void Navigator::Shoot()
 {
-    if (connectDevice(getString("devices", "navigatorcamera")))
+    //sendMessage("SMRequestExposure");
+    if (!sendModNewNumber(getString("devices", "camera"), "CCD_GAIN", "GAIN", getValueInt("parms",
+                          "gain")->value()))
     {
-        frameReset(getString("devices", "navigatorcamera"));
-        sendModNewNumber(getString("devices", "navigatorcamera"), "CCD_EXPOSURE", "CCD_EXPOSURE_VALUE",
-                         getFloat("parameters", "exposure"));
-        getProperty("actions")->setState(OST::Busy);
+        emit abort();
+        return;
     }
-    else
+    if (!sendModNewNumber(getString("devices", "camera"), "CCD_OFFSET", "OFFSET", getValueInt("parms",
+                          "offset")->value()))
     {
-        getProperty("actions")->setState(OST::Error);
+        emit abort();
+        return;
     }
+
+    if (!sendModNewNumber(getString("devices", "camera"), "CCD_EXPOSURE", "CCD_EXPOSURE_VALUE", getValueFloat("parms",
+                          "exposure")->value()))
+    {
+        emit abort();
+        return;
+    }
+    getProperty("actions")->setState(OST::Error);
 }
 void Navigator::initIndi()
 {
     connectIndi();
-    connectDevice(getString("devices", "navigatorcamera"));
-    connectDevice(getString("devices", "navigatormount"));
-    setBLOBMode(B_ALSO, getString("devices", "navigatorcamera").toStdString().c_str(), nullptr);
-    sendModNewNumber(getString("devices", "navigatorcamera"), "SIMULATOR_SETTINGS", "SIM_TIME_FACTOR", 0.01 );
-    enableDirectBlobAccess(getString("devices", "navigatorcamera").toStdString().c_str(), nullptr);
+    connectDevice(getString("devices", "camera"));
+    connectDevice(getString("devices", "mount"));
+    setBLOBMode(B_ALSO, getString("devices", "camera").toStdString().c_str(), nullptr);
+    if (getString("devices", "camera") == "CCD Simulator")
+    {
+        sendModNewNumber(getString("devices", "camera"), "SIMULATOR_SETTINGS", "SIM_TIME_FACTOR", 0.01 );
+    }
+    sendModNewNumber(getString("devices", "camera"), "SIMULATOR_SETTINGS", "SIM_TIME_FACTOR", 0.01 );
+    enableDirectBlobAccess(getString("devices", "camera").toStdString().c_str(), nullptr);
 
 }
-void Navigator::OnSucessSEP()
+void Navigator::OnSolverLog(QString &text)
+{
+    sendMessage(text);
+}
+void Navigator::OnSucessSolve()
 {
     getProperty("actions")->setState(OST::Ok);
-    setOstElementValue("imagevalues", "imgHFR", mSolver.HFRavg, false);
-    setOstElementValue("imagevalues", "starscount", mSolver.stars.size(), true);
 
-    QList<fileio::Record> rec = pImage->getRecords();
     QImage rawImage = pImage->getRawQImage();
     QImage im = rawImage.convertToFormat(QImage::Format_RGB32);
     im.setColorTable(rawImage.colorTable());
-
     im.save(getWebroot()  + "/" + getModuleName() + ".jpeg", "JPG", 100);
-    OST::ImgData dta;
+    OST::ImgData dta = pImage->ImgStats();
     dta.mUrlJpeg = getModuleName() + ".jpeg";
-    getValueImg("image", "image1")->setValue(dta, true);
+    dta.solverRA = mSolver.stellarSolver.getSolution().ra;
+    dta.solverDE = mSolver.stellarSolver.getSolution().dec;
+    dta.isSolved = true;
+    qDebug() << "RA=" << dta.solverRA << " DE=" << dta.solverDE;
+    getValueImg("image", "image")->setValue(dta, true);
 
-    emit FindStarsDone();
+    mState = "idle";
+    disconnect(&mSolver, &Solver::successSolve, this, &Navigator::OnSucessSolve);
+    disconnect(&mSolver, &Solver::solverLog, this, &Navigator::OnSolverLog);
+
+
 }
 void Navigator::updateSearchList(void)
 {
@@ -229,8 +275,8 @@ void Navigator::updateSearchList(void)
 }
 void Navigator::slewToSelection(void)
 {
-    QString mount = getString("devices", "navigatormount");
-    QString cam  = getString("devices", "navigatorcamera");
+    QString mount = getString("devices", "mount");
+    QString cam  = getString("devices", "camera");
     double ra  = getFloat("selectnow", "RA");
     double dec  = getFloat("selectnow", "DEC");
     INDI::BaseDevice dp = getDevice(mount.toStdString().c_str());

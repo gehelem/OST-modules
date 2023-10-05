@@ -18,6 +18,7 @@ Inspector::Inspector(QString name, QString label, QString profile, QVariantMap a
     setModuleDescription("Inspector module - work in progress");
     setModuleVersion("0.1");
 
+    giveMeADevice("camera", "Camera", INDI::BaseDevice::CCD_INTERFACE);
     defineMeAsSequencer();
 
     OST::ValueBool* b = new OST::ValueBool("Shoot", "0", "");
@@ -94,7 +95,7 @@ void Inspector::newBLOB(INDI::PropertyBlob pblob)
 {
 
     if (
-        (QString(pblob.getDeviceName()) == getString("devices", "sequencercamera")) && (mState != "idle")
+        (QString(pblob.getDeviceName()) == getString("devices", "camera")) && (mState != "idle")
     )
     {
         getProperty("actions")->setState(OST::Ok);
@@ -120,7 +121,7 @@ void Inspector::updateProperty(INDI::Property property)
         newBLOB(property);
     }
     if (
-        (property.getDeviceName() == getString("devices", "sequencercamera"))
+        (property.getDeviceName() == getString("devices", "camera"))
         &&  (property.getState() == IPS_ALERT)
     )
     {
@@ -130,7 +131,7 @@ void Inspector::updateProperty(INDI::Property property)
 
 
     if (
-        (property.getDeviceName() == getString("devices", "sequencercamera"))
+        (property.getDeviceName() == getString("devices", "camera"))
         &&  (property.getName()   == std::string("CCD_FRAME_RESET"))
         &&  (property.getState() == IPS_OK)
     )
@@ -141,10 +142,10 @@ void Inspector::updateProperty(INDI::Property property)
 }
 void Inspector::Shoot()
 {
-    if (connectDevice(getString("devices", "sequencercamera")))
+    if (connectDevice(getString("devices", "camera")))
     {
-        frameReset(getString("devices", "sequencercamera"));
-        sendModNewNumber(getString("devices", "sequencercamera"), "CCD_EXPOSURE", "CCD_EXPOSURE_VALUE", getFloat("parms",
+        frameReset(getString("devices", "camera"));
+        sendModNewNumber(getString("devices", "camera"), "CCD_EXPOSURE", "CCD_EXPOSURE_VALUE", getFloat("parms",
                          "exposure"));
         getProperty("actions")->setState(OST::Busy);
     }
@@ -156,13 +157,13 @@ void Inspector::Shoot()
 void Inspector::initIndi()
 {
     connectIndi();
-    connectDevice(getString("devices", "sequencercamera"));
-    setBLOBMode(B_ALSO, getString("devices", "sequencercamera").toStdString().c_str(), nullptr);
-    if (getString("devices", "sequencercamera") == "CCD Simulator")
+    connectDevice(getString("devices", "camera"));
+    setBLOBMode(B_ALSO, getString("devices", "camera").toStdString().c_str(), nullptr);
+    if (getString("devices", "camera") == "CCD Simulator")
     {
-        sendModNewNumber(getString("devices", "sequencercamera"), "SIMULATOR_SETTINGS", "SIM_TIME_FACTOR", 0.01 );
+        sendModNewNumber(getString("devices", "camera"), "SIMULATOR_SETTINGS", "SIM_TIME_FACTOR", 0.01 );
     }
-    enableDirectBlobAccess(getString("devices", "sequencercamera").toStdString().c_str(), nullptr);
+    enableDirectBlobAccess(getString("devices", "camera").toStdString().c_str(), nullptr);
 
 }
 

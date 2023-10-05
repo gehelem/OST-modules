@@ -20,6 +20,9 @@ Guider::Guider(QString name, QString label, QString profile, QVariantMap availab
     buildCalStateMachines();
     buildGuideStateMachines();
 
+    giveMeADevice("camera", "Camera", INDI::BaseDevice::CCD_INTERFACE);
+    giveMeADevice("guider", "Guide via", INDI::BaseDevice::GUIDER_INTERFACE);
+
     defineMeAsGuider();
 
 }
@@ -112,7 +115,7 @@ void Guider::updateProperty(INDI::Property property)
         newBLOB(property);
     }
     if (
-        (property.getDeviceName() == getString("devices", "guidecamera"))
+        (property.getDeviceName() == getString("devices", "camera"))
         &&  (QString(property.getName()) == "CCD_FRAME_RESET")
         &&  (property.getState() == IPS_OK)
     )
@@ -157,7 +160,7 @@ void Guider::updateProperty(INDI::Property property)
 void Guider::newBLOB(INDI::PropertyBlob pblob)
 {
     if (
-        (QString(pblob.getDeviceName()) == getString("devices", "guidecamera"))
+        (QString(pblob.getDeviceName()) == getString("devices", "camera"))
     )
     {
         delete _image;
@@ -314,17 +317,17 @@ void Guider::buildGuideStateMachines(void)
 void Guider::SMInitInit()
 {
     //sendMessage("SMInitInit");
-    if (connectDevice(getString("devices", "guidecamera")))
+    if (connectDevice(getString("devices", "camera")))
     {
         connectIndi();
-        connectDevice(getString("devices", "guidecamera"));
+        connectDevice(getString("devices", "camera"));
         connectDevice(getString("devices", "guider"));
-        setBLOBMode(B_ALSO, getString("devices", "guidecamera").toStdString().c_str(), nullptr);
-        enableDirectBlobAccess(getString("devices", "guidecamera").toStdString().c_str(), nullptr);
-        frameReset(getString("devices", "guidecamera"));
-        if (getString("devices", "guidecamera") == "CCD Simulator")
+        setBLOBMode(B_ALSO, getString("devices", "camera").toStdString().c_str(), nullptr);
+        enableDirectBlobAccess(getString("devices", "camera").toStdString().c_str(), nullptr);
+        frameReset(getString("devices", "camera"));
+        if (getString("devices", "camera") == "CCD Simulator")
         {
-            sendModNewNumber(getString("devices", "guidecamera"), "SIMULATOR_SETTINGS", "SIM_TIME_FACTOR", 1 );
+            sendModNewNumber(getString("devices", "camera"), "SIMULATOR_SETTINGS", "SIM_TIME_FACTOR", 0.01 );
         }
         getProperty("actions")->setState(OST::Busy);
         getProperty("drift")->clearGrid();
@@ -436,7 +439,7 @@ void Guider::SMRequestFrameReset()
 {
     //BOOST_LOG_TRIVIAL(debug) << "SMRequestFrameReset";
     //sendMessage("SMRequestFrameReset");
-    if (!frameReset(getString("devices", "guidecamera")))
+    if (!frameReset(getString("devices", "camera")))
     {
         emit Abort();
         return;
@@ -450,7 +453,7 @@ void Guider::SMRequestExposure()
 {
     //BOOST_LOG_TRIVIAL(debug) << "SMRequestExposure";
     //sendMessage("SMRequestExposure");
-    if (!sendModNewNumber(getString("devices", "guidecamera"), "CCD_EXPOSURE", "CCD_EXPOSURE_VALUE", getFloat("parms",
+    if (!sendModNewNumber(getString("devices", "camera"), "CCD_EXPOSURE", "CCD_EXPOSURE_VALUE", getFloat("parms",
                           "exposure")))
     {
         emit Abort();

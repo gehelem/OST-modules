@@ -19,6 +19,7 @@ Allsky::Allsky(QString name, QString label, QString profile, QVariantMap availab
     setModuleDescription("Simple allsky camera module");
     setModuleVersion("0.1");
 
+    giveMeADevice("camera", "Camera", INDI::BaseDevice::CCD_INTERFACE);
     defineMeAsSequencer();
 
 
@@ -109,10 +110,10 @@ void Allsky::startLoop()
     dir.mkdir(getWebroot() + "/" + getModuleName());
     dir.mkdir(getWebroot() + "/" + getModuleName() + "/batch/");
     connectIndi();
-    connectDevice(getString("devices", "sequencercamera"));
-    setBLOBMode(B_ALSO, getString("devices", "sequencercamera").toStdString().c_str(), nullptr);
-    enableDirectBlobAccess(getString("devices", "sequencercamera").toStdString().c_str(), nullptr);
-    if (!sendModNewNumber(getString("devices", "sequencercamera"), "CCD_EXPOSURE", "CCD_EXPOSURE_VALUE", getFloat("parms",
+    connectDevice(getString("devices", "camera"));
+    setBLOBMode(B_ALSO, getString("devices", "camera").toStdString().c_str(), nullptr);
+    enableDirectBlobAccess(getString("devices", "camera").toStdString().c_str(), nullptr);
+    if (!sendModNewNumber(getString("devices", "camera"), "CCD_EXPOSURE", "CCD_EXPOSURE_VALUE", getFloat("parms",
                           "exposure")))
     {
         getProperty("actions")->setState(OST::Error);
@@ -163,7 +164,7 @@ void Allsky::newBLOB(INDI::PropertyBlob pblob)
 {
     if
     (
-        (QString(pblob.getDeviceName()) == getString("devices", "sequencercamera"))
+        (QString(pblob.getDeviceName()) == getString("devices", "camera"))
     )
     {
         getProperty("actions")->setState(OST::Ok);
@@ -218,7 +219,7 @@ void Allsky::newBLOB(INDI::PropertyBlob pblob)
         getProperty("actions")->setState(OST::Busy);
         if (_isLooping)
         {
-            if (!sendModNewNumber(getString("devices", "sequencercamera"), "CCD_EXPOSURE", "CCD_EXPOSURE_VALUE", getFloat("parms",
+            if (!sendModNewNumber(getString("devices", "camera"), "CCD_EXPOSURE", "CCD_EXPOSURE_VALUE", getFloat("parms",
                                   "exposure")))
             {
                 getProperty("actions")->setState(OST::Error);
