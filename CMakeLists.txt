@@ -218,7 +218,7 @@ install(TARGETS
     ostindipanel
     ostfocuser
     ostsequencer
-#    ostmeteo
+    ostmeteo
 #    ostpolar
     RUNTIME DESTINATION "/usr/bin"
     LIBRARY DESTINATION "/usr/lib"
