@@ -16,6 +16,8 @@ Sequencer::Sequencer(QString name, QString label, QString profile, QVariantMap a
     setModuleDescription("Sequencer module");
     setModuleVersion("0.1");
 
+    giveMeADevice("camera", "Camera", INDI::BaseDevice::CCD_INTERFACE);
+    giveMeADevice("filter", "Filter wheel", INDI::BaseDevice::FILTER_INTERFACE);
     defineMeAsSequencer();
     refreshFilterLov();
 
@@ -50,7 +52,7 @@ void Sequencer::OnMyExternalEvent(const QString &eventType, const QString  &even
                 }
                 if (keyprop == "devices")
                 {
-                    if (keyelt == "sequencerfilter")
+                    if (keyelt == "filter")
                     {
                         refreshFilterLov();
                     }
@@ -83,7 +85,7 @@ void Sequencer::newBLOB(INDI::PropertyBlob pblob)
 {
 
     if (
-        (QString(pblob.getDeviceName()) == getString("devices", "sequencercamera"))
+        (QString(pblob.getDeviceName()) == getString("devices", "camera"))
         && isSequenceRunning
     )
     {
@@ -126,14 +128,14 @@ void Sequencer::newBLOB(INDI::PropertyBlob pblob)
 void Sequencer::newProperty(INDI::Property property)
 {
     if (
-        (property.getDeviceName()  == getString("devices", "sequencerfilter"))
+        (property.getDeviceName()  == getString("devices", "filter"))
         &&  (QString(property.getName())   == "FILTER_NAME")
     )
     {
         refreshFilterLov();
     }
     if (
-        (property.getDeviceName()  == getString("devices", "sequencerfilter"))
+        (property.getDeviceName()  == getString("devices", "filter"))
         &&  (QString(property.getName())   == "FILTER_SLOT")
         &&  (property.getState() == IPS_OK)
         && isSequenceRunning
@@ -152,7 +154,7 @@ void Sequencer::updateProperty(INDI::Property property)
         newBLOB(property);
     }
     if (
-        (property.getDeviceName() == getString("devices", "sequencercamera"))
+        (property.getDeviceName() == getString("devices", "camera"))
         &&  (property.getState() == IPS_ALERT)
     )
     {
@@ -162,7 +164,7 @@ void Sequencer::updateProperty(INDI::Property property)
 
 
     if (
-        (property.getDeviceName()  == getString("devices", "sequencercamera"))
+        (property.getDeviceName()  == getString("devices", "camera"))
         &&  (QString(property.getName())   == "CCD_FRAME_RESET")
         &&  (property.getState()  == IPS_OK)
     )
@@ -172,7 +174,7 @@ void Sequencer::updateProperty(INDI::Property property)
     }
 
     if (
-        (property.getDeviceName()  == getString("devices", "sequencerfilter"))
+        (property.getDeviceName()  == getString("devices", "filter"))
         &&  (QString(property.getName())   == "FILTER_SLOT")
         &&  (property.getState() == IPS_OK)
         && isSequenceRunning
@@ -186,7 +188,7 @@ void Sequencer::updateProperty(INDI::Property property)
 void Sequencer::Shoot()
 {
     double exp = getValueFloat("sequence", "exposure")->getGrid()[0];
-    sendModNewNumber(getString("devices", "sequencercamera"), "CCD_EXPOSURE", "CCD_EXPOSURE_VALUE",
+    sendModNewNumber(getString("devices", "camera"), "CCD_EXPOSURE", "CCD_EXPOSURE_VALUE",
                      //getOstElementGrid("sequence", "exposure")[0].toDouble());
                      exp);
     double i = getValueInt("sequence", "count")->getGrid()[currentLine];
@@ -209,13 +211,13 @@ void Sequencer::StartSequence()
     isSequenceRunning = true;
 
     connectIndi();
-    if (connectDevice(getString("devices", "sequencercamera")))
+    if (connectDevice(getString("devices", "camera")))
     {
-        setBLOBMode(B_ALSO, getString("devices", "sequencercamera").toStdString().c_str(), nullptr);
-        frameReset(getString("devices", "sequencercamera"));
-        if (getString("devices", "sequencercamera") == "CCD Simulator")
+        setBLOBMode(B_ALSO, getString("devices", "camera").toStdString().c_str(), nullptr);
+        frameReset(getString("devices", "camera"));
+        if (getString("devices", "camera") == "CCD Simulator")
         {
-            sendModNewNumber(getString("devices", "sequencercamera"), "SIMULATOR_SETTINGS", "SIM_TIME_FACTOR", 0.01 );
+            sendModNewNumber(getString("devices", "camera"), "SIMULATOR_SETTINGS", "SIM_TIME_FACTOR", 0.01 );
         }
         getProperty("actions")->setState(OST::Busy);
 
@@ -253,22 +255,22 @@ void Sequencer::StartLine()
 
         int i = getValueInt("sequence", "filter")->getGrid()[currentLine];
         currentFilter = getValueInt("sequence", "filter")->getLov()[i];
-        sendModNewNumber(getString("devices", "sequencerfilter"), "FILTER_SLOT", "FILTER_SLOT_VALUE", i);
+        sendModNewNumber(getString("devices", "filter"), "FILTER_SLOT", "FILTER_SLOT_VALUE", i);
     }
 }
 void Sequencer::refreshFilterLov()
 {
-    INDI::BaseDevice dp = getDevice(getString("devices", "sequencerfilter").toStdString().c_str());
+    INDI::BaseDevice dp = getDevice(getString("devices", "filter").toStdString().c_str());
 
     if (!dp.isValid())
     {
-        sendError("Unable to find " + getString("devices", "sequencerfilter") + " device.");
+        sendError("Unable to find " + getString("devices", "filter") + " device.");
         return;
     }
     INDI::PropertyText txt = dp.getText("FILTER_NAME");
     if (!txt.isValid())
     {
-        sendError("Unable to find " + getString("devices", "sequencerfilter")  + "/" + "FILTER_NAME" + " property.");
+        sendError("Unable to find " + getString("devices", "filter")  + "/" + "FILTER_NAME" + " property.");
         return;
     }
 
