@@ -1,6 +1,8 @@
 #ifndef POLAR_MODULE_h_
 #define POLAR_MODULE_h_
-#include <basemodule.h>
+#include <indimodule.h>
+#include <fileio.h>
+#include <solver.h>
 
 #if defined(POLAR_MODULE)
 #  define MODULE_INIT Q_DECL_EXPORT
@@ -11,17 +13,16 @@
 #include <QtCore>
 #include <QtConcurrent>
 #include <QStateMachine>
-#include "image.h"
-#include "rotations.h"
+#include <libastro.h>
+#include <libnova/julian_day.h>
 
 
-
-class MODULE_INIT PolarModule : public Basemodule
+class MODULE_INIT PolarModule : public IndiModule
 {
-    Q_OBJECT
+        Q_OBJECT
 
     public:
-        PolarModule(QString name,QString label);
+        PolarModule(QString name, QString label, QString profile, QVariantMap availableModuleLibs);
         ~PolarModule();
 
     signals:
@@ -45,7 +46,10 @@ class MODULE_INIT PolarModule : public Basemodule
         void OnSetPropertyNumber(NumberProperty* prop) override;
         void OnSetPropertySwitch(SwitchProperty* prop) override;
         void OnSucessSEP();
-        void DummySlot(){BOOST_LOG_TRIVIAL(debug) << "************************* DUMMY SLOT";}
+        void DummySlot()
+        {
+            BOOST_LOG_TRIVIAL(debug) << "************************* DUMMY SLOT";
+        }
     private:
         void newNumber(INumberVectorProperty *nvp) override;
         void newBLOB(IBLOB *bp) override;
@@ -67,7 +71,7 @@ class MODULE_INIT PolarModule : public Basemodule
         double _exposure = 2;
         double _mountDEC;
         double _mountRA;
-        bool   _mountPointingWest=false;
+        bool   _mountPointingWest = false;
         double _ccdOrientation;
         double _aperture;
         double _focalLength;
@@ -76,27 +80,30 @@ class MODULE_INIT PolarModule : public Basemodule
         double _ccdSize;
         double _ccdFov;
         double _pixelSize;
-        double _ccdSampling=206*5.2/800;
-        double _ra0=0;
-        double _de0=0;
-        double _t0=0;
-        double _ra1=0;
-        double _de1=0;
-        double _t1=0;
-        double _ra2=0;
-        double _de2=0;
-        double _t2=0;
-        double _erraz=0;
-        double _erralt=0;
-        double _errtot=0;
-        int _itt=0;
+        double _ccdSampling = 206 * 5.2 / 800;
+        double _ra0 = 0;
+        double _de0 = 0;
+        double _t0 = 0;
+        double _ra1 = 0;
+        double _de1 = 0;
+        double _t1 = 0;
+        double _ra2 = 0;
+        double _de2 = 0;
+        double _t2 = 0;
+        double _erraz = 0;
+        double _erralt = 0;
+        double _errtot = 0;
+        int _itt = 0;
 
 
         QString _camera  = "CCD Simulator";
         QString _mount  = "Telescope Simulator";
         QStateMachine _machine;
 
-        double square(double value){ return value*value;}
+        double square(double value)
+        {
+            return value * value;
+        }
 
         void buildStateMachine(void);
         void SMInit();
@@ -109,6 +116,7 @@ class MODULE_INIT PolarModule : public Basemodule
         void SMAbort();
 };
 
-extern "C" MODULE_INIT PolarModule *initialize(QString name,QString label);
+extern "C" MODULE_INIT PolarModule *initialize(QString name, QString label, QString profile,
+        QVariantMap availableModuleLibs);
 
 #endif
