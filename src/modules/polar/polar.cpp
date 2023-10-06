@@ -12,59 +12,24 @@ PolarModule *initialize(QString name, QString label, QString profile, QVariantMa
 PolarModule::PolarModule(QString name, QString label, QString profile, QVariantMap availableModuleLibs)
     : IndiModule(name, label, profile, availableModuleLibs)
 {
-    loadOstPropertiesFromFile(":meteo.json");
+
+    loadOstPropertiesFromFile(":polar.json");
     setClassName(QString(metaObject()->className()).toLower());
 
     setModuleDescription("Polar assistant");
     setModuleVersion("0.1");
 
-    _actions = new SwitchProperty(_modulename, "Control", "root", "actions", "Actions", 2, 0, 1);
-    _actions->addSwitch(new SwitchValue("condev", "Connect devices", "hint", 0));
-    _actions->addSwitch(new SwitchValue("loadconfs", "Load devices conf", "hint", 0));
-    _actions->addSwitch(new SwitchValue("abort", "Abort", "hint", 0));
-    _actions->addSwitch(new SwitchValue("start", "Start", "hint", 0));
-    _actions->addSwitch(new SwitchValue("test", "Test", "hint", 0));
-    emit propertyCreated(_actions, &_modulename);
-    _propertyStore.add(_actions);
+    giveMeADevice("camera", "Camera", INDI::BaseDevice::CCD_INTERFACE);
+    giveMeADevice("mount", "Mount", INDI::BaseDevice::TELESCOPE_INTERFACE);
+    defineMeAsImager();
 
-    _commonParams = new NumberProperty(_modulename, "Control", "root", "commonParams", "Parameters", 2, 0);
-    _commonParams->addNumber(new NumberValue("exposure", "Exposure s", "hint", _exposure, "", 0, 5, 1));
-    emit propertyCreated(_commonParams, &_modulename);
-    _propertyStore.add(_commonParams);
+    OST::ValueBool* b = new OST::ValueBool("Start", "0", "");
+    getProperty("actions")->addValue("start", b);
+    b = new OST::ValueBool("Abort", "2", "");
+    getProperty("actions")->addValue("abort", b);
+    b = new OST::ValueBool("Test", "4", "");
+    getProperty("actions")->addValue("test", b);
 
-
-    _values = new NumberProperty(_modulename, "Control", "root", "values", "Values", 0, 0);
-    _values->addNumber(new NumberValue("ra0", "RA 0", "hint", _ra0, "", 0, 10000, 0));
-    _values->addNumber(new NumberValue("de0", "DE 0", "hint", _de0, "", 0, 10000, 0));
-    _values->addNumber(new NumberValue("t0", "Time 0", "hint", _t0, "", 0, 10000, 0));
-    _values->addNumber(new NumberValue("ra1", "RA 1", "hint", _ra1, "", 0, 10000, 0));
-    _values->addNumber(new NumberValue("de1", "DE 1", "hint", _de1, "", 0, 10000, 0));
-    _values->addNumber(new NumberValue("t1", "+Time 1", "hint", _t1, "", 0, 10000, 0));
-    _values->addNumber(new NumberValue("ra2", "RA 2", "hint", _ra2, "", 0, 10000, 0));
-    _values->addNumber(new NumberValue("de2", "DE 2", "hint", _de2, "", 0, 10000, 0));
-    _values->addNumber(new NumberValue("t2", "+Time 2", "hint", _t2, "", 0, 10000, 0));
-    emit propertyCreated(_values, &_modulename);
-    _propertyStore.add(_values);
-
-    _errors = new NumberProperty(_modulename, "Control", "root", "errors", "Polar error", 0, 0);
-    _errors->addNumber(new NumberValue("erraz", "Azimuth error °", "hint", _erraz, "", 0, 10000, 0));
-    _errors->addNumber(new NumberValue("erralt", "Altitude error °", "hint", _erralt, "", 0, 10000, 0));
-    _errors->addNumber(new NumberValue("errtot", "Total error °", "hint", _errtot, "", 0, 10000, 0));
-    emit propertyCreated(_errors, &_modulename);
-    _propertyStore.add(_errors);
-
-    _img = new ImageProperty(_modulename, "Control", "root", "viewer", "Image property label", 0, 0, 0);
-    emit propertyCreated(_img, &_modulename);
-    _propertyStore.add(_img);
-
-    _states = new LightProperty(_modulename, "Control", "root", "states", "State", 0, 0);
-    _states->addLight(new LightValue("idle", "Idle", "hint", 1));
-    _states->addLight(new LightValue("Moving", "Moving", "hint", 0));
-    _states->addLight(new LightValue("Shooting", "Shooting", "hint", 0));
-    _states->addLight(new LightValue("Solving", "Solving", "hint", 0));
-    _states->addLight(new LightValue("Compute", "Compute", "hint", 0));
-    emit propertyCreated(_states, &_modulename);
-    _propertyStore.add(_states);
 
     buildStateMachine();
 
@@ -73,109 +38,95 @@ PolarModule::~PolarModule()
 {
 
 }
-void PolarModule::OnSetPropertyNumber(NumberProperty* prop)
+void PolarModule::OnMyExternalEvent(const QString &pEventType, const QString  &pEventModule, const QString  &pEventKey,
+                                    const QVariantMap &pEventData)
 {
-    if (!(prop->getModuleName() == _modulename)) return;
+    //sendMessage("OnMyExternalEvent - recv : " + getModuleName() + "-" + eventType + "-" + eventKey);
+    Q_UNUSED(pEventType);
+    Q_UNUSED(pEventKey);
 
-    QList<NumberValue*> numbers = prop->getNumbers();
-    for (int j = 0; j < numbers.size(); ++j)
+    if (getModuleName() == pEventModule)
     {
-        if (numbers[j]->name() == "exposure")        _exposure = numbers[j]->getValue();
-        prop->setState(1);
-        emit propertyUpdated(prop, &_modulename);
-        _propertyStore.add(prop);
-        //BOOST_LOG_TRIVIAL(debug) << "Focus number property item modified " << prop->getName().toStdString();
+        foreach(const QString &keyprop, pEventData.keys())
+        {
+            foreach(const QString &keyelt, pEventData[keyprop].toMap()["elements"].toMap().keys())
+            {
+                if (keyprop == "actions")
+                {
+                    if (keyelt == "start")
+                    {
+                        connectIndi();
+                        connectDevice(getString("devices", "camera"));
+                        connectDevice(getString("devices", "mount"));
+                        setBLOBMode(B_ALSO, getString("devices", "camera").toStdString().c_str(), nullptr);
+                        if (getString("devices", "camera") == "CCD Simulator")
+                        {
+                            sendModNewNumber(getString("devices", "camera"), "SIMULATOR_SETTINGS", "SIM_TIME_FACTOR", 0.01 );
+                        }
+                        sendModNewNumber(getString("devices", "camera"), "SIMULATOR_SETTINGS", "SIM_TIME_FACTOR", 0.01 );
+                        enableDirectBlobAccess(getString("devices", "camera").toStdString().c_str(), nullptr);
+
+                        _machine.start();
+                    }
+                    if (keyelt == "abort")
+                    {
+                        emit Abort();
+                    }
+                    if (keyelt == "test")
+                    {
+                        SMComputeFinal();
+                    }
+
+                }
+            }
+
+        }
     }
-
 }
-void PolarModule::OnSetPropertyText(TextProperty* prop)
-{
-    if (!(prop->getModuleName() == _modulename)) return;
-}
-void PolarModule::OnSetPropertySwitch(SwitchProperty* prop)
-{
-    if (!(prop->getModuleName() == _modulename)) return;
 
-    SwitchProperty* wprop = _propertyStore.getSwitch(prop->getDeviceName(), prop->getGroupName(), prop->getName());
-    QList<SwitchValue*> switchs = prop->getSwitches();
-    for (int j = 0; j < switchs.size(); ++j)
+
+void PolarModule::updateProperty(INDI::Property property)
+{
+    //if (mState == "idle") return;
+
+    if (strcmp(property.getName(), "CCD1") == 0)
     {
-        if (switchs[j]->name() == "start")
-        {
-            _machine.start();
-            wprop->setSwitch(switchs[j]->name(), true);
-        }
-        if (switchs[j]->name() == "loadconfs")
-        {
-            wprop->setSwitch(switchs[j]->name(), true);
-            loadDevicesConfs();
-        }
-        if (switchs[j]->name() == "abort")
-        {
-            wprop->setSwitch(switchs[j]->name(), true);
-            emit Abort();
-        }
-        if (switchs[j]->name() == "condev")
-        {
-            wprop->setSwitch(switchs[j]->name(), true);
-            connectAllDevices();
-        }
-        if (switchs[j]->name() == "test")
-        {
-            wprop->setSwitch(switchs[j]->name(), true);
-            SMComputeFinal();
-        }
-        //prop->setSwitches(switchs);
-        _propertyStore.update(wprop);
-        emit propertyUpdated(wprop, &_modulename);
+        newBLOB(property);
     }
-
-}
-void PolarModule::newNumber(INumberVectorProperty *nvp)
-{
     if (
-        (QString(nvp->device) == _mount) &&
-        (QString(nvp->name)   == "EQUATORIAL_EOD_COORD") &&
-        (nvp->s   == IPS_OK)
+        (property.getDeviceName() == getString("devices", "mount"))
+        &&  (property.getState() == IPS_OK)
     )
     {
-        //_mountRA=nvp->np[0].value; // RA
-        //_mountDEC=nvp->np[1].value; // DEC
         emit MoveDone();
     }
-
-}
-void PolarModule::newBLOB(IBLOB *bp)
-{
     if (
-        (QString(bp->bvp->device) == _camera) && (_machine.isRunning())
-    )
-    {
-        delete image;
-        image = new Image();
-        image->LoadFromBlob(bp);
-        image->CalcStats();
-        image->computeHistogram();
-        image->saveToJpeg(_webroot + "/" + QString(bp->bvp->device) + ".jpeg", 100);
-
-        _img->setURL(QString(bp->bvp->device) + ".jpeg");
-        emit propertyUpdated(_img, &_modulename);
-        _propertyStore.add(_img);
-        BOOST_LOG_TRIVIAL(debug) << "Emit Exposure done";
-        emit ExposureDone();
-    }
-
-}
-void PolarModule::newSwitch(ISwitchVectorProperty *svp)
-{
-    if (
-        (QString(svp->device) == _camera)
-        &&  (QString(svp->name)   == "CCD_FRAME_RESET")
-        &&  (svp->s == IPS_OK)
+        (property.getDeviceName() == getString("devices", "camera"))
+        &&  (property.getName()   == std::string("CCD_FRAME_RESET"))
+        &&  (property.getState() == IPS_OK)
     )
     {
         sendMessage("FrameResetDone");
         emit FrameResetDone();
+    }
+}
+void PolarModule::newBLOB(INDI::PropertyBlob  bp)
+{
+    if (
+        (QString(bp.getDeviceName()) == _camera) && (_machine.isRunning())
+    )
+    {
+        delete image;
+        image = new fileio();
+        image->loadBlob(bp, 64);
+        QImage rawImage = image->getRawQImage();
+        QImage im = rawImage.convertToFormat(QImage::Format_RGB32);
+        im.setColorTable(rawImage.colorTable());
+        im.save(getWebroot()  + "/" + getModuleName() + ".jpeg", "JPG", 100);
+        OST::ImgData dta = image->ImgStats();
+        dta.mUrlJpeg = getModuleName() + ".jpeg";
+        getValueImg("image", "image")->setValue(dta, true);
+        emit ExposureDone();
     }
 
 }
@@ -231,9 +182,7 @@ void PolarModule::buildStateMachine(void)
 }
 void PolarModule::SMInit()
 {
-    BOOST_LOG_TRIVIAL(debug) << "SMInit";
     sendMessage("SMInit");
-    setBlobMode();
 
     /* get mount DEC */
     if (!getModNumber(_mount, "EQUATORIAL_EOD_COORD", "DEC", _mountDEC))
@@ -241,7 +190,6 @@ void PolarModule::SMInit()
         emit Abort();
         return;
     }
-    BOOST_LOG_TRIVIAL(debug) << "Mount DEC " << _mountDEC;
 
     /* get mount RA */
     if (!getModNumber(_mount, "EQUATORIAL_EOD_COORD", "RA", _mountRA))
@@ -249,7 +197,6 @@ void PolarModule::SMInit()
         emit Abort();
         return;
     }
-    BOOST_LOG_TRIVIAL(debug) << "Mount RA " << _mountRA;
 
     /* get focal length */
     if (!getModNumber(_mount, "TELESCOPE_INFO", "TELESCOPE_FOCAL_LENGTH", _focalLength))
@@ -257,7 +204,6 @@ void PolarModule::SMInit()
         emit Abort();
         return;
     }
-    BOOST_LOG_TRIVIAL(debug) << "focal lenth " << _focalLength;
 
     /* get pixel size */
     if (!getModNumber(_camera, "CCD_INFO", "CCD_PIXEL_SIZE", _pixelSize))
@@ -265,7 +211,6 @@ void PolarModule::SMInit()
         emit Abort();
         return;
     }
-    BOOST_LOG_TRIVIAL(debug) << "Pixel size " << _pixelSize;
 
     /* get ccd width */
     if (!getModNumber(_camera, "CCD_INFO", "CCD_MAX_X", _ccdX))
@@ -273,7 +218,6 @@ void PolarModule::SMInit()
         emit Abort();
         return;
     }
-    BOOST_LOG_TRIVIAL(debug) << "CCD width " << _ccdX;
 
     /* get ccd height */
     if (!getModNumber(_camera, "CCD_INFO", "CCD_MAX_Y", _ccdY))
@@ -281,16 +225,10 @@ void PolarModule::SMInit()
         emit Abort();
         return;
     }
-    BOOST_LOG_TRIVIAL(debug) << "CCD height " << _ccdY;
 
 
     _ccdSampling = 206 * _pixelSize / _focalLength;
-    BOOST_LOG_TRIVIAL(debug) << "CCD sampling (arcs/px) " << _ccdSampling;
     _ccdFov = sqrt(square(_ccdX) + square(_ccdY)) * _ccdSampling;
-    BOOST_LOG_TRIVIAL(debug) << "CCD FOV (arcs) " << _ccdFov;
-    BOOST_LOG_TRIVIAL(debug) << "CCD FOV (arcm) " << _ccdFov / 60;
-    BOOST_LOG_TRIVIAL(debug) << "CCD FOV (deg)  " << _ccdFov / 3600;
-
 
     /* get mount Pier position  */
     if (!getModSwitch(_mount, "TELESCOPE_PIER_SIDE", "PIER_WEST", _mountPointingWest))
@@ -298,7 +236,6 @@ void PolarModule::SMInit()
         emit Abort();
         return;
     }
-    BOOST_LOG_TRIVIAL(debug) << "PIER_WEST " << _mountPointingWest;
 
     _itt = 0;
     _ra0 = 0;
@@ -311,56 +248,44 @@ void PolarModule::SMInit()
     _de2 = 0;
     _t2 = 0;
 
-    _values = new NumberProperty(_modulename, "Control", "root", "values", "Values", 0, 0);
-    _values->addNumber(new NumberValue("ra0", "RA 0", "hint", _ra0, "", 0, 10000, 0));
-    _values->addNumber(new NumberValue("de0", "DE 0", "hint", _de0, "", 0, 10000, 0));
-    _values->addNumber(new NumberValue("t0", "Time 0", "hint", _t0, "", 0, 10000, 0));
-    _values->addNumber(new NumberValue("ra1", "RA 1", "hint", _ra1, "", 0, 10000, 0));
-    _values->addNumber(new NumberValue("de1", "DE 1", "hint", _de1, "", 0, 10000, 0));
-    _values->addNumber(new NumberValue("t1", "Time 1", "hint", _t1, "", 0, 10000, 0));
-    _values->addNumber(new NumberValue("ra2", "RA 2", "hint", _ra2, "", 0, 10000, 0));
-    _values->addNumber(new NumberValue("de2", "DE 2", "hint", _de2, "", 0, 10000, 0));
-    _values->addNumber(new NumberValue("t2", "Time 2", "hint", _t2, "", 0, 10000, 0));
-    emit propertyCreated(_values, &_modulename);
-    _propertyStore.add(_values);
+    getValueFloat("values", "ra0")->setValue(_ra0, false);
+    getValueFloat("values", "de0")->setValue(_de0, false);
+    getValueFloat("values", "t0")->setValue(_t0, false);
+    getValueFloat("values", "ra1")->setValue(_ra1, false);
+    getValueFloat("values", "de1")->setValue(_de1, false);
+    getValueFloat("values", "t1")->setValue(_t1, false);
+    getValueFloat("values", "ra2")->setValue(_ra2, false);
+    getValueFloat("values", "de2")->setValue(_de2, false);
+    getValueFloat("values", "t2")->setValue(_t2, true);
 
     _erraz = 0;
     _erralt = 0;
     _errtot = 0;
-    _errors = new NumberProperty(_modulename, "Control", "root", "errors", "Polar error", 0, 0);
-    _errors->addNumber(new NumberValue("erraz", "Azimuth error °", "hint", _erraz, "", 0, 10000, 0));
-    _errors->addNumber(new NumberValue("erralt", "Altitude error °", "hint", _erralt, "", 0, 10000, 0));
-    _errors->addNumber(new NumberValue("errtot", "Total error °", "hint", _errtot, "", 0, 10000, 0));
-    emit propertyCreated(_errors, &_modulename);
-    _propertyStore.add(_errors);
 
-    BOOST_LOG_TRIVIAL(debug) << "SMInitDone";
+    getValueFloat("errors", "erraz")->setValue(_erraz, false);
+    getValueFloat("errors", "erralt")->setValue(_erralt, false);
+    getValueFloat("errors", "errtot")->setValue(_errtot, true);
+
     emit InitDone();
 }
 void PolarModule::SMRequestFrameReset()
 {
-    BOOST_LOG_TRIVIAL(debug) << "SMRequestFrameReset";
     sendMessage("SMRequestFrameReset");
     if (!frameReset(_camera))
     {
         emit Abort();
         return;
     }
-    BOOST_LOG_TRIVIAL(debug) << "SMRequestFrameResetDone";
     emit RequestFrameResetDone();
 }
 void PolarModule::SMRequestExposure()
 {
-    _states = new LightProperty(_modulename, "Control", "root", "states", "State", 0, 0);
-    _states->addLight(new LightValue("idle", "Idle", "hint", 0));
-    _states->addLight(new LightValue("Moving", "Moving", "hint", 0));
-    _states->addLight(new LightValue("Shooting", "Shooting", "hint", 2));
-    _states->addLight(new LightValue("Solving", "Solving", "hint", 0));
-    _states->addLight(new LightValue("Compute", "Compute", "hint", 0));
-    emit propertyCreated(_states, &_modulename);
-    _propertyStore.add(_states);
+    getValueLight("states", "idle")->setValue(OST::Idle, false);
+    getValueLight("states", "moving")->setValue(OST::Idle, false);
+    getValueLight("states", "shooting")->setValue(OST::Busy, false);
+    getValueLight("states", "solving")->setValue(OST::Idle, false);
+    getValueLight("states", "compute")->setValue(OST::Idle, true);
 
-    BOOST_LOG_TRIVIAL(debug) << "SMRequestExposure";
     double t = QDateTime::currentDateTime().currentMSecsSinceEpoch();
     //double t = ln_get_julian_from_sys();
 
@@ -387,16 +312,12 @@ void PolarModule::SMRequestExposure()
 }
 void PolarModule::SMRequestMove()
 {
-    _states = new LightProperty(_modulename, "Control", "root", "states", "State", 0, 0);
-    _states->addLight(new LightValue("idle", "Idle", "hint", 0));
-    _states->addLight(new LightValue("Moving", "Moving", "hint", 2));
-    _states->addLight(new LightValue("Shooting", "Shooting", "hint", 0));
-    _states->addLight(new LightValue("Solving", "Solving", "hint", 0));
-    _states->addLight(new LightValue("Compute", "Compute", "hint", 0));
-    emit propertyCreated(_states, &_modulename);
-    _propertyStore.add(_states);
+    getValueLight("states", "idle")->setValue(OST::Idle, false);
+    getValueLight("states", "moving")->setValue(OST::Busy, false);
+    getValueLight("states", "shooting")->setValue(OST::Idle, false);
+    getValueLight("states", "solving")->setValue(OST::Idle, false);
+    getValueLight("states", "compute")->setValue(OST::Idle, true);
 
-    BOOST_LOG_TRIVIAL(debug) << "SMRequestMove";
     sendMessage("SMRequestMove");
 
     double oldRA, newRA;
@@ -404,7 +325,7 @@ void PolarModule::SMRequestMove()
     /* get mount RA */
     if (!getModNumber(_mount, "EQUATORIAL_EOD_COORD", "RA", oldRA))
     {
-        BOOST_LOG_TRIVIAL(debug) << "SMRequestMove error 1";
+        sendMessage("SMRequestMove error 1");
         emit Abort();
         return;
     }
@@ -420,85 +341,65 @@ void PolarModule::SMRequestMove()
         newRA = oldRA + 15 * 24 / 360;
         if (newRA >= 24) newRA = newRA - 24;
     }
-    BOOST_LOG_TRIVIAL(debug) << "SMRequestMove old RA = " << oldRA << " new RA= " << newRA << " pointing west " <<
-                             _mountPointingWest;
 
     if (!sendModNewNumber(_mount, "EQUATORIAL_EOD_COORD", "RA", newRA))
     {
-        BOOST_LOG_TRIVIAL(debug) << "SMRequestMove error 2";
         emit Abort();
         return;
     }
-    BOOST_LOG_TRIVIAL(debug) << "SMRequestMove done";
     emit RequestMoveDone();
 
 }
 void PolarModule::SMCompute()
 {
+    getValueLight("states", "idle")->setValue(OST::Idle, false);
+    getValueLight("states", "moving")->setValue(OST::Idle, false);
+    getValueLight("states", "shooting")->setValue(OST::Idle, false);
+    getValueLight("states", "solving")->setValue(OST::Idle, false);
+    getValueLight("states", "compute")->setValue(OST::Busy, true);
 
-    _states = new LightProperty(_modulename, "Control", "root", "states", "State", 0, 0);
-    _states->addLight(new LightValue("idle", "Idle", "hint", 0));
-    _states->addLight(new LightValue("Moving", "Moving", "hint", 0));
-    _states->addLight(new LightValue("Shooting", "Shooting", "hint", 0));
-    _states->addLight(new LightValue("Solving", "Solving", "hint", 0));
-    _states->addLight(new LightValue("Compute", "Compute", "hint", 2));
-    emit propertyCreated(_states, &_modulename);
-    _propertyStore.add(_states);
-
-    BOOST_LOG_TRIVIAL(debug) << "*******  SMCompute ******** ";
-    BOOST_LOG_TRIVIAL(debug) << "****** SSolver ready solve";
-    BOOST_LOG_TRIVIAL(debug) << "SMCompute STEP     = " <<     _itt;
-    BOOST_LOG_TRIVIAL(debug) << "SMCompute solve RA = " <<     _solver.stellarSolver->getSolution().ra;
-    BOOST_LOG_TRIVIAL(debug) << "SMCompute solve DE = " <<     _solver.stellarSolver->getSolution().dec;
-    BOOST_LOG_TRIVIAL(debug) << "SMCompute solve WI = " <<     _solver.stellarSolver->getSolution().fieldWidth;
-    BOOST_LOG_TRIVIAL(debug) << "SMCompute solve HE = " <<     _solver.stellarSolver->getSolution().fieldHeight;
-    BOOST_LOG_TRIVIAL(debug) << "SMCompute solve OR = " <<     _solver.stellarSolver->getSolution().orientation;
-    BOOST_LOG_TRIVIAL(debug) << "SMCompute solve SC = " <<     _solver.stellarSolver->getSolution().pixscale;
     INDI::IEquatorialCoordinates coord2000, coordNow;
-    coordNow.rightascension = _solver.stellarSolver->getSolution().ra * 24 / 360;
-    coordNow.declination = _solver.stellarSolver->getSolution().dec;
+    coordNow.rightascension = _solver.stellarSolver.getSolution().ra * 24 / 360;
+    coordNow.declination = _solver.stellarSolver.getSolution().dec;
 
-    //coord2000.rightascension=_solver.stellarSolver->getSolution().ra;
-    //coord2000.declination=_solver.stellarSolver->getSolution().dec;
+    //coord2000.rightascension=_solver.stellarSolver.getSolution().ra;
+    //coord2000.declination=_solver.stellarSolver.getSolution().dec;
 
     if (_itt == 0)
     {
         //INDI::ObservedToJ2000(&coordNow,_t0,&coord2000);
         //_ra0=coord2000.rightascension;
         //_de0=coord2000.declination;
-        _ra0 = _solver.stellarSolver->getSolution().ra;
-        _de0 = _solver.stellarSolver->getSolution().dec;
+        _ra0 = _solver.stellarSolver.getSolution().ra;
+        _de0 = _solver.stellarSolver.getSolution().dec;
     }
     if (_itt == 1)
     {
         //INDI::ObservedToJ2000(&coordNow,_t1,&coord2000);
         //_ra1=coord2000.rightascension;
         //_de1=coord2000.declination;
-        _ra1 = _solver.stellarSolver->getSolution().ra;
-        _de1 = _solver.stellarSolver->getSolution().dec;
+        _ra1 = _solver.stellarSolver.getSolution().ra;
+        _de1 = _solver.stellarSolver.getSolution().dec;
     }
     if (_itt == 2)
     {
         //INDI::ObservedToJ2000(&coordNow,_t2,&coord2000);
         //_ra2=coord2000.rightascension;
         //_de2=coord2000.declination;
-        _ra2 = _solver.stellarSolver->getSolution().ra;
-        _de2 = _solver.stellarSolver->getSolution().dec;
+        _ra2 = _solver.stellarSolver.getSolution().ra;
+        _de2 = _solver.stellarSolver.getSolution().dec;
 
     }
 
-    _values = new NumberProperty(_modulename, "Control", "root", "values", "Values", 0, 0);
-    _values->addNumber(new NumberValue("ra0", "RA 0", "hint", _ra0, "", 0, 10000, 0));
-    _values->addNumber(new NumberValue("de0", "DE 0", "hint", _de0, "", 0, 10000, 0));
-    _values->addNumber(new NumberValue("t0", "Time 0", "hint", _t0, "", 0, 10000, 0));
-    _values->addNumber(new NumberValue("ra1", "RA 1", "hint", _ra1, "", 0, 10000, 0));
-    _values->addNumber(new NumberValue("de1", "DE 1", "hint", _de1, "", 0, 10000, 0));
-    _values->addNumber(new NumberValue("t1", "Time 1", "hint", _t1, "", 0, 10000, 0));
-    _values->addNumber(new NumberValue("ra2", "RA 2", "hint", _ra2, "", 0, 10000, 0));
-    _values->addNumber(new NumberValue("de2", "DE 2", "hint", _de2, "", 0, 10000, 0));
-    _values->addNumber(new NumberValue("t2", "Time 2", "hint", _t2, "", 0, 10000, 0));
-    emit propertyCreated(_values, &_modulename);
-    _propertyStore.add(_values);
+    getValueFloat("values", "ra0")->setValue(_ra0, false);
+    getValueFloat("values", "de0")->setValue(_de0, false);
+    getValueFloat("values", "t0")->setValue(_t0, false);
+    getValueFloat("values", "ra1")->setValue(_ra1, false);
+    getValueFloat("values", "de1")->setValue(_de1, false);
+    getValueFloat("values", "t1")->setValue(_t1, false);
+    getValueFloat("values", "ra2")->setValue(_ra2, false);
+    getValueFloat("values", "de2")->setValue(_de2, false);
+    getValueFloat("values", "t2")->setValue(_t2, true);
 
     _itt++;
     if (_itt < 3) emit ComputeDone();
@@ -507,21 +408,21 @@ void PolarModule::SMCompute()
 }
 void PolarModule::SMComputeFinal()
 {
-    BOOST_LOG_TRIVIAL(debug) << "SMComputeFinal";
+    sendMessage("SMComputeFinal");
     //_ra0=354.1265137671062;  _de0=0.2921369570805727;_t0=1643110224331;
     //_ra1=339.12724652172227; _de1=0.300002845425132; _t1=1643110229671;
     //_ra2=324.1279546867718;  _de2=0.315854040156525; _t2=1643110234681;
-    BOOST_LOG_TRIVIAL(debug) << "SMComputeFinal RA 0 = " <<     _ra0;
-    BOOST_LOG_TRIVIAL(debug) << "SMComputeFinal DE 0 = " <<     _de0;
-    BOOST_LOG_TRIVIAL(debug) << "SMComputeFinal t 0  = " <<     _t0;
+    //BOOST_LOG_TRIVIAL(debug) << "SMComputeFinal RA 0 = " <<     _ra0;
+    //BOOST_LOG_TRIVIAL(debug) << "SMComputeFinal DE 0 = " <<     _de0;
+    //BOOST_LOG_TRIVIAL(debug) << "SMComputeFinal t 0  = " <<     _t0;
 
-    BOOST_LOG_TRIVIAL(debug) << "SMComputeFinal RA 1 = " <<     _ra1;
-    BOOST_LOG_TRIVIAL(debug) << "SMComputeFinal DE 1 = " <<     _de1;
-    BOOST_LOG_TRIVIAL(debug) << "SMComputeFinal t 1  = " <<     _t1;
+    //BOOST_LOG_TRIVIAL(debug) << "SMComputeFinal RA 1 = " <<     _ra1;
+    //BOOST_LOG_TRIVIAL(debug) << "SMComputeFinal DE 1 = " <<     _de1;
+    //BOOST_LOG_TRIVIAL(debug) << "SMComputeFinal t 1  = " <<     _t1;
 
-    BOOST_LOG_TRIVIAL(debug) << "SMComputeFinal RA 2 = " <<     _ra2;
-    BOOST_LOG_TRIVIAL(debug) << "SMComputeFinal DE 2 = " <<     _de2;
-    BOOST_LOG_TRIVIAL(debug) << "SMComputeFinal t 2  = " <<     _t2;
+    //BOOST_LOG_TRIVIAL(debug) << "SMComputeFinal RA 2 = " <<     _ra2;
+    //BOOST_LOG_TRIVIAL(debug) << "SMComputeFinal DE 2 = " <<     _de2;
+    //BOOST_LOG_TRIVIAL(debug) << "SMComputeFinal t 2  = " <<     _t2;
     /*double dra1=360*(_t1-_t0)/(1000*3600*24);
     double dra2=360*(_t2-_t0)/(1000*3600*24);
 
@@ -539,7 +440,7 @@ void PolarModule::SMComputeFinal()
     if (axis.length() < 0.9)
     {
         // It failed to normalize the vector, something's wrong.
-        BOOST_LOG_TRIVIAL(debug) << "Normal vector too short. findAxis failed.";
+        //BOOST_LOG_TRIVIAL(debug) << "Normal vector too short. findAxis failed.";
         emit Abort();
         return;
     }
@@ -551,9 +452,9 @@ void PolarModule::SMComputeFinal()
         axis = Rotations::V3(-axis.x(), -axis.y(), -axis.z());
     }
 
-    BOOST_LOG_TRIVIAL(debug) << "axis.x() " << axis.x();
-    BOOST_LOG_TRIVIAL(debug) << "axis.y() " << axis.y();
-    BOOST_LOG_TRIVIAL(debug) << "axis.z() " << axis.z();
+    //BOOST_LOG_TRIVIAL(debug) << "axis.x() " << axis.x();
+    //BOOST_LOG_TRIVIAL(debug) << "axis.y() " << axis.y();
+    //BOOST_LOG_TRIVIAL(debug) << "axis.z() " << axis.z();
     QPointF azAlt = Rotations::xyz2azAlt(axis);
     //azimuthCenter = azAlt.x();
     //altitudeCenter = azAlt.y();
@@ -561,26 +462,19 @@ void PolarModule::SMComputeFinal()
     _erralt = 90 - azAlt.y();
     //_erralt=azAlt.y();
     _errtot = sqrt(square(_erraz) + square(_erralt));
-    BOOST_LOG_TRIVIAL(debug) << "azimuthCenter "  << _erraz;
-    BOOST_LOG_TRIVIAL(debug) << "altitudeCenter " << _erralt;
-    BOOST_LOG_TRIVIAL(debug) << "PA error °"       << _errtot;
+    //BOOST_LOG_TRIVIAL(debug) << "azimuthCenter "  << _erraz;
+    //BOOST_LOG_TRIVIAL(debug) << "altitudeCenter " << _erralt;
+    //BOOST_LOG_TRIVIAL(debug) << "PA error °"       << _errtot;
 
-    _errors = new NumberProperty(_modulename, "Control", "root", "errors", "Polar error", 0, 0);
-    _errors->addNumber(new NumberValue("erraz", "Azimuth error °", "hint", _erraz, "", 0, 10000, 0));
-    _errors->addNumber(new NumberValue("erralt", "Altitude error °", "hint", _erralt, "", 0, 10000, 0));
-    _errors->addNumber(new NumberValue("errtot", "Total error °", "hint", _errtot, "", 0, 10000, 0));
-    emit propertyCreated(_errors, &_modulename);
-    _propertyStore.add(_errors);
+    getValueFloat("errors", "erraz")->setValue(_erraz, false);
+    getValueFloat("errors", "erralt")->setValue(_erralt, false);
+    getValueFloat("errors", "errtot")->setValue(_errtot, true);
 
-    _states = new LightProperty(_modulename, "Control", "root", "states", "State", 0, 0);
-    _states->addLight(new LightValue("idle", "Idle", "hint", 0));
-    _states->addLight(new LightValue("Moving", "Moving", "hint", 0));
-    _states->addLight(new LightValue("Shooting", "Shooting", "hint", 0));
-    _states->addLight(new LightValue("Solving", "Solving", "hint", 0));
-    _states->addLight(new LightValue("Compute", "Compute", "hint", 1));
-    emit propertyCreated(_states, &_modulename);
-    _propertyStore.add(_states);
-
+    getValueLight("states", "idle")->setValue(OST::Idle, false);
+    getValueLight("states", "moving")->setValue(OST::Idle, false);
+    getValueLight("states", "shooting")->setValue(OST::Idle, false);
+    getValueLight("states", "solving")->setValue(OST::Idle, false);
+    getValueLight("states", "compute")->setValue(OST::Busy, true);
 
     emit ComputeFinalDone();
     return;
@@ -588,17 +482,12 @@ void PolarModule::SMComputeFinal()
 }
 void PolarModule::SMFindStars()
 {
-    BOOST_LOG_TRIVIAL(debug) << "SMFindStars";
 
-    _states = new LightProperty(_modulename, "Control", "root", "states", "State", 0, 0);
-    _states->addLight(new LightValue("idle", "Idle", "hint", 0));
-    _states->addLight(new LightValue("Moving", "Moving", "hint", 0));
-    _states->addLight(new LightValue("Shooting", "Shooting", "hint", 0));
-    _states->addLight(new LightValue("Solving", "Solving", "hint", 2));
-    _states->addLight(new LightValue("Compute", "Compute", "hint", 0));
-    emit propertyCreated(_states, &_modulename);
-    _propertyStore.add(_states);
-
+    getValueLight("states", "idle")->setValue(OST::Idle, false);
+    getValueLight("states", "moving")->setValue(OST::Idle, false);
+    getValueLight("states", "shooting")->setValue(OST::Idle, false);
+    getValueLight("states", "solving")->setValue(OST::Busy, false);
+    getValueLight("states", "compute")->setValue(OST::Idle, true);
 
     sendMessage("SMFindStars");
 
@@ -608,7 +497,6 @@ void PolarModule::SMFindStars()
         emit Abort();
         return;
     }
-    BOOST_LOG_TRIVIAL(debug) << "Mount DEC " << _mountDEC;
 
     /* get mount RA */
     if (!getModNumber(_mount, "EQUATORIAL_EOD_COORD", "RA", _mountRA))
@@ -616,11 +504,9 @@ void PolarModule::SMFindStars()
         emit Abort();
         return;
     }
-    BOOST_LOG_TRIVIAL(debug) << "Mount RA " << _mountRA;
 
-
-
-    _solver.ResetSolver(image->stats, image->m_ImageBuffer);
+    mStats = image->getStats();
+    _solver.ResetSolver(mStats, image->getImageBuffer());
     connect(&_solver, &Solver::successSolve, this, &PolarModule::OnSucessSEP);
     _solver.stars.clear();
     SSolver::Parameters params = _solver.stellarSolverProfiles[0];
@@ -631,23 +517,25 @@ void PolarModule::SMFindStars()
     //BOOST_LOG_TRIVIAL(debug) << "maxidth " << params.maxwidth;
     //_solver.setSearchScale(0.1*_ccdFov/3600,1.1*_ccdFov/3600,ScaleUnits::DEG_WIDTH);
     //_solver.setSearchPositionInDegrees(_mountRA*360/24,_mountDEC);
-    _solver.stellarSolver->setSearchPositionInDegrees(_mountRA * 360 / 24, _mountDEC);
+    _solver.stellarSolver.setSearchPositionInDegrees(_mountRA * 360 / 24, _mountDEC);
     _solver.SolveStars(params);
 }
 void PolarModule::OnSucessSEP()
 {
-    BOOST_LOG_TRIVIAL(debug) << "OnSucessSEP";
 
     sendMessage("SEP finished");
     disconnect(&_solver, &Solver::successSolve, this, &PolarModule::OnSucessSEP);
-    BOOST_LOG_TRIVIAL(debug) << "********* SEP Finished";
+    //BOOST_LOG_TRIVIAL(debug) << "********* SEP Finished";
     emit FindStarsDone();
 }
 void PolarModule::SMAbort()
 {
     emit AbortDone();
     _machine.stop();
-    _states->addLight(new LightValue("idle", "Idle", "hint", 1));
-    emit propertyUpdated(_states, &_modulename);
-    _propertyStore.update(_states);
+    getValueLight("states", "idle")->setValue(OST::Idle, false);
+    getValueLight("states", "moving")->setValue(OST::Idle, false);
+    getValueLight("states", "shooting")->setValue(OST::Idle, false);
+    getValueLight("states", "solving")->setValue(OST::Idle, false);
+    getValueLight("states", "compute")->setValue(OST::Idle, true);
+
 }

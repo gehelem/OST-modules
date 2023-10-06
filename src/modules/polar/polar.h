@@ -42,31 +42,26 @@ class MODULE_INIT PolarModule : public IndiModule
 
 
     public slots:
-        void OnSetPropertyText(TextProperty* prop) override;
-        void OnSetPropertyNumber(NumberProperty* prop) override;
-        void OnSetPropertySwitch(SwitchProperty* prop) override;
+        void OnMyExternalEvent(const QString &pEventType, const QString  &pEventModule, const QString  &pEventKey,
+                               const QVariantMap &pEventData) override;
         void OnSucessSEP();
-        void DummySlot()
-        {
-            BOOST_LOG_TRIVIAL(debug) << "************************* DUMMY SLOT";
-        }
     private:
-        void newNumber(INumberVectorProperty *nvp) override;
-        void newBLOB(IBLOB *bp) override;
-        void newSwitch(ISwitchVectorProperty *svp) override;
+        void updateProperty(INDI::Property property) override;
+        void newBLOB(INDI::PropertyBlob pblob);
 
-        SwitchProperty* _actions;
+        /*SwitchProperty* _actions;
         NumberProperty* _commonParams;
         NumberProperty* _calParams;
         NumberProperty* _guideParams;
         NumberProperty* _values;
         NumberProperty* _errors;
         ImageProperty*  _img;
-        LightProperty*  _states;
+        LightProperty*  _states;*/
 
 
         //std::unique_ptr<Image> image =nullptr;
-        QPointer<Image> image;
+        QPointer<fileio> image;
+        FITSImage::Statistic mStats;
 
         double _exposure = 2;
         double _mountDEC;
@@ -99,7 +94,7 @@ class MODULE_INIT PolarModule : public IndiModule
         QString _camera  = "CCD Simulator";
         QString _mount  = "Telescope Simulator";
         QStateMachine _machine;
-
+        Solver _solver;
         double square(double value)
         {
             return value * value;

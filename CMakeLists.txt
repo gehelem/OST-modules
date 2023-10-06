@@ -117,6 +117,7 @@ add_library(ostpolar SHARED
     ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/polar/polar.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/polar/rotations.h
     ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/polar/rotations.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/polar/polar.qrc
 )
 target_link_libraries(ostpolar PRIVATE
     ${OST_LIBRARY_INDI}
