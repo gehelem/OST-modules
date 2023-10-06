@@ -98,6 +98,7 @@ void PolarModule::updateProperty(INDI::Property property)
         &&  (property.getState() == IPS_OK)
     )
     {
+        sendMessage("MoveDone");
         emit MoveDone();
     }
     if (
@@ -113,7 +114,7 @@ void PolarModule::updateProperty(INDI::Property property)
 void PolarModule::newBLOB(INDI::PropertyBlob  bp)
 {
     if (
-        (QString(bp.getDeviceName()) == _camera) && (_machine.isRunning())
+        (QString(bp.getDeviceName()) == getString("devices", "camera")) && (_machine.isRunning())
     )
     {
         delete image;
@@ -185,42 +186,42 @@ void PolarModule::SMInit()
     sendMessage("SMInit");
 
     /* get mount DEC */
-    if (!getModNumber(_mount, "EQUATORIAL_EOD_COORD", "DEC", _mountDEC))
+    if (!getModNumber(getString("devices", "mount"), "EQUATORIAL_EOD_COORD", "DEC", _mountDEC))
     {
         emit Abort();
         return;
     }
 
     /* get mount RA */
-    if (!getModNumber(_mount, "EQUATORIAL_EOD_COORD", "RA", _mountRA))
+    if (!getModNumber(getString("devices", "mount"), "EQUATORIAL_EOD_COORD", "RA", _mountRA))
     {
         emit Abort();
         return;
     }
 
     /* get focal length */
-    if (!getModNumber(_mount, "TELESCOPE_INFO", "TELESCOPE_FOCAL_LENGTH", _focalLength))
+    if (!getModNumber(getString("devices", "mount"), "TELESCOPE_INFO", "TELESCOPE_FOCAL_LENGTH", _focalLength))
     {
         emit Abort();
         return;
     }
 
     /* get pixel size */
-    if (!getModNumber(_camera, "CCD_INFO", "CCD_PIXEL_SIZE", _pixelSize))
+    if (!getModNumber(getString("devices", "camera"), "CCD_INFO", "CCD_PIXEL_SIZE", _pixelSize))
     {
         emit Abort();
         return;
     }
 
     /* get ccd width */
-    if (!getModNumber(_camera, "CCD_INFO", "CCD_MAX_X", _ccdX))
+    if (!getModNumber(getString("devices", "camera"), "CCD_INFO", "CCD_MAX_X", _ccdX))
     {
         emit Abort();
         return;
     }
 
     /* get ccd height */
-    if (!getModNumber(_camera, "CCD_INFO", "CCD_MAX_Y", _ccdY))
+    if (!getModNumber(getString("devices", "camera"), "CCD_INFO", "CCD_MAX_Y", _ccdY))
     {
         emit Abort();
         return;
@@ -231,7 +232,7 @@ void PolarModule::SMInit()
     _ccdFov = sqrt(square(_ccdX) + square(_ccdY)) * _ccdSampling;
 
     /* get mount Pier position  */
-    if (!getModSwitch(_mount, "TELESCOPE_PIER_SIDE", "PIER_WEST", _mountPointingWest))
+    if (!getModSwitch(getString("devices", "mount"), "TELESCOPE_PIER_SIDE", "PIER_WEST", _mountPointingWest))
     {
         emit Abort();
         return;
@@ -271,7 +272,7 @@ void PolarModule::SMInit()
 void PolarModule::SMRequestFrameReset()
 {
     sendMessage("SMRequestFrameReset");
-    if (!frameReset(_camera))
+    if (!frameReset(getString("devices", "camera")))
     {
         emit Abort();
         return;
@@ -280,6 +281,7 @@ void PolarModule::SMRequestFrameReset()
 }
 void PolarModule::SMRequestExposure()
 {
+    sendMessage("SMRequestExposure");
     getValueLight("states", "idle")->setValue(OST::Idle, false);
     getValueLight("states", "moving")->setValue(OST::Idle, false);
     getValueLight("states", "shooting")->setValue(OST::Busy, false);
@@ -302,8 +304,7 @@ void PolarModule::SMRequestExposure()
         _t2 = t;
     }
 
-    sendMessage("SMRequestExposure");
-    if (!sendModNewNumber(_camera, "CCD_EXPOSURE", "CCD_EXPOSURE_VALUE", _exposure))
+    if (!sendModNewNumber(getString("devices", "camera"), "CCD_EXPOSURE", "CCD_EXPOSURE_VALUE", _exposure))
     {
         emit Abort();
         return;
@@ -312,6 +313,7 @@ void PolarModule::SMRequestExposure()
 }
 void PolarModule::SMRequestMove()
 {
+    sendMessage("SMRequestMove");
     getValueLight("states", "idle")->setValue(OST::Idle, false);
     getValueLight("states", "moving")->setValue(OST::Busy, false);
     getValueLight("states", "shooting")->setValue(OST::Idle, false);
@@ -323,27 +325,29 @@ void PolarModule::SMRequestMove()
     double oldRA, newRA;
 
     /* get mount RA */
-    if (!getModNumber(_mount, "EQUATORIAL_EOD_COORD", "RA", oldRA))
+    if (!getModNumber(getString("devices", "mount"), "EQUATORIAL_EOD_COORD", "RA", oldRA))
     {
         sendMessage("SMRequestMove error 1");
         emit Abort();
         return;
     }
-
+    sendMessage("SMRequestMove oldRA=" + QString::number(oldRA));
 
     if (_mountPointingWest)
     {
-        newRA = oldRA - 15 * 24 / 360;
+        newRA = oldRA - 0.25;
         if (newRA < 0) newRA = newRA + 24;
     }
     else
     {
-        newRA = oldRA + 15 * 24 / 360;
+        newRA = oldRA + +0.25;
         if (newRA >= 24) newRA = newRA - 24;
     }
 
-    if (!sendModNewNumber(_mount, "EQUATORIAL_EOD_COORD", "RA", newRA))
+    sendMessage("SMRequestMove newRA=" + QString::number(newRA));
+    if (!sendModNewNumber(getString("devices", "mount"), "EQUATORIAL_EOD_COORD", "RA", newRA))
     {
+        sendMessage("SMRequestMove error 2");
         emit Abort();
         return;
     }
@@ -352,6 +356,7 @@ void PolarModule::SMRequestMove()
 }
 void PolarModule::SMCompute()
 {
+    sendMessage("SMCompute");
     getValueLight("states", "idle")->setValue(OST::Idle, false);
     getValueLight("states", "moving")->setValue(OST::Idle, false);
     getValueLight("states", "shooting")->setValue(OST::Idle, false);
@@ -365,6 +370,13 @@ void PolarModule::SMCompute()
     //coord2000.rightascension=_solver.stellarSolver.getSolution().ra;
     //coord2000.declination=_solver.stellarSolver.getSolution().dec;
 
+    OST::ImgData dta = image->ImgStats();
+    dta.starsCount = _solver.stars.size();
+    dta.solverRA = _solver.stellarSolver.getSolution().ra;
+    dta.solverDE = _solver.stellarSolver.getSolution().dec;
+    dta.isSolved = true;
+    getValueImg("image", "image")->setValue(dta, true);
+
     if (_itt == 0)
     {
         //INDI::ObservedToJ2000(&coordNow,_t0,&coord2000);
@@ -372,6 +384,9 @@ void PolarModule::SMCompute()
         //_de0=coord2000.declination;
         _ra0 = _solver.stellarSolver.getSolution().ra;
         _de0 = _solver.stellarSolver.getSolution().dec;
+        sendMessage("ra0=" + QString::number(_ra0));
+        sendMessage("de0=" + QString::number(_de0));
+
     }
     if (_itt == 1)
     {
@@ -380,6 +395,8 @@ void PolarModule::SMCompute()
         //_de1=coord2000.declination;
         _ra1 = _solver.stellarSolver.getSolution().ra;
         _de1 = _solver.stellarSolver.getSolution().dec;
+        sendMessage("ra1=" + QString::number(_ra1));
+        sendMessage("de1=" + QString::number(_de1));
     }
     if (_itt == 2)
     {
@@ -388,7 +405,8 @@ void PolarModule::SMCompute()
         //_de2=coord2000.declination;
         _ra2 = _solver.stellarSolver.getSolution().ra;
         _de2 = _solver.stellarSolver.getSolution().dec;
-
+        sendMessage("ra2=" + QString::number(_ra2));
+        sendMessage("de2=" + QString::number(_de2));
     }
 
     getValueFloat("values", "ra0")->setValue(_ra0, false);
@@ -440,7 +458,7 @@ void PolarModule::SMComputeFinal()
     if (axis.length() < 0.9)
     {
         // It failed to normalize the vector, something's wrong.
-        //BOOST_LOG_TRIVIAL(debug) << "Normal vector too short. findAxis failed.";
+        sendWarning("Normal vector too short. findAxis failed.");
         emit Abort();
         return;
     }
@@ -465,7 +483,9 @@ void PolarModule::SMComputeFinal()
     //BOOST_LOG_TRIVIAL(debug) << "azimuthCenter "  << _erraz;
     //BOOST_LOG_TRIVIAL(debug) << "altitudeCenter " << _erralt;
     //BOOST_LOG_TRIVIAL(debug) << "PA error °"       << _errtot;
-
+    qDebug() << _erraz;
+    qDebug() << _erralt;
+    qDebug() << _errtot;
     getValueFloat("errors", "erraz")->setValue(_erraz, false);
     getValueFloat("errors", "erralt")->setValue(_erralt, false);
     getValueFloat("errors", "errtot")->setValue(_errtot, true);
@@ -492,14 +512,14 @@ void PolarModule::SMFindStars()
     sendMessage("SMFindStars");
 
     /* get mount DEC */
-    if (!getModNumber(_mount, "EQUATORIAL_EOD_COORD", "DEC", _mountDEC))
+    if (!getModNumber(getString("devices", "mount"), "EQUATORIAL_EOD_COORD", "DEC", _mountDEC))
     {
         emit Abort();
         return;
     }
 
     /* get mount RA */
-    if (!getModNumber(_mount, "EQUATORIAL_EOD_COORD", "RA", _mountRA))
+    if (!getModNumber(getString("devices", "mount"), "EQUATORIAL_EOD_COORD", "RA", _mountRA))
     {
         emit Abort();
         return;
@@ -507,12 +527,16 @@ void PolarModule::SMFindStars()
 
     mStats = image->getStats();
     _solver.ResetSolver(mStats, image->getImageBuffer());
-    connect(&_solver, &Solver::successSolve, this, &PolarModule::OnSucessSEP);
+    QStringList folders;
+    folders.append("/usr/share/astrometry");
+    _solver.stellarSolver.setIndexFolderPaths(folders);
+    connect(&_solver, &Solver::successSolve, this, &PolarModule::OnSucessSolve);
+    connect(&_solver, &Solver::solverLog, this, &PolarModule::OnSolverLog);
     _solver.stars.clear();
     SSolver::Parameters params = _solver.stellarSolverProfiles[0];
-    //params.minwidth=0.1*_ccdFov/3600;
-    //params.maxwidth=1.1*_ccdFov/3600;
-    //params.search_radius=2;
+    params.minwidth = 0.1 * _ccdFov / 3600;
+    params.maxwidth = 1.1 * _ccdFov / 3600;
+    params.search_radius = 2;
     //BOOST_LOG_TRIVIAL(debug) << "minwidth " << params.minwidth;
     //BOOST_LOG_TRIVIAL(debug) << "maxidth " << params.maxwidth;
     //_solver.setSearchScale(0.1*_ccdFov/3600,1.1*_ccdFov/3600,ScaleUnits::DEG_WIDTH);
@@ -520,13 +544,25 @@ void PolarModule::SMFindStars()
     _solver.stellarSolver.setSearchPositionInDegrees(_mountRA * 360 / 24, _mountDEC);
     _solver.SolveStars(params);
 }
-void PolarModule::OnSucessSEP()
+void PolarModule::OnSucessSolve()
 {
 
     sendMessage("SEP finished");
-    disconnect(&_solver, &Solver::successSolve, this, &PolarModule::OnSucessSEP);
-    //BOOST_LOG_TRIVIAL(debug) << "********* SEP Finished";
+    OST::ImgData dta = image->ImgStats();
+    dta.mUrlJpeg = getModuleName() + ".jpeg";
+    dta.starsCount = _solver.stars.size();
+    dta.solverRA = _solver.stellarSolver.getSolution().ra;
+    dta.solverDE = _solver.stellarSolver.getSolution().dec;
+    dta.isSolved = true;
+    getValueImg("image", "image")->setValue(dta, true);
+
+    disconnect(&_solver, &Solver::successSolve, this, &PolarModule::OnSucessSolve);
+    disconnect(&_solver, &Solver::solverLog, this, &PolarModule::OnSolverLog);
     emit FindStarsDone();
+}
+void PolarModule::OnSolverLog(QString &text)
+{
+    //sendMessage(text);
 }
 void PolarModule::SMAbort()
 {

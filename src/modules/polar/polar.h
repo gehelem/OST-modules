@@ -44,7 +44,8 @@ class MODULE_INIT PolarModule : public IndiModule
     public slots:
         void OnMyExternalEvent(const QString &pEventType, const QString  &pEventModule, const QString  &pEventKey,
                                const QVariantMap &pEventData) override;
-        void OnSucessSEP();
+        void OnSucessSolve();
+        void OnSolverLog(QString &text);
     private:
         void updateProperty(INDI::Property property) override;
         void newBLOB(INDI::PropertyBlob pblob);

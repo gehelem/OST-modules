@@ -1,8 +1,6 @@
 {
 "properties":{
     "values": {
-        "hasArray":true,
-        "showArray":false,
         "devcat": "Control",
         "order":"Control100",
         "group": "",
@@ -12,55 +10,55 @@
             "ra0": {
                 "type":"float",
                 "label": "RA 0",
-                "value":0,
+                "order":"00",
                 "format": "99.99"
             },
             "de0": {
                 "type":"float",
                 "label": "DE 0",
-                "value":0,
+                "order":"00",
                 "format": "99.99"
             },
             "t0": {
                 "type":"float",
                 "label": "Time 0",
-                "value":0,
+                "order":"00",
                 "format": "99.99"
             },
             "ra1": {
                 "type":"float",
                 "label": "RA 1",
-                "value":0,
+                "order":"00",
                 "format": "99.99"
             },
             "de1": {
                 "type":"float",
                 "label": "DE 1",
-                "value":0,
+                "order":"00",
                 "format": "99.99"
             },
             "t1": {
                 "type":"float",
                 "label": "Time 1",
-                "value":0,
+                "order":"00",
                 "format": "99.99"
             },
             "ra2": {
                 "type":"float",
                 "label": "RA 2",
-                "value":0,
+                "order":"00",
                 "format": "99.99"
             },
             "de2": {
                 "type":"float",
                 "label": "DE 2",
-                "value":0,
+                "order":"00",
                 "format": "99.99"
             },
             "t2": {
                 "type":"float",
                 "label": "Time 2",
-                "value":0,
+                "order":"00",
                 "format": "99.99"
             }
         }
