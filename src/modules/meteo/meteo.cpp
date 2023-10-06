@@ -65,7 +65,7 @@ void Meteo::OnMyExternalEvent(const QString &pEventType, const QString  &pEventM
             if (pEventType == "Fldelete" && keyprop == "selection")
             {
                 double line = pEventData[keyprop].toMap()["line"].toDouble();
-                QString id = pEventData["selection"].toMap()["dpv"].toString();
+                QString id = getString("selection", "dpv", line);
                 getStore()[keyprop]->deleteLine(line);
                 deleteOstProperty(id);
             }
