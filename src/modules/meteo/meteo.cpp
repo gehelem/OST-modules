@@ -24,7 +24,7 @@ Meteo::Meteo(QString name, QString label, QString profile, QVariantMap available
     i->setDirectEdit(true);
     i->setAutoUpdate(true);
     getProperty("parms")->addValue("interval", i);
-    i = new OST::ValueInt("Keep x value", "0", "");
+    i = new OST::ValueInt("Keep x values", "0", "");
     i->setValue(10, false);
     i->setDirectEdit(true);
     i->setAutoUpdate(true);
@@ -55,10 +55,8 @@ void Meteo::OnMyExternalEvent(const QString &pEventType, const QString  &pEventM
                 {
                     if (keyelt == "interval")
                     {
-                        QVariant val = pEventData[keyprop].toMap()[keyelt];
                         mTimer.stop();
-                        mTimer.start(val.toDouble() * 1000);
-                        getValueInt("parms", "interval")->setValue(val.toInt(), true);
+                        mTimer.start(getInt("parms", "interval") * 1000);
                     }
                 }
 
@@ -67,7 +65,7 @@ void Meteo::OnMyExternalEvent(const QString &pEventType, const QString  &pEventM
             if (pEventType == "Fldelete" && keyprop == "selection")
             {
                 double line = pEventData[keyprop].toMap()["line"].toDouble();
-                QString id = pEventData["selection"].toMap()["dpv"].toString();
+                QString id = getString("selection", "dpv", line);
                 getStore()[keyprop]->deleteLine(line);
                 deleteOstProperty(id);
             }
@@ -121,6 +119,8 @@ void Meteo::OnTimer()
         declareNewGraph(propname);
         if (getStore().contains(propname))
         {
+            getProperty(propname)->setArrayLimit(getInt("parms", "histo"));
+
             getValueFloat(propname, "time")->setValue(QDateTime::currentDateTime().toMSecsSinceEpoch(), true);
             getProperty(propname)->push();
         }
@@ -143,11 +143,13 @@ void Meteo::declareNewGraph(const QString  &pName)
     QString lab = mAvailableMeasures[pName];
     OST::PropertyMulti* pm = new OST::PropertyMulti(pName, lab, OST::ReadOnly, "Measures", "", 0, false, true);
     pm->setShowArray(false);
+    pm->setArrayLimit(getInt("parms", "histo"));
     OST::ValueFloat* t = new OST::ValueFloat("Time", "", "");
     pm->addValue("time", t);
     t = new OST::ValueFloat(pName, "", "");
     pm->addValue(pName, t);
     OST::ValueGraph* g = new OST::ValueGraph("", "", "");
+
     OST::GraphDefs def;
     def.type = OST::GraphType::DY;
     def.params["D"] = "time";

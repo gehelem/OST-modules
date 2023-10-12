@@ -145,8 +145,8 @@ void Inspector::Shoot()
     if (connectDevice(getString("devices", "camera")))
     {
         frameReset(getString("devices", "camera"));
-        sendModNewNumber(getString("devices", "camera"), "CCD_EXPOSURE", "CCD_EXPOSURE_VALUE", getFloat("parms",
-                         "exposure"));
+        requestCapture(getString("devices", "camera"), getFloat("parms", "exposure"), getInt("parms", "gain"), getInt("parms",
+                       "offset"));
         getProperty("actions")->setState(OST::Busy);
     }
     else

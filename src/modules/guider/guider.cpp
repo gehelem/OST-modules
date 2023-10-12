@@ -453,8 +453,8 @@ void Guider::SMRequestExposure()
 {
     //BOOST_LOG_TRIVIAL(debug) << "SMRequestExposure";
     //sendMessage("SMRequestExposure");
-    if (!sendModNewNumber(getString("devices", "camera"), "CCD_EXPOSURE", "CCD_EXPOSURE_VALUE", getFloat("parms",
-                          "exposure")))
+    if (!requestCapture(getString("devices", "camera"), getFloat("parms", "exposure"), getInt("parms", "gain"), getInt("parms",
+                        "offset")))
     {
         emit Abort();
         return;
