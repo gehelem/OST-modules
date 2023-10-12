@@ -4,12 +4,12 @@
 
 #define PI 3.14159265
 
-PolarModule *initialize(QString name, QString label, QString profile, QVariantMap availableModuleLibs)
+Polar *initialize(QString name, QString label, QString profile, QVariantMap availableModuleLibs)
 {
-    PolarModule *basemodule = new PolarModule( name,  label,  profile,  availableModuleLibs);
+    Polar *basemodule = new Polar( name,  label,  profile,  availableModuleLibs);
     return basemodule;
 }
-PolarModule::PolarModule(QString name, QString label, QString profile, QVariantMap availableModuleLibs)
+Polar::Polar(QString name, QString label, QString profile, QVariantMap availableModuleLibs)
     : IndiModule(name, label, profile, availableModuleLibs)
 {
 
@@ -34,12 +34,12 @@ PolarModule::PolarModule(QString name, QString label, QString profile, QVariantM
     buildStateMachine();
 
 }
-PolarModule::~PolarModule()
+Polar::~Polar()
 {
 
 }
-void PolarModule::OnMyExternalEvent(const QString &pEventType, const QString  &pEventModule, const QString  &pEventKey,
-                                    const QVariantMap &pEventData)
+void Polar::OnMyExternalEvent(const QString &pEventType, const QString  &pEventModule, const QString  &pEventKey,
+                              const QVariantMap &pEventData)
 {
     //sendMessage("OnMyExternalEvent - recv : " + getModuleName() + "-" + eventType + "-" + eventKey);
     Q_UNUSED(pEventType);
@@ -85,7 +85,7 @@ void PolarModule::OnMyExternalEvent(const QString &pEventType, const QString  &p
 }
 
 
-void PolarModule::updateProperty(INDI::Property property)
+void Polar::updateProperty(INDI::Property property)
 {
     //if (mState == "idle") return;
 
@@ -111,7 +111,7 @@ void PolarModule::updateProperty(INDI::Property property)
         emit FrameResetDone();
     }
 }
-void PolarModule::newBLOB(INDI::PropertyBlob  bp)
+void Polar::newBLOB(INDI::PropertyBlob  bp)
 {
     if (
         (QString(bp.getDeviceName()) == getString("devices", "camera")) && (_machine.isRunning())
@@ -131,7 +131,7 @@ void PolarModule::newBLOB(INDI::PropertyBlob  bp)
     }
 
 }
-void PolarModule::buildStateMachine(void)
+void Polar::buildStateMachine(void)
 {
     auto *Abort = new QState();
     auto *Polar = new QState();
@@ -148,29 +148,29 @@ void PolarModule::buildStateMachine(void)
     auto *WaitMove             = new QState(Polar);
     auto *FinalCompute         = new QState(Polar);
 
-    connect(InitInit, &QState::entered, this, &PolarModule::SMInit);
-    connect(RequestFrameReset, &QState::entered, this, &PolarModule::SMRequestFrameReset);
-    connect(RequestExposure, &QState::entered, this, &PolarModule::SMRequestExposure);
-    connect(RequestMove, &QState::entered, this, &PolarModule::SMRequestMove);
-    connect(FindStars, &QState::entered, this, &PolarModule::SMFindStars);
-    connect(Compute, &QState::entered, this, &PolarModule::SMCompute);
-    connect(FinalCompute, &QState::entered, this, &PolarModule::SMComputeFinal);
-    connect(Abort,               &QState::entered, this, &PolarModule::SMAbort);
+    connect(InitInit, &QState::entered, this, &Polar::SMInit);
+    connect(RequestFrameReset, &QState::entered, this, &Polar::SMRequestFrameReset);
+    connect(RequestExposure, &QState::entered, this, &Polar::SMRequestExposure);
+    connect(RequestMove, &QState::entered, this, &Polar::SMRequestMove);
+    connect(FindStars, &QState::entered, this, &Polar::SMFindStars);
+    connect(Compute, &QState::entered, this, &Polar::SMCompute);
+    connect(FinalCompute, &QState::entered, this, &Polar::SMComputeFinal);
+    connect(Abort,               &QState::entered, this, &Polar::SMAbort);
 
-    Polar->               addTransition(this, &PolarModule::Abort, Abort);
-    Abort->               addTransition(this, &PolarModule::AbortDone, End);
+    Polar->               addTransition(this, &Polar::Abort, Abort);
+    Abort->               addTransition(this, &Polar::AbortDone, End);
 
-    InitInit->            addTransition(this, &PolarModule::InitDone, RequestFrameReset);
-    RequestFrameReset->   addTransition(this, &PolarModule::RequestFrameResetDone, WaitFrameReset);
-    WaitFrameReset->      addTransition(this, &PolarModule::FrameResetDone, RequestExposure);
-    RequestExposure->     addTransition(this, &PolarModule::RequestExposureDone, WaitExposure);
-    WaitExposure->        addTransition(this, &PolarModule::ExposureDone, FindStars);
-    FindStars->           addTransition(this, &PolarModule::FindStarsDone, Compute);
-    Compute->             addTransition(this, &PolarModule::ComputeDone, RequestMove);
-    Compute->             addTransition(this, &PolarModule::PolarDone, FinalCompute);
-    RequestMove->         addTransition(this, &PolarModule::RequestMoveDone, WaitMove);
-    WaitMove->            addTransition(this, &PolarModule::MoveDone, RequestExposure);
-    FinalCompute->        addTransition(this, &PolarModule::ComputeFinalDone, End);
+    InitInit->            addTransition(this, &Polar::InitDone, RequestFrameReset);
+    RequestFrameReset->   addTransition(this, &Polar::RequestFrameResetDone, WaitFrameReset);
+    WaitFrameReset->      addTransition(this, &Polar::FrameResetDone, RequestExposure);
+    RequestExposure->     addTransition(this, &Polar::RequestExposureDone, WaitExposure);
+    WaitExposure->        addTransition(this, &Polar::ExposureDone, FindStars);
+    FindStars->           addTransition(this, &Polar::FindStarsDone, Compute);
+    Compute->             addTransition(this, &Polar::ComputeDone, RequestMove);
+    Compute->             addTransition(this, &Polar::PolarDone, FinalCompute);
+    RequestMove->         addTransition(this, &Polar::RequestMoveDone, WaitMove);
+    WaitMove->            addTransition(this, &Polar::MoveDone, RequestExposure);
+    FinalCompute->        addTransition(this, &Polar::ComputeFinalDone, End);
 
     Polar->setInitialState(InitInit);
 
@@ -181,7 +181,7 @@ void PolarModule::buildStateMachine(void)
 
 
 }
-void PolarModule::SMInit()
+void Polar::SMInit()
 {
     sendMessage("SMInit");
 
@@ -269,7 +269,7 @@ void PolarModule::SMInit()
 
     emit InitDone();
 }
-void PolarModule::SMRequestFrameReset()
+void Polar::SMRequestFrameReset()
 {
     sendMessage("SMRequestFrameReset");
     if (!frameReset(getString("devices", "camera")))
@@ -279,7 +279,7 @@ void PolarModule::SMRequestFrameReset()
     }
     emit RequestFrameResetDone();
 }
-void PolarModule::SMRequestExposure()
+void Polar::SMRequestExposure()
 {
     sendMessage("SMRequestExposure");
     getValueLight("states", "idle")->setValue(OST::Idle, false);
@@ -311,7 +311,7 @@ void PolarModule::SMRequestExposure()
     }
     emit RequestExposureDone();
 }
-void PolarModule::SMRequestMove()
+void Polar::SMRequestMove()
 {
     sendMessage("SMRequestMove");
     getValueLight("states", "idle")->setValue(OST::Idle, false);
@@ -354,7 +354,7 @@ void PolarModule::SMRequestMove()
     emit RequestMoveDone();
 
 }
-void PolarModule::SMCompute()
+void Polar::SMCompute()
 {
     sendMessage("SMCompute");
     getValueLight("states", "idle")->setValue(OST::Idle, false);
@@ -424,7 +424,7 @@ void PolarModule::SMCompute()
     else emit PolarDone();
 
 }
-void PolarModule::SMComputeFinal()
+void Polar::SMComputeFinal()
 {
     sendMessage("SMComputeFinal");
     //_ra0=354.1265137671062;  _de0=0.2921369570805727;_t0=1643110224331;
@@ -500,7 +500,7 @@ void PolarModule::SMComputeFinal()
     return;
 
 }
-void PolarModule::SMFindStars()
+void Polar::SMFindStars()
 {
 
     getValueLight("states", "idle")->setValue(OST::Idle, false);
@@ -530,8 +530,8 @@ void PolarModule::SMFindStars()
     QStringList folders;
     folders.append("/usr/share/astrometry");
     _solver.stellarSolver.setIndexFolderPaths(folders);
-    connect(&_solver, &Solver::successSolve, this, &PolarModule::OnSucessSolve);
-    connect(&_solver, &Solver::solverLog, this, &PolarModule::OnSolverLog);
+    connect(&_solver, &Solver::successSolve, this, &Polar::OnSucessSolve);
+    connect(&_solver, &Solver::solverLog, this, &Polar::OnSolverLog);
     _solver.stars.clear();
     SSolver::Parameters params = _solver.stellarSolverProfiles[0];
     params.minwidth = 0.1 * _ccdFov / 3600;
@@ -544,7 +544,7 @@ void PolarModule::SMFindStars()
     _solver.stellarSolver.setSearchPositionInDegrees(_mountRA * 360 / 24, _mountDEC);
     _solver.SolveStars(params);
 }
-void PolarModule::OnSucessSolve()
+void Polar::OnSucessSolve()
 {
 
     sendMessage("SEP finished");
@@ -556,15 +556,15 @@ void PolarModule::OnSucessSolve()
     dta.isSolved = true;
     getValueImg("image", "image")->setValue(dta, true);
 
-    disconnect(&_solver, &Solver::successSolve, this, &PolarModule::OnSucessSolve);
-    disconnect(&_solver, &Solver::solverLog, this, &PolarModule::OnSolverLog);
+    disconnect(&_solver, &Solver::successSolve, this, &Polar::OnSucessSolve);
+    disconnect(&_solver, &Solver::solverLog, this, &Polar::OnSolverLog);
     emit FindStarsDone();
 }
-void PolarModule::OnSolverLog(QString &text)
+void Polar::OnSolverLog(QString &text)
 {
     //sendMessage(text);
 }
-void PolarModule::SMAbort()
+void Polar::SMAbort()
 {
     emit AbortDone();
     _machine.stop();

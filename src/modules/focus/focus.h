@@ -12,13 +12,13 @@
 
 #include <QStateMachine>
 
-class MODULE_INIT FocusModule : public IndiModule
+class MODULE_INIT Focus : public IndiModule
 {
         Q_OBJECT
 
     public:
-        FocusModule(QString name, QString label, QString profile, QVariantMap availableModuleLibs);
-        ~FocusModule();
+        Focus(QString name, QString label, QString profile, QVariantMap availableModuleLibs);
+        ~Focus();
 
     signals:
         void focuserPositionChanged(const double &newFocuserPosition);
@@ -117,7 +117,7 @@ class MODULE_INIT FocusModule : public IndiModule
 
 };
 
-extern "C" MODULE_INIT FocusModule *initialize(QString name, QString label, QString profile,
+extern "C" MODULE_INIT Focus *initialize(QString name, QString label, QString profile,
         QVariantMap availableModuleLibs);
 
 #endif

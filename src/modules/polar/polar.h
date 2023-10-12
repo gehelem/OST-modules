@@ -17,13 +17,13 @@
 #include <libnova/julian_day.h>
 
 
-class MODULE_INIT PolarModule : public IndiModule
+class MODULE_INIT Polar : public IndiModule
 {
         Q_OBJECT
 
     public:
-        PolarModule(QString name, QString label, QString profile, QVariantMap availableModuleLibs);
-        ~PolarModule();
+        Polar(QString name, QString label, QString profile, QVariantMap availableModuleLibs);
+        ~Polar();
 
     signals:
         void InitDone();
@@ -112,7 +112,7 @@ class MODULE_INIT PolarModule : public IndiModule
         void SMAbort();
 };
 
-extern "C" MODULE_INIT PolarModule *initialize(QString name, QString label, QString profile,
+extern "C" MODULE_INIT Polar *initialize(QString name, QString label, QString profile,
         QVariantMap availableModuleLibs);
 
 #endif
