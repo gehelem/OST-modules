@@ -304,7 +304,7 @@ void PolarModule::SMRequestExposure()
         _t2 = t;
     }
 
-    if (!sendModNewNumber(getString("devices", "camera"), "CCD_EXPOSURE", "CCD_EXPOSURE_VALUE", _exposure))
+    if (!requestCapture(getString("devices", "camera"), _exposure, getInt("parms", "gain"), getInt("parms", "offset")))
     {
         emit Abort();
         return;

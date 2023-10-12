@@ -113,8 +113,8 @@ void Allsky::startLoop()
     connectDevice(getString("devices", "camera"));
     setBLOBMode(B_ALSO, getString("devices", "camera").toStdString().c_str(), nullptr);
     enableDirectBlobAccess(getString("devices", "camera").toStdString().c_str(), nullptr);
-    if (!sendModNewNumber(getString("devices", "camera"), "CCD_EXPOSURE", "CCD_EXPOSURE_VALUE", getFloat("parms",
-                          "exposure")))
+    if (!requestCapture(getString("devices", "camera"), getFloat("parms", "exposure"), getInt("parms", "gain"), getInt("parms",
+                        "offset")))
     {
         getProperty("actions")->setState(OST::Error);
     }

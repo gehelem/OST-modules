@@ -187,10 +187,14 @@ void Sequencer::updateProperty(INDI::Property property)
 
 void Sequencer::Shoot()
 {
-    double exp = getValueFloat("sequence", "exposure")->getGrid()[0];
+    double exp = getValueFloat("sequence", "exposure")->getGrid()[currentLine];
+    double gain = getValueInt("sequence", "gain")->getGrid()[currentLine];
+    double offset = getValueInt("sequence", "offset")->getGrid()[currentLine];
     sendModNewNumber(getString("devices", "camera"), "CCD_EXPOSURE", "CCD_EXPOSURE_VALUE",
                      //getOstElementGrid("sequence", "exposure")[0].toDouble());
                      exp);
+    requestCapture(getString("devices", "camera"), exp, gain, offset);
+
     double i = getValueInt("sequence", "count")->getGrid()[currentLine];
     getValueString("sequence", "status")->gridUpdate("Running "  + QString::number(
                 i - currentCount) + "/" + QString::number(i), currentLine, true);

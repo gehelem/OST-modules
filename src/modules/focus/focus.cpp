@@ -354,29 +354,14 @@ void FocusModule::SMRequestGotoStart()
 
 void FocusModule::SMRequestExposure()
 {
-    //sendMessage("SMRequestExposure");
-    if (!sendModNewNumber(getString("devices", "camera"), "CCD_GAIN", "GAIN", getValueInt("parms",
-                          "gain")->value()))
-    {
-        emit abort();
-        return;
-    }
-    if (!sendModNewNumber(getString("devices", "camera"), "CCD_OFFSET", "OFFSET", getValueInt("parms",
-                          "offset")->value()))
-    {
-        emit abort();
-        return;
-    }
-
-    if (!sendModNewNumber(getString("devices", "camera"), "CCD_EXPOSURE", "CCD_EXPOSURE_VALUE", getValueFloat("parms",
-                          "exposure")->value()))
+    if (!requestCapture(getString("devices", "camera"), getFloat("parms", "exposure"), getInt("parms", "gain"), getInt("parms",
+                        "offset")))
     {
         emit abort();
         return;
     }
     //setBLOBMode(B_ALSO, getString("devices","camera").toStdString().c_str(), nullptr);
     emit RequestExposureDone();
-
 }
 
 void FocusModule::SMFindStars()
