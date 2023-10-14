@@ -1,5 +1,38 @@
 {
 "properties":{
+    "progress":{
+        "devcat": "Control",
+        "group": "",
+        "permission": 0,
+        "order":2,
+        "label":"Progress",
+        "elements": {
+            "global": {
+                "type": "prg",
+                "prgtype": "spinner",
+                "label": "Global",
+                "dynlabel": "",
+                "value": 0,
+                "order":0
+            },
+            "current": {
+                "type": "prg",
+                "prgtype": "spinner",
+                "label": "Current",
+                "dynlabel": "",
+                "value": 0,
+                "order":1
+            },
+            "exposure": {
+                "type": "prg",
+                "prgtype": "spinner",
+                "label": "Exposure",
+                "dynlabel": "",
+                "value": 0,
+                "order":2
+            }
+        }
+    },
     "sequence": {
         "hasArray":true,
         "devcat": "Control",

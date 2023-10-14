@@ -93,7 +93,6 @@ void Sequencer::newBLOB(INDI::PropertyBlob pblob)
         _image = new fileio();
         _image->loadBlob(pblob, 64);
         stats = _image->getStats();
-        sendMessage("Couting stars ...");
         _solver.ResetSolver(stats, _image->getImageBuffer());
         connect(&_solver, &Solver::successSEP, this, &Sequencer::OnSucessSEP);
         _solver.FindStars(_solver.stellarSolverProfiles[0]);
@@ -183,8 +182,24 @@ void Sequencer::updateProperty(INDI::Property property)
         //sendMessage("Filter OK");
         Shoot();
     }
+    if (
+        (property.getDeviceName()  == getString("devices", "camera"))
+        &&  (QString(property.getName())   == "CCD_EXPOSURE")
+        //&&  (property.getState() == IPS_OK)
+        && isSequenceRunning
+    )
+    {
+        newExp(property);
+    }
 }
 
+void Sequencer::newExp(INDI::PropertyNumber exp)
+{
+    double etot = getValueFloat("sequence", "exposure")->getGrid()[currentLine];
+    double ex = exp.findWidgetByName("CCD_EXPOSURE_VALUE")->value;
+    getValuePrg("progress", "exposure")->setValue(100 * (etot - ex) / etot, true);
+
+}
 void Sequencer::Shoot()
 {
     double exp = getValueFloat("sequence", "exposure")->getGrid()[currentLine];
@@ -198,6 +213,15 @@ void Sequencer::Shoot()
     double i = getValueInt("sequence", "count")->getGrid()[currentLine];
     getValueString("sequence", "status")->gridUpdate("Running "  + QString::number(
                 i - currentCount) + "/" + QString::number(i), currentLine, true);
+
+
+    getValuePrg("progress", "current")->setValue(100 * (i - currentCount + 1) / i, false);
+    getValuePrg("progress", "current")->setDynLabel(QString::number(i - currentCount + 1) + "/" + QString::number(i), false);
+
+    int tot = getValueFloat("sequence", "exposure")->getGrid().size();
+    getValuePrg("progress", "global")->setValue(100 * (currentLine + 1) / (tot), false);
+    getValuePrg("progress", "global")->setDynLabel(QString::number(currentLine + 1) + "/" + QString::number(tot), true);
+
 }
 
 void Sequencer::OnSucessSEP()
