@@ -50,6 +50,7 @@ class MODULE_INIT Sequencer: public IndiModule
         void newBLOB(INDI::PropertyBlob pblob);
         void newProperty(INDI::Property property) override;
         void updateProperty(INDI::Property property) override;
+        void newExp(INDI::PropertyNumber exp);
 
         void Shoot();
         void SMAlert();
