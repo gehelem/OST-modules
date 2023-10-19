@@ -64,7 +64,11 @@
                 "graphtype":"XY",
                 "params":{
                     "X":"RA",
-                    "Y":"DEC"
+                    "Y":"DEC",
+                    "Xmin":-10,
+                    "Ymin":-10,
+                    "Xmax":10,
+                    "Ymax":10
                 }
             },
             "RA": {
