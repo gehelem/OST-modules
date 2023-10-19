@@ -54,6 +54,18 @@
             "Y":"DEC"
         },
         "elements": {
+            "graph": {
+                "type": "graph",
+                "graphtype":"XY",
+                "params":{
+                    "X":"RA",
+                    "Y":"DEC",
+                    "Xmin":-10,
+                    "Ymin":-10,
+                    "Xmax":10,
+                    "Ymax":10
+                }
+            },
             "RA": {
                 "elementLabel": "RA",
                 "format": "99.99"
