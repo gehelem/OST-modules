@@ -12,13 +12,13 @@
 
 #include <QStateMachine>
 
-class MODULE_INIT FocusModule : public IndiModule
+class MODULE_INIT Focus : public IndiModule
 {
         Q_OBJECT
 
     public:
-        FocusModule(QString name, QString label, QString profile, QVariantMap availableModuleLibs);
-        ~FocusModule();
+        Focus(QString name, QString label, QString profile, QVariantMap availableModuleLibs);
+        ~Focus();
 
     signals:
         void focuserPositionChanged(const double &newFocuserPosition);
@@ -79,6 +79,7 @@ class MODULE_INIT FocusModule : public IndiModule
         void SMComputeResult();
         void SMInitLoopFrame();
         void SMComputeLoopFrame();
+        void SMFocusDone();
 
 
         void SMAlert();
@@ -88,16 +89,12 @@ class MODULE_INIT FocusModule : public IndiModule
         void startCoarse();
 
 
-        QString _camera  = "CCD Simulator";
-        QString _focuser = "Focuser Simulator";
-        QString _mount = "Telescope Simulator";
         bool    _newblob;
 
         int    _startpos = 30000;
         int    _backlash = 100;
         int    _iterations = 3;
         int    _steps = 3000;
-        int    _exposure = 2;
         int    _loopIterations = 2;
         int    _loopIteration;
         double _loopHFRavg;
@@ -120,7 +117,7 @@ class MODULE_INIT FocusModule : public IndiModule
 
 };
 
-extern "C" MODULE_INIT FocusModule *initialize(QString name, QString label, QString profile,
+extern "C" MODULE_INIT Focus *initialize(QString name, QString label, QString profile,
         QVariantMap availableModuleLibs);
 
 #endif

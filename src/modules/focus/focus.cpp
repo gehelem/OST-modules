@@ -1,13 +1,13 @@
 #include "focus.h"
 #include "polynomialfit.h"
 
-FocusModule *initialize(QString name, QString label, QString profile, QVariantMap availableModuleLibs)
+Focus *initialize(QString name, QString label, QString profile, QVariantMap availableModuleLibs)
 {
-    FocusModule *basemodule = new FocusModule(name, label, profile, availableModuleLibs);
+    Focus *basemodule = new Focus(name, label, profile, availableModuleLibs);
     return basemodule;
 }
 
-FocusModule::FocusModule(QString name, QString label, QString profile, QVariantMap availableModuleLibs)
+Focus::Focus(QString name, QString label, QString profile, QVariantMap availableModuleLibs)
     : IndiModule(name, label, profile, availableModuleLibs)
 
 {
@@ -21,30 +21,26 @@ FocusModule::FocusModule(QString name, QString label, QString profile, QVariantM
     setModuleVersion("0.1");
     //setModuleType("focus");
 
-    createOstElement("devices", "camera", "Camera", true);
-    createOstElement("devices", "focuser", "Focuser", true);
-    createOstElement("devices", "mount", "Mount", true);
-    setOstElementValue("devices", "camera",   _camera, false);
-    setOstElementValue("devices", "focuser",  _focuser, false);
-    setOstElementValue("devices", "mount",    _mount, true);
-    _startpos =          getOstElementValue("parameters", "startpos").toInt();
-    _steps =             getOstElementValue("parameters", "steps").toInt();
-    _iterations =        getOstElementValue("parameters", "iterations").toInt();
-    _loopIterations =    getOstElementValue("parameters", "loopIterations").toInt();
-    _exposure =          getOstElementValue("parameters", "exposure").toInt();
-    _backlash =          getOstElementValue("parameters", "backlash").toInt();
+    _startpos =          getValueInt("parameters", "startpos")->value();
+    _steps =             getValueInt("parameters", "steps")->value();
+    _iterations =        getValueInt("parameters", "iterations")->value();
+    _loopIterations =    getValueInt("parameters", "loopIterations")->value();
+    _backlash =          getValueInt("parameters", "backlash")->value();
+
+    defineMeAsFocuser();
+    giveMeADevice("camera", "Camera", INDI::BaseDevice::CCD_INTERFACE);
+    giveMeADevice("focuser", "Focuser", INDI::BaseDevice::FOCUSER_INTERFACE);
+    giveMeADevice("filter", "Filter wheel", INDI::BaseDevice::FILTER_INTERFACE);
 
 }
 
-FocusModule::~FocusModule()
+Focus::~Focus()
 {
 
 }
-void FocusModule::OnMyExternalEvent(const QString &eventType, const QString  &eventModule, const QString  &eventKey,
-                                    const QVariantMap &eventData)
+void Focus::OnMyExternalEvent(const QString &eventType, const QString  &eventModule, const QString  &eventKey,
+                              const QVariantMap &eventData)
 {
-    //BOOST_LOG_TRIVIAL(debug) << "OnMyExternalEvent FocusModule - recv : " << getModuleName().toStdString() << "-" <<
-    //                         eventType.toStdString() << "-" << eventKey.toStdString();
     Q_UNUSED(eventType);
     Q_UNUSED(eventKey);
 
@@ -54,71 +50,22 @@ void FocusModule::OnMyExternalEvent(const QString &eventType, const QString  &ev
         {
             foreach(const QString &keyelt, eventData[keyprop].toMap()["elements"].toMap().keys())
             {
-                //BOOST_LOG_TRIVIAL(debug) << "OnMyExternalEvent - recv : " << getModuleName().toStdString() << "-" << eventType.toStdString()
-                //                         <<
-                //                         "-" << keyprop.toStdString() << "-" << keyelt.toStdString();
                 QVariant val = eventData[keyprop].toMap()["elements"].toMap()[keyelt].toMap()["value"];
-                if (keyprop == "parameters")
-                {
-                    if (keyelt == "startpos")
-                    {
-                        if (setOstElementValue(keyprop, keyelt, val, true))
-                        {
-                            _startpos = val.toInt();
-                        }
-                    }
-                    if (keyelt == "steps")
-                    {
-                        if (setOstElementValue(keyprop, keyelt, val, true))
-                        {
-                            _steps = val.toInt();
-                        }
-                    }
-                    if (keyelt == "iterations")
-                    {
-                        if (setOstElementValue(keyprop, keyelt, val, true))
-                        {
-                            _iterations = val.toInt();
-                        }
-                    }
-                    if (keyelt == "loopIterations")
-                    {
-                        if (setOstElementValue(keyprop, keyelt, val, true))
-                        {
-                            _loopIterations = val.toInt();
-                        }
-                    }
-                    if (keyelt == "exposure")
-                    {
-                        if (setOstElementValue(keyprop, keyelt, val, true))
-                        {
-                            _exposure = val.toInt();
-                        }
-                    }
-                    if (keyelt == "backlash")
-                    {
-                        if (setOstElementValue(keyprop, keyelt, val, true))
-                        {
-                            _backlash = val.toInt();
-                        }
-                    }
-
-                }
                 if (keyprop == "actions")
                 {
-                    if (keyelt == "coarse")
+                    if (keyelt == "autofocus")
                     {
                         if (setOstElementValue(keyprop, keyelt, false, false))
                         {
-                            setOstPropertyAttribute(keyprop, "status", IPS_BUSY, true);
+                            getProperty(keyprop)->setState(OST::Busy);
                             startCoarse();
                         }
                     }
-                    if (keyelt == "abort")
+                    if (keyelt == "abortfocus")
                     {
                         if (setOstElementValue(keyprop, keyelt, false, false))
                         {
-                            setOstPropertyAttribute(keyprop, "status", IPS_OK, true);
+                            getProperty(keyprop)->setState(OST::Ok);
                             emit abort();
                         }
                     }
@@ -126,47 +73,28 @@ void FocusModule::OnMyExternalEvent(const QString &eventType, const QString  &ev
                     {
                         if (setOstElementValue(keyprop, keyelt, false, false))
                         {
-                            setOstPropertyAttribute(keyprop, "status", IPS_OK, true);
+                            getProperty(keyprop)->setState(OST::Ok);
                         }
                     }
 
-                }
-                if (keyprop == "devices")
-                {
-                    if (keyelt == "camera")
-                    {
-                        if (setOstElementValue(keyprop, keyelt, val, false))
-                        {
-                            setOstPropertyAttribute(keyprop, "status", IPS_OK, true);
-                            _camera = val.toString();
-                        }
-                    }
-                    if (keyelt == "focuser")
-                    {
-                        if (setOstElementValue(keyprop, keyelt, val, false))
-                        {
-                            setOstPropertyAttribute(keyprop, "status", IPS_OK, true);
-                            _focuser = val.toString();
-                        }
-                    }
                 }
             }
         }
     }
 }
 
-void FocusModule::updateProperty(INDI::Property p)
+void Focus::updateProperty(INDI::Property p)
 {
     if (
-        (QString(p.getDeviceName()) == _camera )
+        (QString(p.getDeviceName()) == getString("devices", "camera") )
         &&  (p.getState() == IPS_ALERT)
     )
     {
-        sendMessage("cameraAlert");
+        //sendMessage("cameraAlert");
         emit cameraAlert();
     }
     if (
-        (QString(p.getDeviceName()) == _focuser)
+        (QString(p.getDeviceName()) == getString("devices", "focuser"))
         &&  (QString(p.getName())   == "ABS_FOCUS_POSITION")
     )
     {
@@ -175,7 +103,7 @@ void FocusModule::updateProperty(INDI::Property p)
 
         if (n.getState() == IPS_OK)
         {
-            sendMessage("focuserReachedPosition");
+            //sendMessage("focuserReachedPosition");
             emit GotoBestDone();
             emit BacklashBestDone();
             emit BacklashDone();
@@ -184,13 +112,13 @@ void FocusModule::updateProperty(INDI::Property p)
         }
     }
     if (
-        (QString(p.getDeviceName()) == _camera)
+        (QString(p.getDeviceName()) == getString("devices", "camera"))
         &&  (QString(p.getName())   == "CCD_FRAME_RESET")
         &&  (p.getState() == IPS_OK)
     )
     {
         INDI::PropertySwitch n = p;
-        sendMessage("FrameResetDone");
+        //sendMessage("FrameResetDone");
         if (_machine.isRunning()) emit FrameResetDone();
     }
     if (QString(p.getName()) == "CCD1")
@@ -202,23 +130,26 @@ void FocusModule::updateProperty(INDI::Property p)
 
 }
 
-void FocusModule::newBLOB(INDI::PropertyBlob b)
+void Focus::newBLOB(INDI::PropertyBlob b)
 {
     if
     (
-        (QString(b.getDeviceName()) == _camera)
+        (QString(b.getDeviceName()) == getString("devices", "camera"))
     )
     {
         delete _image;
         _image = new fileio();
-        _image->loadBlob(b);
-        //setBLOBMode(B_NEVER, _camera.toStdString().c_str(), nullptr);
+        _image->loadBlob(b, 64);
+        //setBLOBMode(B_NEVER, getString("devices","camera").toStdString().c_str(), nullptr);
 
-        setOstPropertyAttribute("image", "status", IPS_OK, true);
+        getProperty("image")->setState(OST::Ok);
 
         QImage rawImage = _image->getRawQImage();
-        rawImage.save( getWebroot() + "/" + QString(b.getDeviceName()) + ".jpeg", "JPG", 100);
-        setOstPropertyAttribute("image", "URL", QString(b.getDeviceName()) + ".jpeg", true);
+        rawImage.save( getWebroot() + "/" + getModuleName() + QString(b.getDeviceName()) + ".jpeg", "JPG", 100);
+        OST::ImgData dta = _image->ImgStats();
+        dta.mUrlJpeg = getModuleName() + QString(b.getDeviceName()) + ".jpeg";
+        dta.mUrlFits = getModuleName() + QString(b.getDeviceName()) + ".FITS";
+        getValueImg("image", "image")->setValue(dta, true);
 
         if (_machine.isRunning())
         {
@@ -229,21 +160,24 @@ void FocusModule::newBLOB(INDI::PropertyBlob b)
     }
 }
 
-void FocusModule::SMAbort()
+void Focus::SMAbort()
 {
 
     _machine.stop();
-    sendMessage("machine stopped");
+    //sendMessage("machine stopped");
 }
 
-void FocusModule::startCoarse()
+void Focus::startCoarse()
 {
-    resetOstElements("values");
+    getStore()["values"]->clearGrid();
     connectIndi();
-    connectDevice(_camera);
-    setBLOBMode(B_ALSO, _camera.toStdString().c_str(), nullptr);
-    sendModNewNumber(_camera, "SIMULATOR_SETTINGS", "SIM_TIME_FACTOR", 0.01 );
-    enableDirectBlobAccess(_camera.toStdString().c_str(), nullptr);
+    connectDevice(getString("devices", "camera"));
+    setBLOBMode(B_ALSO, getString("devices", "camera").toStdString().c_str(), nullptr);
+    if (getString("devices", "camera") == "CCD Simulator")
+    {
+        sendModNewNumber(getString("devices", "camera"), "SIMULATOR_SETTINGS", "SIM_TIME_FACTOR", 0.01 );
+    }
+    enableDirectBlobAccess(getString("devices", "camera").toStdString().c_str(), nullptr);
 
     _posvector.clear();
     _hfdvector.clear();
@@ -252,12 +186,11 @@ void FocusModule::startCoarse()
     _besthfr = 99;
     _bestposfit = 99;
 
-    _startpos =          getOstElementValue("parameters", "startpos").toInt();
-    _steps =             getOstElementValue("parameters", "steps").toInt();
-    _iterations =        getOstElementValue("parameters", "iterations").toInt();
-    _loopIterations =    getOstElementValue("parameters", "loopIterations").toInt();
-    _exposure =          getOstElementValue("parameters", "exposure").toInt();
-    _backlash =          getOstElementValue("parameters", "backlash").toInt();
+    _startpos =          getValueInt("parameters", "startpos")->value();
+    _steps =             getValueInt("parameters", "steps")->value();
+    _iterations =        getValueInt("parameters", "iterations")->value();
+    _loopIterations =    getValueInt("parameters", "loopIterations")->value();
+    _backlash =          getValueInt("parameters", "backlash")->value();
 
     /*_grid->clear();
     _propertyStore.update(_grid);
@@ -317,66 +250,67 @@ void FocusModule::startCoarse()
     _machine.setInitialState(CoarseFocus);
 
     /* actions to take when entering into state */
-    connect(Abort,              &QState::entered, this, &FocusModule::SMAbort);
-    connect(RequestFrameReset,  &QState::entered, this, &FocusModule::SMRequestFrameReset);
-    connect(RequestBacklash,    &QState::entered, this, &FocusModule::SMRequestBacklash);
-    connect(RequestGotoStart,   &QState::entered, this, &FocusModule::SMRequestGotoStart);
-    connect(RequestExposure,    &QState::entered, this, &FocusModule::SMRequestExposure);
-    connect(FindStars,          &QState::entered, this, &FocusModule::SMFindStars);
-    connect(Compute,            &QState::entered, this, &FocusModule::SMCompute);
-    connect(RequestGotoNext,    &QState::entered, this, &FocusModule::SMRequestGotoNext);
-    connect(RequestBacklashBest, &QState::entered, this, &FocusModule::SMRequestBacklashBest);
-    connect(RequestGotoBest,    &QState::entered, this, &FocusModule::SMRequestGotoBest);
-    connect(RequestExposureBest, &QState::entered, this, &FocusModule::SMRequestExposureBest);
-    connect(ComputeResult,      &QState::entered, this, &FocusModule::SMComputeResult);
-    connect(ComputeLoopFrame,   &QState::entered, this, &FocusModule::SMComputeLoopFrame);
-    connect(InitLoopFrame,      &QState::entered, this, &FocusModule::SMInitLoopFrame);
+    connect(Abort,              &QState::entered, this, &Focus::SMAbort);
+    connect(RequestFrameReset,  &QState::entered, this, &Focus::SMRequestFrameReset);
+    connect(RequestBacklash,    &QState::entered, this, &Focus::SMRequestBacklash);
+    connect(RequestGotoStart,   &QState::entered, this, &Focus::SMRequestGotoStart);
+    connect(RequestExposure,    &QState::entered, this, &Focus::SMRequestExposure);
+    connect(FindStars,          &QState::entered, this, &Focus::SMFindStars);
+    connect(Compute,            &QState::entered, this, &Focus::SMCompute);
+    connect(RequestGotoNext,    &QState::entered, this, &Focus::SMRequestGotoNext);
+    connect(RequestBacklashBest, &QState::entered, this, &Focus::SMRequestBacklashBest);
+    connect(RequestGotoBest,    &QState::entered, this, &Focus::SMRequestGotoBest);
+    connect(RequestExposureBest, &QState::entered, this, &Focus::SMRequestExposureBest);
+    connect(ComputeResult,      &QState::entered, this, &Focus::SMComputeResult);
+    connect(ComputeLoopFrame,   &QState::entered, this, &Focus::SMComputeLoopFrame);
+    connect(InitLoopFrame,      &QState::entered, this, &Focus::SMInitLoopFrame);
+    connect(Final,      &QState::entered, this, &Focus::SMFocusDone);
 
     /* mapping signals to state transitions */
-    CoarseFocus->       addTransition(this, &FocusModule::abort,                Abort);
-    RequestFrameReset-> addTransition(this, &FocusModule::RequestFrameResetDone, WaitFrameReset);
-    WaitFrameReset->    addTransition(this, &FocusModule::FrameResetDone,       RequestBacklash);
-    RequestBacklash->   addTransition(this, &FocusModule::RequestBacklashDone,  WaitBacklash);
-    WaitBacklash->      addTransition(this, &FocusModule::BacklashDone,         RequestGotoStart);
-    RequestGotoStart->  addTransition(this, &FocusModule::RequestGotoStartDone, WaitGotoStart);
-    WaitGotoStart->     addTransition(this, &FocusModule::GotoStartDone,        Loop);
+    CoarseFocus->       addTransition(this, &Focus::abort,                Abort);
+    RequestFrameReset-> addTransition(this, &Focus::RequestFrameResetDone, WaitFrameReset);
+    WaitFrameReset->    addTransition(this, &Focus::FrameResetDone,       RequestBacklash);
+    RequestBacklash->   addTransition(this, &Focus::RequestBacklashDone,  WaitBacklash);
+    WaitBacklash->      addTransition(this, &Focus::BacklashDone,         RequestGotoStart);
+    RequestGotoStart->  addTransition(this, &Focus::RequestGotoStartDone, WaitGotoStart);
+    WaitGotoStart->     addTransition(this, &Focus::GotoStartDone,        Loop);
 
-    RequestExposure->   addTransition(this, &FocusModule::RequestExposureDone,   WaitExposure);
-    WaitExposure->      addTransition(this, &FocusModule::ExposureDone,          FindStars);
-    FindStars->         addTransition(this, &FocusModule::FindStarsDone,         ComputeLoopFrame);
-    Compute->           addTransition(this, &FocusModule::LoopFinished,          Finish);
+    RequestExposure->   addTransition(this, &Focus::RequestExposureDone,   WaitExposure);
+    WaitExposure->      addTransition(this, &Focus::ExposureDone,          FindStars);
+    FindStars->         addTransition(this, &Focus::FindStarsDone,         ComputeLoopFrame);
+    Compute->           addTransition(this, &Focus::LoopFinished,          Finish);
 
-    Compute->           addTransition(this, &FocusModule::NextLoop,              RequestGotoNext);
-    RequestGotoNext->   addTransition(this, &FocusModule::RequestGotoNextDone,   WaitGotoNext);
-    WaitGotoNext->      addTransition(this, &FocusModule::GotoNextDone,          LoopFrame);
+    Compute->           addTransition(this, &Focus::NextLoop,              RequestGotoNext);
+    RequestGotoNext->   addTransition(this, &Focus::RequestGotoNextDone,   WaitGotoNext);
+    WaitGotoNext->      addTransition(this, &Focus::GotoNextDone,          LoopFrame);
 
-    RequestBacklashBest->   addTransition(this, &FocusModule::RequestBacklashBestDone,   WaitBacklashBest);
-    WaitBacklashBest->      addTransition(this, &FocusModule::BacklashBestDone,          RequestGotoBest);
-    RequestGotoBest->       addTransition(this, &FocusModule::RequestGotoBestDone,       WaitGotoBest);
-    WaitGotoBest->          addTransition(this, &FocusModule::GotoBestDone,              RequestExposureBest);
-    RequestExposureBest->   addTransition(this, &FocusModule::RequestExposureBestDone,   WaitExposureBest);
-    WaitExposureBest->      addTransition(this, &FocusModule::ExposureBestDone,          ComputeResult);
-    ComputeResult->         addTransition(this, &FocusModule::ComputeResultDone,         Final);
+    RequestBacklashBest->   addTransition(this, &Focus::RequestBacklashBestDone,   WaitBacklashBest);
+    WaitBacklashBest->      addTransition(this, &Focus::BacklashBestDone,          RequestGotoBest);
+    RequestGotoBest->       addTransition(this, &Focus::RequestGotoBestDone,       WaitGotoBest);
+    WaitGotoBest->          addTransition(this, &Focus::GotoBestDone,              RequestExposureBest);
+    RequestExposureBest->   addTransition(this, &Focus::RequestExposureBestDone,   WaitExposureBest);
+    WaitExposureBest->      addTransition(this, &Focus::ExposureBestDone,          ComputeResult);
+    ComputeResult->         addTransition(this, &Focus::ComputeResultDone,         Final);
 
-    InitLoopFrame-> addTransition(this, &FocusModule::InitLoopFrameDone, RequestExposure );
-    ComputeLoopFrame->addTransition(this, &FocusModule::NextFrame, RequestExposure);
-    ComputeLoopFrame->addTransition(this, &FocusModule::LoopFrameDone, Compute);
+    InitLoopFrame-> addTransition(this, &Focus::InitLoopFrameDone, RequestExposure );
+    ComputeLoopFrame->addTransition(this, &Focus::NextFrame, RequestExposure);
+    ComputeLoopFrame->addTransition(this, &Focus::LoopFrameDone, Compute);
 
 
 
 
 
     _machine.start();
-    sendMessage("machine started");
+    //sendMessage("machine started");
     qDebug() << "Start coarse focus";
 }
 
-void FocusModule::SMRequestFrameReset()
+void Focus::SMRequestFrameReset()
 {
-    sendMessage("SMRequestFrameReset");
+    //sendMessage("SMRequestFrameReset");
 
 
-    //setBLOBMode(B_ALSO, _camera.toStdString().c_str(), nullptr);
+    //setBLOBMode(B_ALSO, getString("devices","camera").toStdString().c_str(), nullptr);
 
     /*qDebug() << "conf count" << _machine.configuration().count();
     QSet<QAbstractState *>::iterator i;
@@ -385,7 +319,7 @@ void FocusModule::SMRequestFrameReset()
         qDebug() << (*i)->objectName();
     }*/
 
-    if (!frameReset(_camera))
+    if (!frameReset(getString("devices", "camera")))
     {
         RequestFrameResetDone();
         usleep(1000);
@@ -395,10 +329,11 @@ void FocusModule::SMRequestFrameReset()
     emit RequestFrameResetDone();
 }
 
-void FocusModule::SMRequestBacklash()
+void Focus::SMRequestBacklash()
 {
-    sendMessage("SMRequestBacklash");
-    if (!sendModNewNumber(_focuser, "ABS_FOCUS_POSITION", "FOCUS_ABSOLUTE_POSITION", _startpos - _backlash))
+    //sendMessage("SMRequestBacklash");
+    if (!sendModNewNumber(getString("devices", "focuser"), "ABS_FOCUS_POSITION", "FOCUS_ABSOLUTE_POSITION",
+                          _startpos - _backlash))
     {
         emit abort();
         return;
@@ -406,10 +341,10 @@ void FocusModule::SMRequestBacklash()
     emit RequestBacklashDone();
 }
 
-void FocusModule::SMRequestGotoStart()
+void Focus::SMRequestGotoStart()
 {
-    sendMessage("SMRequestGotoStart");
-    if (!sendModNewNumber(_focuser, "ABS_FOCUS_POSITION", "FOCUS_ABSOLUTE_POSITION", _startpos))
+    //sendMessage("SMRequestGotoStart");
+    if (!sendModNewNumber(getString("devices", "focuser"), "ABS_FOCUS_POSITION", "FOCUS_ABSOLUTE_POSITION", _startpos))
     {
         emit abort();
         return;
@@ -417,37 +352,40 @@ void FocusModule::SMRequestGotoStart()
     emit RequestGotoStartDone();
 }
 
-void FocusModule::SMRequestExposure()
+void Focus::SMRequestExposure()
 {
-    sendMessage("SMRequestExposure");
-    if (!sendModNewNumber(_camera, "CCD_EXPOSURE", "CCD_EXPOSURE_VALUE", _exposure))
+    if (!requestCapture(getString("devices", "camera"), getFloat("parms", "exposure"), getInt("parms", "gain"), getInt("parms",
+                        "offset")))
     {
         emit abort();
         return;
     }
-    //setBLOBMode(B_ALSO, _camera.toStdString().c_str(), nullptr);
+    //setBLOBMode(B_ALSO, getString("devices","camera").toStdString().c_str(), nullptr);
     emit RequestExposureDone();
-
 }
 
-void FocusModule::SMFindStars()
+void Focus::SMFindStars()
 {
-    sendMessage("SMFindStars");
+    //sendMessage("SMFindStars");
     stats = _image->getStats();
     _solver.ResetSolver(stats, _image->getImageBuffer());
-    connect(&_solver, &Solver::successSEP, this, &FocusModule::OnSucessSEP);
+    connect(&_solver, &Solver::successSEP, this, &Focus::OnSucessSEP);
     _solver.FindStars(_solver.stellarSolverProfiles[0]);
 }
 
-void FocusModule::OnSucessSEP()
+void Focus::OnSucessSEP()
 {
-    setOstElementValue("values", "imgHFR", _solver.HFRavg, true);
+    OST::ImgData dta = getValueImg("image", "image")->value();
+    dta.HFRavg = _solver.HFRavg;
+    dta.starsCount = _solver.stars.size();
+    getValueImg("image", "image")->setValue(dta, true);
+
     emit FindStarsDone();
 }
 
-void FocusModule::SMCompute()
+void Focus::SMCompute()
 {
-    sendMessage("SMCompute");
+    //sendMessage("SMCompute");
 
     _posvector.push_back(_startpos + _iteration * _steps);
     _hfdvector.push_back(_loopHFRavg);
@@ -465,8 +403,8 @@ void FocusModule::SMCompute()
         //emit valueChanged(_loopHFRavg);
         _bestpos = _startpos + _iteration * _steps;
     }
-    qDebug() << "Compute " << _iteration << "/" << _iterations << "=" << _loopHFRavg << "bestpos/pos" << _bestpos << "/" <<
-             _startpos + _iteration*_steps << "polfit=" << _bestposfit;
+    //qDebug() << "Compute " << _iteration << "/" << _iterations << "=" << _loopHFRavg << "bestpos/pos" << _bestpos << "/" <<
+    //_startpos + _iteration*_steps << "polfit=" << _bestposfit;
 
     setOstElementValue("values", "loopHFRavg", _loopHFRavg, false);
     setOstElementValue("values", "bestpos",   _bestpos, false);
@@ -474,7 +412,7 @@ void FocusModule::SMCompute()
     setOstElementValue("values", "focpos",    _startpos + _iteration * _steps, false);
     setOstElementValue("values", "iteration", _iteration, true);
 
-    pushOstElements("values");
+    getStore()["values"]->push();
 
     /*_grid->append(_startpos + _iteration*_steps,_loopHFRavg);
     _propertyStore.update(_grid);
@@ -491,10 +429,11 @@ void FocusModule::SMCompute()
     }
 }
 
-void FocusModule::SMRequestGotoNext()
+void Focus::SMRequestGotoNext()
 {
-    sendMessage("SMRequestGotoNext");
-    if (!sendModNewNumber(_focuser, "ABS_FOCUS_POSITION", "FOCUS_ABSOLUTE_POSITION", _startpos + _iteration * _steps))
+    //sendMessage("SMRequestGotoNext");
+    if (!sendModNewNumber(getString("devices", "focuser"), "ABS_FOCUS_POSITION", "FOCUS_ABSOLUTE_POSITION",
+                          _startpos + _iteration * _steps))
     {
         emit abort();
         return;
@@ -502,10 +441,11 @@ void FocusModule::SMRequestGotoNext()
     emit RequestGotoNextDone();
 }
 
-void FocusModule::SMRequestBacklashBest()
+void Focus::SMRequestBacklashBest()
 {
-    sendMessage("SMRequestBacklashBest");
-    if (!sendModNewNumber(_focuser, "ABS_FOCUS_POSITION", "FOCUS_ABSOLUTE_POSITION", _bestpos - _backlash))
+    //sendMessage("SMRequestBacklashBest");
+    if (!sendModNewNumber(getString("devices", "focuser"), "ABS_FOCUS_POSITION", "FOCUS_ABSOLUTE_POSITION",
+                          _bestpos - _backlash))
     {
         emit abort();
         return;
@@ -513,10 +453,11 @@ void FocusModule::SMRequestBacklashBest()
     emit RequestBacklashBestDone();
 }
 
-void FocusModule::SMRequestGotoBest()
+void Focus::SMRequestGotoBest()
 {
-    sendMessage("SMRequestGotoBest");
-    if (!sendModNewNumber(_focuser, "ABS_FOCUS_POSITION", "FOCUS_ABSOLUTE_POSITION", _bestpos))
+    //sendMessage("SMRequestGotoBest");
+    if (_bestposfit == 99 ) _bestposfit = _bestpos;
+    if (!sendModNewNumber(getString("devices", "focuser"), "ABS_FOCUS_POSITION", "FOCUS_ABSOLUTE_POSITION", _bestposfit))
     {
         emit abort();
         return;
@@ -524,21 +465,35 @@ void FocusModule::SMRequestGotoBest()
     emit RequestGotoBestDone();
 }
 
-void FocusModule::SMRequestExposureBest()
+void Focus::SMRequestExposureBest()
 {
-    sendMessage("SMRequestExposureBest");
-    if (!sendModNewNumber(_camera, "CCD_EXPOSURE", "CCD_EXPOSURE_VALUE", _exposure))
+    //sendMessage("SMRequestExposureBest");
+    if (!sendModNewNumber(getString("devices", "camera"), "CCD_EXPOSURE", "CCD_EXPOSURE_VALUE", getValueFloat("parms",
+                          "exposure")->value()))
     {
         emit abort();
         return;
     }
+    double mFinalPos = 0;
+    if (!getModNumber(getString("devices", "focuser"), "ABS_FOCUS_POSITION", "FOCUS_ABSOLUTE_POSITION", mFinalPos))
+    {
+        emit abort();
+        return;
+    }
+    setOstElementValue("results", "pos", mFinalPos, true);
     emit RequestExposureBestDone();
 }
 
-void FocusModule::SMComputeResult()
+void Focus::SMComputeResult()
 {
-    sendMessage("SMComputeResult");
+    //sendMessage("SMComputeResult");
     setOstElementValue("values", "imgHFR", _solver.HFRavg, true);
+    setOstElementValue("results", "hfr", _solver.HFRavg, true);
+    OST::ImgData dta = getValueImg("image", "image")->value();
+    dta.HFRavg = _solver.HFRavg;
+    dta.starsCount = _solver.stars.size();
+    getValueImg("image", "image")->setValue(dta, true);
+
     // what should i do here ?
     emit ComputeResultDone();
 }
@@ -546,18 +501,18 @@ void FocusModule::SMComputeResult()
 
 
 
-void FocusModule::SMInitLoopFrame()
+void Focus::SMInitLoopFrame()
 {
-    sendMessage("SMInitLoopFrame");
+    //sendMessage("SMInitLoopFrame");
     _loopIteration = 0;
     _loopHFRavg = 99;
     setOstElementValue("values", "loopHFRavg", _loopHFRavg, true);
     emit InitLoopFrameDone();
 }
 
-void FocusModule::SMComputeLoopFrame()
+void Focus::SMComputeLoopFrame()
 {
-    sendMessage("SMComputeLoopFrame");
+    //sendMessage("SMComputeLoopFrame");
     _loopIteration++;
     _loopHFRavg = ((_loopIteration - 1) * _loopHFRavg + _solver.HFRavg) / _loopIteration;
     setOstElementValue("values", "loopHFRavg", _loopHFRavg, false);
@@ -576,9 +531,15 @@ void FocusModule::SMComputeLoopFrame()
     }
 }
 
-void FocusModule::SMAlert()
+void Focus::SMAlert()
 {
     sendMessage("SMAlert");
     emit abort();
 }
 
+void Focus::SMFocusDone()
+{
+    sendMessage("Focus done");
+    setOstElementValue("results", "hfr", _solver.HFRavg, false);
+    getProperty("actions")->setState(OST::Ok);
+}

@@ -29,15 +29,14 @@ class MODULE_INIT Allsky : public IndiModule
         void startBatch();
         void processOutput();
         void processError();
-        QString _camera  = "CCD Simulator";
+
         QPointer<fileio> _image;
         Solver _solver;
         FITSImage::Statistic stats;
         bool _isLooping = false;
         long _index;
         QProcess *_process;
-
-
+        QImage mKheog;
 
 };
 

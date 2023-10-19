@@ -1,41 +1,50 @@
 {
+"properties":{
     "values": {
         "devcat": "Control",
         "group": "",
         "order":"Control800",
         "permission": 0,
-        "propertyLabel": "Values",
+        "label": "Values",
         "elements": {
             "pulseN": {
-                "elementLabel": "Pulse N",
+                "type":"int",
+                "label": "Pulse N",
                 "format": "99.99"
             },
             "pulseS": {
-                "elementLabel": "Pulse S",
+                "type":"int",
+                "label": "Pulse S",
                 "format": "99.99"
             },
             "pulseE": {
-                "elementLabel": "Pulse E",
+                "type":"int",
+                "label": "Pulse E",
                 "format": "99.99"
             },
             "pulseW": {
-                "elementLabel": "Pulse W",
+                "type":"int",
+                "label": "Pulse W",
                 "format": "99.99"
             },
             "calPulseN": {
-                "elementLabel": "Calibration Pulse N",
+                "type":"int",
+                "label": "Calibration Pulse N",
                 "format": "99.99"
             },
             "calPulseS": {
-                "elementLabel": "Calibration Pulse S",
+                "type":"int",
+                "label": "Calibration Pulse S",
                 "format": "99.99"
             },
             "calPulseE": {
-                "elementLabel": "Calibration Pulse E",
+                "type":"int",
+                "label": "Calibration Pulse E",
                 "format": "99.99"
             },
             "calPulseW": {
-                "elementLabel": "Calibration Pulse W",
+                "type":"int",
+                "label": "Calibration Pulse W",
                 "format": "99.99"
             }
 
@@ -46,13 +55,9 @@
         "group": "",
         "order":"Control350",
         "permission": 0,
-        "propertyLabel": "Drift",
-        "grid":0,
-        "gridlimit":50,
-        "GXY":{
-            "X":"RA",
-            "Y":"DEC"
-        },
+        "label": "Drift",
+        "hasArray":true,
+        "showArray":false,
         "elements": {
             "graph": {
                 "type": "graph",
@@ -67,11 +72,13 @@
                 }
             },
             "RA": {
-                "elementLabel": "RA",
+                "type":"float",
+                "label": "RA",
                 "format": "99.99"
             },
             "DEC": {
-                "elementLabel": "DEC",
+                "type":"float",
+                "label": "DEC",
                 "format": "99.99"
             }
         }
@@ -81,108 +88,79 @@
         "group": "",
         "order":"Control100",
         "permission": 0,
-        "propertyLabel": "Guiding graph",
-        "grid":0,
-        "gridlimit":50,
-        "GPHD":{
-            "D":"time",
-            "RA":"RA",
-            "DE":"DE",
-            "pRA":"pRA",
-            "pDE":"pDE"
-        },
+        "label": "Guiding graph",
+        "hasArray":true,
+        "showArray":false,
         "elements": {
+            "graph": {
+                "type": "graph",
+                "graphtype":"PHD",
+                "params":{
+                    "D":"time",
+                    "RA":"RA",
+                    "DE":"DE",
+                    "pRA":"pRA",
+                    "pDE":"pDE"
+                }
+            },
             "time": {
-                "elementLabel": "time",
+                "type":"float",
+                "label": "time",
                 "value":0
             },
             "RA": {
-                "elementLabel": "Drift (RA)",
+                "type":"float",
+                "label": "Drift (RA)",
                 "format": "99.99"
             },
             "DE": {
-                "elementLabel": "Drift (DE)",
+                "type":"float",
+                "label": "Drift (DE)",
                 "format": "99.99"
             },
             "pRA": {
-                "elementLabel": "Pulse (RA)",
+                "type":"float",
+                "label": "Pulse (RA)",
                 "format": "99.99"
             },
             "pDE": {
-                "elementLabel": "Pulse (DE)",
+                "type":"float",
+                "label": "Pulse (DE)",
                 "format": "99.99"
             }
         }
     },
     "snr": {
         "devcat": "Control",
-        "grid":[],
-        "gridlimit":50,
+        "arrayLimit":50,
         "order":"Control300",
         "rule":0,
-        "GDY":{
-            "D":"time",
-            "Y":"snr"
-        },
+        "hasArray":true,
+        "showArray":false,
         "elements": {
+                "graph": {
+                    "type": "graph",
+                    "label": "graph",
+                    "graphtype":"DY",
+                    "params":{
+                        "D":"time",
+                        "Y":"snr"
+                    }
+                },
                 "time": {
-                    "elementLabel": "Time",
+                    "type":"float",
+                    "label": "Time",
                     "value":0
                 },
                 "snr": {
-                    "elementLabel": "SNR",
+                    "type":"float",
+                    "label": "SNR",
                     "value":0
                 }
         },
         "group": "",
         "permission": 0,
-        "propertyLabel": "SNR"
-    },
-    "actions": {
-        "devcat": "Control",
-        "group": "",
-        "order":"Control000",
-        "permission": 2,
-        "rule":0,
-        "propertyLabel": "Actions",
-        "elements": {
-            "abort": {
-                "elementLabel": "Abort"
-                ,"value":false
-            },
-            "calibration": {
-                "elementLabel": "Calibration"
-                ,"value":false
-            },
-            "guide": {
-                "elementLabel": "Guide"
-                ,"value":false
-            },
-            "init": {
-                "elementLabel": "Initialize"
-                ,"value":false
-            },
-            "calguide": {
-                "elementLabel": "Calibrate & guide"
-                ,"value":false
-            }
-        }
-    },
-
-    "commonParams": {
-        "devcat": "Parameters",
-        "group": "",
-        "order":"Parameters000",
-        "permission": 2,
-        "hasprofile":true,
-        "propertyLabel": "Common Parameters",
-        "elements": {
-            "exposure": {
-                "elementLabel": "Exposure (s)",
-                "value":0.5,
-                "format": "99.99"
-            }
-        }
+        "label": "SNR"
     },
     "calParams": {
         "devcat": "Parameters",
@@ -190,15 +168,21 @@
         "order":"Parameters100",
         "permission": 2,
         "hasprofile":true,
-        "propertyLabel": "Calibration Parameters",
+        "label": "Calibration Parameters",
         "elements": {
             "pulse": {
-                "elementLabel": "Calibration pulse (ms)",
+                "type":"int",
+                "autoupdate":true,
+                "directedit":true,
+                "label": "Calibration pulse (ms)",
                 "value":1000,
                 "format": "99"
             },
             "calsteps": {
-                "elementLabel": "Iterations / axis",
+                "type":"int",
+                "autoupdate":true,
+                "directedit":true,
+                "label": "Iterations / axis",
                 "value":2,
                 "format": "99"
             }
@@ -212,25 +196,37 @@
         "permission": 2,
         "rule":2,
         "hasprofile":true,
-        "propertyLabel": "Guide parameters",
+        "label": "Guide parameters",
         "elements": {
             "pulsemax": {
-                "elementLabel": "Max pulse (ms)",
+                "type":"int",
+                "autoupdate":true,
+                "directedit":true,
+                "label": "Max pulse (ms)",
                 "value":2000,
                 "format": "99"
             },
             "pulsemin": {
-                "elementLabel": "Min pulse (ms)",
+                "type":"int",
+                "autoupdate":true,
+                "directedit":true,
+                "label": "Min pulse (ms)",
                 "value":20,
                 "format": "99"
             },
             "raAgr": {
-                "elementLabel": "RA Agressivity",
+                "type":"float",
+                "autoupdate":true,
+                "directedit":true,
+                "label": "RA Agressivity",
                 "value":0.8,
                 "format": "99.99"
             },
             "deAgr": {
-                "elementLabel": "DEC Agressivity",
+                "type":"float",
+                "autoupdate":true,
+                "directedit":true,
+                "label": "DEC Agressivity",
                 "value":0.8,
                 "format": "99"
             }
@@ -243,14 +239,18 @@
         "permission": 2,
         "rule":2,
         "hasprofile":true,
-        "propertyLabel": "Reverse guiding corrections",
+        "label": "Reverse guiding corrections",
         "elements": {
             "revRA": {
-                "elementLabel": "RA",
+                "type":"bool",
+                "label": "RA",
+                "autoupdate":true,
                 "value":false
             },
             "revDE": {
-                "elementLabel": "DEC",
+                "type":"bool",
+                "label": "DEC",
+                "autoupdate":true,
                 "value":false
             }
         }
@@ -262,33 +262,33 @@
             "order":"Parameters400",
             "rule":2,
             "hasprofile":true,
-            "propertyLabel": "Disable guiding corrections",
+            "label": "Disable guiding corrections",
             "elements": {
                 "disRA+": {
-                    "elementLabel": "RA+",
+                    "autoupdate":true,
+                    "type":"bool",
+                    "label": "RA+",
                     "value":false
                 },
                 "disRA-": {
-                    "elementLabel": "RA-",
+                    "autoupdate":true,
+                    "type":"bool",
+                    "label": "RA-",
                     "value":false
                 },
                 "disDE+": {
-                    "elementLabel": "DE+",
+                    "type":"bool",
+                    "autoupdate":true,
+                    "label": "DE+",
                     "value":false
                 },
                 "disDE-": {
-                    "elementLabel": "DE-",
+                    "type":"bool",
+                    "autoupdate":true,
+                    "label": "DE-",
                     "value":false
                 }
             }
-    },
-    "image": {
-        "devcat": "Control",
-        "order":"Control9999",
-        "group": "",
-        "permission": 0,
-        "propertyLabel": "Last image",
-        "URL": ""
     }
-
+}
 }
