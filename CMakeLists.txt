@@ -31,8 +31,8 @@ find_package(Nova REQUIRED)
 find_package(GSL REQUIRED)
 #find_package(OpenCV REQUIRED )
 find_package(WCSLIB REQUIRED)
-find_package(QT NAMES Qt5 COMPONENTS Gui Widgets Core Concurrent Network WebSockets Sql REQUIRED)
-find_package(Qt5 REQUIRED COMPONENTS Gui Widgets Core Concurrent Network WebSockets Sql)
+find_package(QT NAMES Qt5 COMPONENTS Gui Widgets Core Concurrent Network WebSockets Sql Scxml REQUIRED)
+find_package(Qt5 5.15.2 REQUIRED COMPONENTS Gui Widgets Core Concurrent Network WebSockets Sql Scxml)
 find_package(StellarSolver REQUIRED)
 find_package(OSTSERVER REQUIRED)
 
@@ -60,7 +60,7 @@ include(CMakeCommon)
 # Focus module
 #list (APPEND RESOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/focus/focus.qrc)
 #qt5_add_resources (RCC_SOURCES ${RESOURCES})
-add_library(ostfocuser SHARED
+add_library(ostfocus SHARED
     ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/focus/focus.h
     ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/focus/focus.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/focus/focus.qrc
@@ -68,15 +68,16 @@ add_library(ostfocuser SHARED
     ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/focus/polynomialfit.h
     ${RCC_SOURCES}
 )
-target_link_libraries(ostfocuser PRIVATE
+target_link_libraries(ostfocus PRIVATE
     ${OST_LIBRARY_INDI}
     Qt${QT_VERSION_MAJOR}::Core
     Qt${QT_VERSION_MAJOR}::Concurrent
     Qt${QT_VERSION_MAJOR}::Widgets
+    Qt${QT_VERSION_MAJOR}::Scxml
     Threads::Threads
     z
 )
-target_compile_definitions(ostfocuser PRIVATE FOCUS_MODULE)
+target_compile_definitions(ostfocus PRIVATE FOCUS_MODULE)
 
 
 # Indipanel module
@@ -216,7 +217,7 @@ install(TARGETS
     ostnavigator
     ostguider
     ostindipanel
-    ostfocuser
+    ostfocus
     ostsequencer
     ostmeteo
     ostpolar

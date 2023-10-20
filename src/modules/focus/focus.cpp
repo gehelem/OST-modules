@@ -92,6 +92,7 @@ void Focus::updateProperty(INDI::Property p)
     {
         //sendMessage("cameraAlert");
         emit cameraAlert();
+        pMachine->submitEvent("cameraAlert");
     }
     if (
         (QString(p.getDeviceName()) == getString("devices", "focuser"))
@@ -109,6 +110,11 @@ void Focus::updateProperty(INDI::Property p)
             emit BacklashDone();
             emit GotoNextDone();
             emit GotoStartDone();
+            pMachine->submitEvent("GotoBestDone");
+            pMachine->submitEvent("BacklashBestDone");
+            pMachine->submitEvent("BacklashDone");
+            pMachine->submitEvent("GotoNextDone");
+            pMachine->submitEvent("GotoStartDone");
         }
     }
     if (
@@ -119,7 +125,12 @@ void Focus::updateProperty(INDI::Property p)
     {
         INDI::PropertySwitch n = p;
         //sendMessage("FrameResetDone");
-        if (_machine.isRunning()) emit FrameResetDone();
+        if (pMachine->isRunning())
+        {
+            emit FrameResetDone();
+            pMachine->submitEvent("FrameResetDone");
+
+        }
     }
     if (QString(p.getName()) == "CCD1")
     {
@@ -151,10 +162,14 @@ void Focus::newBLOB(INDI::PropertyBlob b)
         dta.mUrlFits = getModuleName() + QString(b.getDeviceName()) + ".FITS";
         getValueImg("image", "image")->setValue(dta, true);
 
-        if (_machine.isRunning())
+        if (pMachine->isRunning())
         {
             emit ExposureDone();
             emit ExposureBestDone();
+            pMachine->submitEvent("ExposureDone");
+            pMachine->submitEvent("ExposureBestDone");
+
+
         }
 
     }
@@ -163,7 +178,7 @@ void Focus::newBLOB(INDI::PropertyBlob b)
 void Focus::SMAbort()
 {
 
-    _machine.stop();
+    pMachine->stop();
     //sendMessage("machine stopped");
 }
 
@@ -172,6 +187,8 @@ void Focus::startCoarse()
     getStore()["values"]->clearGrid();
     connectIndi();
     connectDevice(getString("devices", "camera"));
+    connectDevice(getString("devices", "focuser"));
+    connectDevice(getString("devices", "filter"));
     setBLOBMode(B_ALSO, getString("devices", "camera").toStdString().c_str(), nullptr);
     if (getString("devices", "camera") == "CCD Simulator")
     {
@@ -195,12 +212,25 @@ void Focus::startCoarse()
     /*_grid->clear();
     _propertyStore.update(_grid);
     emit propertyUpdated(_grid,&_modulename);*/
-
+    pMachine = QScxmlStateMachine::fromFile(":focus.scxml");
+    pMachine->connectToState("RequestFrameReset", QScxmlStateMachine::onEntry(this, &Focus::SMRequestFrameReset));
+    pMachine->connectToState("RequestBacklash", QScxmlStateMachine::onEntry(this, &Focus::SMRequestBacklash));
+    pMachine->connectToState("RequestGotoStart", QScxmlStateMachine::onEntry(this, &Focus::SMRequestGotoStart));
+    pMachine->connectToState("RequestExposure", QScxmlStateMachine::onEntry(this, &Focus::SMRequestExposure));
+    pMachine->connectToState("FindStars", QScxmlStateMachine::onEntry(this, &Focus::SMFindStars));
+    pMachine->connectToState("Compute", QScxmlStateMachine::onEntry(this, &Focus::SMCompute));
+    pMachine->connectToState("RequestGotoNext", QScxmlStateMachine::onEntry(this, &Focus::SMRequestGotoNext));
+    pMachine->connectToState("RequestBacklashBest", QScxmlStateMachine::onEntry(this, &Focus::SMRequestBacklashBest));
+    pMachine->connectToState("RequestGotoBest", QScxmlStateMachine::onEntry(this, &Focus::SMRequestGotoBest));
+    pMachine->connectToState("RequestExposureBest", QScxmlStateMachine::onEntry(this, &Focus::SMRequestExposureBest));
+    pMachine->connectToState("ComputeResult", QScxmlStateMachine::onEntry(this, &Focus::SMComputeResult));
+    pMachine->connectToState("ComputeLoopFrame", QScxmlStateMachine::onEntry(this, &Focus::SMComputeLoopFrame));
+    pMachine->connectToState("InitLoopFrame", QScxmlStateMachine::onEntry(this, &Focus::SMInitLoopFrame));
 
     //_machine = new QStateMachine();
 
     /* states definitions */
-    auto *CoarseFocus = new QState();
+    /*auto *CoarseFocus = new QState();
     auto *Abort       = new QState();
     auto *Error       = new QState();
     auto *Init        = new QState(CoarseFocus);
@@ -239,18 +269,18 @@ void Focus::startCoarse()
     _machine.addState(CoarseFocus);
     _machine.addState(Abort);
     _machine.addState(Error);
-    _machine.addState(Final);
+    _machine.addState(Final);*/
 
     /* Set initial states */
-    Init->setInitialState(RequestFrameReset);
+    /*Init->setInitialState(RequestFrameReset);
     Loop->setInitialState(LoopFrame);
     LoopFrame->setInitialState(InitLoopFrame);
     Finish->setInitialState(RequestBacklashBest);
     CoarseFocus->setInitialState(Init);
-    _machine.setInitialState(CoarseFocus);
+    _machine.setInitialState(CoarseFocus);*/
 
     /* actions to take when entering into state */
-    connect(Abort,              &QState::entered, this, &Focus::SMAbort);
+    /*connect(Abort,              &QState::entered, this, &Focus::SMAbort);
     connect(RequestFrameReset,  &QState::entered, this, &Focus::SMRequestFrameReset);
     connect(RequestBacklash,    &QState::entered, this, &Focus::SMRequestBacklash);
     connect(RequestGotoStart,   &QState::entered, this, &Focus::SMRequestGotoStart);
@@ -264,10 +294,10 @@ void Focus::startCoarse()
     connect(ComputeResult,      &QState::entered, this, &Focus::SMComputeResult);
     connect(ComputeLoopFrame,   &QState::entered, this, &Focus::SMComputeLoopFrame);
     connect(InitLoopFrame,      &QState::entered, this, &Focus::SMInitLoopFrame);
-    connect(Final,      &QState::entered, this, &Focus::SMFocusDone);
+    connect(Final,      &QState::entered, this, &Focus::SMFocusDone);*/
 
     /* mapping signals to state transitions */
-    CoarseFocus->       addTransition(this, &Focus::abort,                Abort);
+    /*CoarseFocus->       addTransition(this, &Focus::abort,                Abort);
     RequestFrameReset-> addTransition(this, &Focus::RequestFrameResetDone, WaitFrameReset);
     WaitFrameReset->    addTransition(this, &Focus::FrameResetDone,       RequestBacklash);
     RequestBacklash->   addTransition(this, &Focus::RequestBacklashDone,  WaitBacklash);
@@ -294,20 +324,16 @@ void Focus::startCoarse()
 
     InitLoopFrame-> addTransition(this, &Focus::InitLoopFrameDone, RequestExposure );
     ComputeLoopFrame->addTransition(this, &Focus::NextFrame, RequestExposure);
-    ComputeLoopFrame->addTransition(this, &Focus::LoopFrameDone, Compute);
+    ComputeLoopFrame->addTransition(this, &Focus::LoopFrameDone, Compute);*/
 
-
-
-
-
-    _machine.start();
+    pMachine->start();
     //sendMessage("machine started");
     qDebug() << "Start coarse focus";
 }
 
 void Focus::SMRequestFrameReset()
 {
-    //sendMessage("SMRequestFrameReset");
+    sendMessage("SMRequestFrameReset");
 
 
     //setBLOBMode(B_ALSO, getString("devices","camera").toStdString().c_str(), nullptr);
@@ -321,12 +347,15 @@ void Focus::SMRequestFrameReset()
 
     if (!frameReset(getString("devices", "camera")))
     {
-        RequestFrameResetDone();
+        pMachine->submitEvent("RequestFrameResetDone");
         usleep(1000);
         emit FrameResetDone();
+        pMachine->submitEvent("FrameResetDone");
         return;
     }
     emit RequestFrameResetDone();
+    pMachine->submitEvent("RequestFrameResetDone");
+
 }
 
 void Focus::SMRequestBacklash()
@@ -336,9 +365,12 @@ void Focus::SMRequestBacklash()
                           _startpos - _backlash))
     {
         emit abort();
+        pMachine->submitEvent("abort");
         return;
     }
     emit RequestBacklashDone();
+    pMachine->submitEvent("RequestBacklashDone");
+
 }
 
 void Focus::SMRequestGotoStart()
@@ -347,9 +379,12 @@ void Focus::SMRequestGotoStart()
     if (!sendModNewNumber(getString("devices", "focuser"), "ABS_FOCUS_POSITION", "FOCUS_ABSOLUTE_POSITION", _startpos))
     {
         emit abort();
+        pMachine->submitEvent("abort");
         return;
     }
     emit RequestGotoStartDone();
+    pMachine->submitEvent("RequestGotoStartDone");
+
 }
 
 void Focus::SMRequestExposure()
@@ -362,6 +397,8 @@ void Focus::SMRequestExposure()
     }
     //setBLOBMode(B_ALSO, getString("devices","camera").toStdString().c_str(), nullptr);
     emit RequestExposureDone();
+    pMachine->submitEvent("RequestExposureDone");
+
 }
 
 void Focus::SMFindStars()
@@ -379,7 +416,7 @@ void Focus::OnSucessSEP()
     dta.HFRavg = _solver.HFRavg;
     dta.starsCount = _solver.stars.size();
     getValueImg("image", "image")->setValue(dta, true);
-
+    pMachine->submitEvent("FindStarsDone");
     emit FindStarsDone();
 }
 
@@ -422,10 +459,12 @@ void Focus::SMCompute()
     {
         _iteration++;
         emit NextLoop();
+        pMachine->submitEvent("NextLoop");
     }
     else
     {
         emit LoopFinished();
+        pMachine->submitEvent("LoopFinished");
     }
 }
 
@@ -436,8 +475,10 @@ void Focus::SMRequestGotoNext()
                           _startpos + _iteration * _steps))
     {
         emit abort();
+        pMachine->submitEvent("abort");
         return;
     }
+    pMachine->submitEvent("RequestGotoNextDone");
     emit RequestGotoNextDone();
 }
 
@@ -448,9 +489,11 @@ void Focus::SMRequestBacklashBest()
                           _bestpos - _backlash))
     {
         emit abort();
+        pMachine->submitEvent("abort");
         return;
     }
     emit RequestBacklashBestDone();
+    pMachine->submitEvent("RequestBacklashBestDone");
 }
 
 void Focus::SMRequestGotoBest()
@@ -460,9 +503,11 @@ void Focus::SMRequestGotoBest()
     if (!sendModNewNumber(getString("devices", "focuser"), "ABS_FOCUS_POSITION", "FOCUS_ABSOLUTE_POSITION", _bestposfit))
     {
         emit abort();
+        pMachine->submitEvent("abort");
         return;
     }
     emit RequestGotoBestDone();
+    pMachine->submitEvent("RequestGotoBestDone");
 }
 
 void Focus::SMRequestExposureBest()
@@ -472,16 +517,19 @@ void Focus::SMRequestExposureBest()
                           "exposure")->value()))
     {
         emit abort();
+        pMachine->submitEvent("abort");
         return;
     }
     double mFinalPos = 0;
     if (!getModNumber(getString("devices", "focuser"), "ABS_FOCUS_POSITION", "FOCUS_ABSOLUTE_POSITION", mFinalPos))
     {
+        pMachine->submitEvent("abort");
         emit abort();
         return;
     }
     setOstElementValue("results", "pos", mFinalPos, true);
     emit RequestExposureBestDone();
+    pMachine->submitEvent("RequestExposureBestDone");
 }
 
 void Focus::SMComputeResult()
@@ -496,6 +544,7 @@ void Focus::SMComputeResult()
 
     // what should i do here ?
     emit ComputeResultDone();
+    pMachine->submitEvent("ComputeResultDone");
 }
 
 
@@ -508,6 +557,8 @@ void Focus::SMInitLoopFrame()
     _loopHFRavg = 99;
     setOstElementValue("values", "loopHFRavg", _loopHFRavg, true);
     emit InitLoopFrameDone();
+    pMachine->submitEvent("InitLoopFrameDone");
+
 }
 
 void Focus::SMComputeLoopFrame()
@@ -524,10 +575,13 @@ void Focus::SMComputeLoopFrame()
     if (_loopIteration < _loopIterations )
     {
         emit NextFrame();
+        pMachine->submitEvent("NextFrame");
+
     }
     else
     {
         emit LoopFrameDone();
+        pMachine->submitEvent("LoopFrameDone");
     }
 }
 
@@ -535,6 +589,7 @@ void Focus::SMAlert()
 {
     sendMessage("SMAlert");
     emit abort();
+    pMachine->submitEvent("abort");
 }
 
 void Focus::SMFocusDone()

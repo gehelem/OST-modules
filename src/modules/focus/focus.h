@@ -3,6 +3,7 @@
 #include <indimodule.h>
 #include <fileio.h>
 #include <solver.h>
+#include <QScxmlStateMachine>
 
 #if defined(FOCUS_MODULE)
 #  define MODULE_INIT Q_DECL_EXPORT
@@ -11,6 +12,7 @@
 #endif
 
 #include <QStateMachine>
+
 
 class MODULE_INIT Focus : public IndiModule
 {
@@ -104,7 +106,7 @@ class MODULE_INIT Focus : public IndiModule
         double _bestposfit;
         double _besthfr;
         double  _focuserPosition;
-        QStateMachine _machine;
+        QScxmlStateMachine *pMachine;
 
         std::vector<double> _posvector;
         std::vector<double> _hfdvector;
