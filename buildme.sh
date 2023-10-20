@@ -12,6 +12,7 @@ libstellarsolver-dev \
 libnova-dev \
 libgsl-dev \
 wcslib-dev \
+libqt5scxml5-dev \
 libqt5websockets5-dev \
 libcfitsio-dev \
 ostserver
