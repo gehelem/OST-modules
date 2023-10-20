@@ -23,39 +23,6 @@ class MODULE_INIT Focus : public IndiModule
         ~Focus();
 
     signals:
-        void focuserPositionChanged(const double &newFocuserPosition);
-        //void expdone(IBLOB *bp);
-        void focuserReachedPosition();
-        void valueChanged(const double &newValue);
-        //void valueChanged(const QString qnewValue);
-
-        void RequestFrameResetDone();
-        void FrameResetDone();
-        void RequestBacklashDone();
-        void BacklashDone();
-        void RequestGotoStartDone();
-        void GotoStartDone();
-
-        void RequestExposureDone();
-        void ExposureDone();
-        void FindStarsDone();
-        void NextLoop();
-        void RequestGotoNextDone();
-        void GotoNextDone();
-        void LoopFinished();
-
-        void RequestBacklashBestDone();
-        void BacklashBestDone();
-        void RequestGotoBestDone();
-        void GotoBestDone();
-        void RequestExposureBestDone();
-        void ExposureBestDone();
-        void ComputeResultDone();
-        void InitLoopFrameDone();
-        void LoopFrameDone();
-        void NextFrame();
-
-        void blobloaded();
         void cameraAlert();
         void abort();
     public slots:
