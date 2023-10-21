@@ -18,6 +18,23 @@ Focus::Focus(QString name, QString label, QString profile, QVariantMap available
 
     setModuleDescription("Focus (scxml)");
     setModuleVersion("0.1");
+    pMachine = QScxmlStateMachine::fromFile(":focus.scxml");
+    pMachine->connectToState("RequestFrameReset", QScxmlStateMachine::onEntry(this, &Focus::SMRequestFrameReset));
+    pMachine->connectToState("RequestBacklash", QScxmlStateMachine::onEntry(this, &Focus::SMRequestBacklash));
+    pMachine->connectToState("RequestGotoStart", QScxmlStateMachine::onEntry(this, &Focus::SMRequestGotoStart));
+    pMachine->connectToState("RequestExposure", QScxmlStateMachine::onEntry(this, &Focus::SMRequestExposure));
+    pMachine->connectToState("FindStars", QScxmlStateMachine::onEntry(this, &Focus::SMFindStars));
+    pMachine->connectToState("Compute", QScxmlStateMachine::onEntry(this, &Focus::SMCompute));
+    pMachine->connectToState("RequestGotoNext", QScxmlStateMachine::onEntry(this, &Focus::SMRequestGotoNext));
+    pMachine->connectToState("RequestBacklashBest", QScxmlStateMachine::onEntry(this, &Focus::SMRequestBacklashBest));
+    pMachine->connectToState("RequestGotoBest", QScxmlStateMachine::onEntry(this, &Focus::SMRequestGotoBest));
+    pMachine->connectToState("RequestExposureBest", QScxmlStateMachine::onEntry(this, &Focus::SMRequestExposureBest));
+    pMachine->connectToState("ComputeResult", QScxmlStateMachine::onEntry(this, &Focus::SMComputeResult));
+    pMachine->connectToState("ComputeResult", QScxmlStateMachine::onExit(this, &Focus::SMFocusDone));
+    pMachine->connectToState("ComputeLoopFrame", QScxmlStateMachine::onEntry(this, &Focus::SMComputeLoopFrame));
+    pMachine->connectToState("InitLoopFrame", QScxmlStateMachine::onEntry(this, &Focus::SMInitLoopFrame));
+    pMachine->connectToState("FindStarsFinal", QScxmlStateMachine::onEntry(this, &Focus::SMFindStars));
+
 
     _startpos =          getValueInt("parameters", "startpos")->value();
     _steps =             getValueInt("parameters", "steps")->value();
@@ -126,7 +143,7 @@ void Focus::updateProperty(INDI::Property p)
         newBLOB(p);
     }
 
-
+    if (pMachine->isRunning())qDebug() << pMachine->activeStateNames();
 
 }
 
@@ -190,24 +207,9 @@ void Focus::startCoarse()
     _loopIterations =    getValueInt("parameters", "loopIterations")->value();
     _backlash =          getValueInt("parameters", "backlash")->value();
 
-    pMachine = QScxmlStateMachine::fromFile(":focus.scxml");
-    pMachine->connectToState("RequestFrameReset", QScxmlStateMachine::onEntry(this, &Focus::SMRequestFrameReset));
-    pMachine->connectToState("RequestBacklash", QScxmlStateMachine::onEntry(this, &Focus::SMRequestBacklash));
-    pMachine->connectToState("RequestGotoStart", QScxmlStateMachine::onEntry(this, &Focus::SMRequestGotoStart));
-    pMachine->connectToState("RequestExposure", QScxmlStateMachine::onEntry(this, &Focus::SMRequestExposure));
-    pMachine->connectToState("FindStars", QScxmlStateMachine::onEntry(this, &Focus::SMFindStars));
-    pMachine->connectToState("Compute", QScxmlStateMachine::onEntry(this, &Focus::SMCompute));
-    pMachine->connectToState("RequestGotoNext", QScxmlStateMachine::onEntry(this, &Focus::SMRequestGotoNext));
-    pMachine->connectToState("RequestBacklashBest", QScxmlStateMachine::onEntry(this, &Focus::SMRequestBacklashBest));
-    pMachine->connectToState("RequestGotoBest", QScxmlStateMachine::onEntry(this, &Focus::SMRequestGotoBest));
-    pMachine->connectToState("RequestExposureBest", QScxmlStateMachine::onEntry(this, &Focus::SMRequestExposureBest));
-    pMachine->connectToState("ComputeResult", QScxmlStateMachine::onEntry(this, &Focus::SMComputeResult));
-    pMachine->connectToState("ComputeResult", QScxmlStateMachine::onExit(this, &Focus::SMFocusDone));
-    pMachine->connectToState("ComputeLoopFrame", QScxmlStateMachine::onEntry(this, &Focus::SMComputeLoopFrame));
-    pMachine->connectToState("InitLoopFrame", QScxmlStateMachine::onEntry(this, &Focus::SMInitLoopFrame));
-    pMachine->connectToState("FindStarsFinal", QScxmlStateMachine::onEntry(this, &Focus::SMFindStars));
+    //pMachine = QScxmlStateMachine::fromFile(":focus.scxml");
 
-
+    pMachine->init();
     pMachine->start();
 }
 
@@ -217,12 +219,10 @@ void Focus::SMRequestFrameReset()
 
     if (!frameReset(getString("devices", "camera")))
     {
-        pMachine->submitEvent("RequestFrameResetDone");
         usleep(1000);
         pMachine->submitEvent("FrameResetDone");
         return;
     }
-    pMachine->submitEvent("RequestFrameResetDone");
 
 }
 
@@ -274,6 +274,7 @@ void Focus::SMFindStars()
 
 void Focus::OnSucessSEP()
 {
+    disconnect(&_solver, &Solver::successSEP, this, &Focus::OnSucessSEP);
     OST::ImgData dta = getValueImg("image", "image")->value();
     dta.HFRavg = _solver.HFRavg;
     dta.starsCount = _solver.stars.size();
@@ -434,4 +435,5 @@ void Focus::SMFocusDone()
     sendMessage("Focus done");
     setOstElementValue("results", "hfr", _solver.HFRavg, false);
     getProperty("actions")->setState(OST::Ok);
+    pMachine->stop();
 }
