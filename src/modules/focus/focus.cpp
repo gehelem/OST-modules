@@ -143,8 +143,6 @@ void Focus::updateProperty(INDI::Property p)
         newBLOB(p);
     }
 
-    if (pMachine->isRunning())qDebug() << pMachine->activeStateNames();
-
 }
 
 void Focus::newBLOB(INDI::PropertyBlob b)
@@ -197,9 +195,23 @@ void Focus::startCoarse()
     _posvector.clear();
     _hfdvector.clear();
     _coefficients.clear();
+
+    _zonePosvector.clear();
+    _zoneHfdvector.clear();
+    _zoneCoefficients.clear();
+
+
     _iteration = 0;
     _besthfr = 99;
-    _bestposfit = 99;
+    _bestposfit = 0;
+    _zoneBestposfit.clear();
+
+    mZoning =  getInt("parameters", "zoning");
+
+    for (int i = 0; i < mZoning * mZoning; i++)
+    {
+        _zoneBestposfit.append(0);
+    }
 
     _startpos =          getValueInt("parameters", "startpos")->value();
     _steps =             getValueInt("parameters", "steps")->value();
@@ -215,7 +227,7 @@ void Focus::startCoarse()
 
 void Focus::SMRequestFrameReset()
 {
-    sendMessage("SMRequestFrameReset");
+    //sendMessage("SMRequestFrameReset");
 
     if (!frameReset(getString("devices", "camera")))
     {
@@ -289,11 +301,30 @@ void Focus::SMCompute()
     _posvector.push_back(_startpos + _iteration * _steps);
     _hfdvector.push_back(_loopHFRavg);
 
+    for (int i = 0; i < mZoning * mZoning; i++)
+    {
+        if (_zoneloopHFRavg[i] != 99)
+        {
+            _zonePosvector[i].push_back(_startpos + _iteration * _steps);
+            _zoneHfdvector[i].push_back(_zoneloopHFRavg[i]);
+        }
+    }
+
     if (_posvector.size() > 2)
     {
         double coeff[3];
         polynomialfit(_posvector.size(), 3, _posvector.data(), _hfdvector.data(), coeff);
         _bestposfit = -coeff[1] / (2 * coeff[2]);
+    }
+
+    for (int i = 0; i < mZoning * mZoning; i++)
+    {
+        if (_zoneHfdvector[i].size() > 2)
+        {
+            double coeff[3];
+            polynomialfit(_posvector.size(), 3, _posvector.data(), _zoneHfdvector[i].data(), coeff);
+            _zoneBestposfit[i] = -coeff[1] / (2 * coeff[2]);
+        }
     }
 
     if ( _loopHFRavg < _besthfr )
@@ -388,6 +419,42 @@ void Focus::SMComputeResult()
 
     // what should i do here ?
     pMachine->submitEvent("ComputeResultDone");
+
+    getProperty("zones")->clearGrid();
+
+    for (int i = 0; i < mZoning * mZoning; i++)
+    {
+        if ((mZoning != 2) && (mZoning != 3))
+        {
+            getValueString("zones", "zone")->setValue(QString::number(i + 1), false);
+        }
+        if (mZoning == 2)
+        {
+            if (i == 0) getValueString("zones", "zone")->setValue("Upper left", false);
+            if (i == 1) getValueString("zones", "zone")->setValue("Upper right", false);
+            if (i == 2) getValueString("zones", "zone")->setValue("Lower left", false);
+            if (i == 3) getValueString("zones", "zone")->setValue("Lower right", false);
+        }
+        if (mZoning == 3)
+        {
+            if (i == 0) getValueString("zones", "zone")->setValue("Upper left", false);
+            if (i == 1) getValueString("zones", "zone")->setValue("Upper middle", false);
+            if (i == 2) getValueString("zones", "zone")->setValue("Upper right", false);
+            if (i == 3) getValueString("zones", "zone")->setValue("Midle left", false);
+            if (i == 4) getValueString("zones", "zone")->setValue("Center", false);
+            if (i == 5) getValueString("zones", "zone")->setValue("Middle right", false);
+            if (i == 6) getValueString("zones", "zone")->setValue("Lower left", false);
+            if (i == 7) getValueString("zones", "zone")->setValue("Lower middle", false);
+            if (i == 8) getValueString("zones", "zone")->setValue("Lower right", false);
+        }
+
+
+        getValueFloat("zones", "bestpos")->setValue(_zoneBestposfit[i], false);
+        getProperty("zones")->push();
+    }
+
+
+
 }
 
 
@@ -398,6 +465,15 @@ void Focus::SMInitLoopFrame()
     //sendMessage("SMInitLoopFrame");
     _loopIteration = 0;
     _loopHFRavg = 99;
+    _zoneloopHFRavg.clear();
+    _zoneLoopIteration.clear();
+    for (int i = 0; i < mZoning * mZoning; i++)
+    {
+        _zoneloopHFRavg.append(99);
+        _zoneLoopIteration.append(0);
+        _zonePosvector.append(std::vector<double>());
+        _zoneHfdvector.append(std::vector<double>());
+    }
     setOstElementValue("values", "loopHFRavg", _loopHFRavg, true);
     pMachine->submitEvent("InitLoopFrameDone");
 
@@ -408,6 +484,15 @@ void Focus::SMComputeLoopFrame()
     //sendMessage("SMComputeLoopFrame");
     _loopIteration++;
     _loopHFRavg = ((_loopIteration - 1) * _loopHFRavg + _solver.HFRavg) / _loopIteration;
+    for (int i = 0; i < mZoning * mZoning; i++)
+    {
+        if (_solver.HFRavgZone[i] != 99)
+        {
+            _zoneloopHFRavg[i] = (_zoneLoopIteration[i] * _zoneloopHFRavg[i] + _solver.HFRavgZone[i]) / (_zoneLoopIteration[i] + 1);
+            _zoneLoopIteration[i]++;
+
+        }
+    }
     setOstElementValue("values", "loopHFRavg", _loopHFRavg, false);
     setOstElementValue("values", "imgHFR", _solver.HFRavg, true);
 

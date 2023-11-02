@@ -66,11 +66,15 @@ class MODULE_INIT Focus : public IndiModule
         int    _steps = 3000;
         int    _loopIterations = 2;
         int    _loopIteration;
+        QList<int> _zoneLoopIteration;
         double _loopHFRavg;
+        int mZoning = 2;
+        QList<double> _zoneloopHFRavg;
 
         int    _iteration;
         double _bestpos;
         double _bestposfit;
+        QList<double> _zoneBestposfit;
         double _besthfr;
         double  _focuserPosition;
         QScxmlStateMachine *pMachine;
@@ -78,6 +82,10 @@ class MODULE_INIT Focus : public IndiModule
         std::vector<double> _posvector;
         std::vector<double> _hfdvector;
         std::vector<double> _coefficients;
+
+        QList<std::vector<double>> _zonePosvector;
+        QList<std::vector<double>> _zoneHfdvector;
+        QList<std::vector<double>> _zoneCoefficients;
 
         QPointer<fileio> _image;
         Solver _solver;

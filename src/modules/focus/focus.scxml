@@ -8,71 +8,68 @@
         </onentry>
     </final>
     <state id="Finish">
-        <qt:editorinfo geometry="768.20;-92.05;-208.38;-153.13;364.46;905.11" scenegeometry="768.20;-92.05;559.82;-245.18;364.46;905.11" stateColor="#c5bafc"/>
+        <qt:editorinfo geometry="768.20;-92.05;-208.38;-153.13;364.46;905.11" stateColor="#c5bafc" scenegeometry="768.20;-92.05;559.82;-245.18;364.46;905.11"/>
         <state id="RequestBacklashBest">
-            <qt:editorinfo geometry="-46.96;0;-106;-49.51;262.20;101.51" scenegeometry="793.93;-29.74;687.93;-79.25;262.20;101.51"/>
+            <qt:editorinfo geometry="-46.96;0;-106;-49.51;262.20;101.51" scenegeometry="721.24;-92.05;615.24;-141.56;262.20;101.51"/>
             <transition type="internal" target="RequestGotoBest" event="BacklashBestDone">
                 <qt:editorinfo endTargetFactors="53.30;9.68" movePoint="0;1.18"/>
             </transition>
         </state>
         <state id="RequestGotoBest">
-            <qt:editorinfo geometry="-24.81;161.42;-106;-50;192.83;102" scenegeometry="816.08;131.68;710.08;81.68;192.83;102"/>
+            <qt:editorinfo geometry="-24.81;161.42;-106;-50;192.83;102" scenegeometry="743.39;69.37;637.39;19.37;192.83;102"/>
             <transition type="internal" target="RequestExposureBest" event="GotoBestDone">
                 <qt:editorinfo endTargetFactors="42.33;7.65"/>
             </transition>
         </state>
         <state id="RequestExposureBest">
-            <qt:editorinfo geometry="-18.88;322.39;-106;-50;197.46;102" scenegeometry="822.01;292.65;716.01;242.65;197.46;102"/>
+            <qt:editorinfo geometry="-18.88;322.39;-106;-50;197.46;102" scenegeometry="749.32;230.34;643.32;180.34;197.46;102"/>
             <transition type="internal" event="ExposureBestDone" target="FindStarsFinal">
                 <qt:editorinfo endTargetFactors="51.82;9.87"/>
             </transition>
         </state>
         <state id="ComputeResult">
-            <qt:editorinfo geometry="-12.80;663.99;-106;-50;185.29;102" scenegeometry="828.09;634.25;722.09;584.25;185.29;102"/>
+            <qt:editorinfo geometry="-12.80;663.99;-106;-50;185.29;102" scenegeometry="755.40;571.94;649.40;521.94;185.29;102"/>
             <transition type="internal" target="Final_1" event="ComputeResultDone"/>
         </state>
-        <onentry>
-            <log expr="finish"/>
-        </onentry>
         <state id="FindStarsFinal">
-            <qt:editorinfo geometry="37.49;514.73;-143.47;-50;159.65;100" scenegeometry="878.38;484.99;734.91;434.99;159.65;100"/>
+            <qt:editorinfo geometry="37.49;514.73;-143.47;-50;159.65;100" scenegeometry="805.69;422.68;662.22;372.68;159.65;100"/>
             <transition type="internal" event="FindStarsDone" target="ComputeResult">
                 <qt:editorinfo endTargetFactors="24.38;48.43"/>
             </transition>
         </state>
     </state>
     <state id="Loop" initial="LoopFrame">
-        <qt:editorinfo geometry="57.96;-33.60;-364.68;-222.48;848.93;834.74" scenegeometry="57.96;-33.60;-306.72;-256.08;848.93;834.74" stateColor="#a2d700"/>
+        <qt:editorinfo geometry="57.96;-33.60;-364.68;-222.48;848.93;834.74" stateColor="#a2d700" scenegeometry="57.96;-33.60;-306.72;-256.08;848.93;834.74"/>
         <state id="RequestGotoNext">
-            <qt:editorinfo geometry="67.28;473.33;-106;-50;166;100" scenegeometry="175.68;510.94;69.68;460.94;166;100"/>
+            <qt:editorinfo geometry="67.28;473.33;-106;-50;166;100" scenegeometry="125.24;439.73;19.24;389.73;166;100"/>
             <transition type="internal" event="GotoNextDone" target="LoopFrame">
                 <qt:editorinfo endTargetFactors="40.03;15.27"/>
             </transition>
         </state>
         <state id="LoopFrame" initial="InitLoopFrame">
-            <qt:editorinfo geometry="-32.11;1.80;-250.91;-137.77;513.83;532.71" scenegeometry="76.29;39.41;-174.62;-98.36;513.83;532.71"/>
+            <qt:editorinfo geometry="-32.11;1.80;-250.91;-137.77;513.83;532.71" scenegeometry="25.85;-31.80;-225.06;-169.57;513.83;532.71"/>
             <state id="RequestExposure">
-                <qt:editorinfo geometry="56.01;140.31;-192.97;-50;166.53;100" scenegeometry="334.60;220.18;141.63;170.18;166.53;100"/>
+                <qt:editorinfo geometry="56.01;140.31;-192.97;-50;166.53;100" scenegeometry="81.86;108.51;-111.11;58.51;166.53;100"/>
                 <transition type="internal" event="ExposureDone" target="FindStars">
                     <qt:editorinfo endTargetFactors="38.32;13.01"/>
                 </transition>
             </state>
             <state id="FindStars">
-                <qt:editorinfo geometry="106.24;288.12;-143.47;-50;159.65;100" scenegeometry="384.83;367.99;241.36;317.99;159.65;100"/>
+                <qt:editorinfo geometry="106.24;288.12;-143.47;-50;159.65;100" scenegeometry="132.09;256.32;-11.38;206.32;159.65;100"/>
                 <transition type="internal" event="FindStarsDone" target="ComputeLoopFrame">
                     <qt:editorinfo endTargetFactors="52.99;90.39"/>
                 </transition>
             </state>
             <state id="InitLoopFrame">
-                <qt:editorinfo geometry="-54.50;-8.70;-60;-50;120;100" scenegeometry="224.09;71.17;164.09;21.17;120;100"/>
+                <qt:editorinfo geometry="-54.50;-8.70;-60;-50;120;100" scenegeometry="-28.65;-40.50;-88.65;-90.50;120;100"/>
                 <transition type="external" event="InitLoopFrameDone" target="RequestExposure">
                     <qt:editorinfo endTargetFactors="68.54;73.61"/>
                 </transition>
             </state>
             <state id="ComputeLoopFrame">
-                <qt:editorinfo geometry="-70.57;290.42;-155.78;-50;179.78;100" scenegeometry="208.02;370.29;52.24;320.29;179.78;100"/>
+                <qt:editorinfo geometry="-70.57;290.42;-155.78;-50;179.78;100" scenegeometry="-44.72;258.62;-200.50;208.62;179.78;100"/>
                 <transition type="internal" event="LoopFrameDone" target="Compute">
-                    <qt:editorinfo startTargetFactors="5.27;54.85" endTargetFactors="88.89;54.54"/>
+                    <qt:editorinfo endTargetFactors="88.89;54.54" startTargetFactors="5.27;54.85"/>
                 </transition>
                 <transition type="internal" target="RequestExposure" event="NextFrame">
                     <qt:editorinfo endTargetFactors="14.22;87.86" movePoint="0;-1.48"/>
@@ -80,18 +77,18 @@
             </state>
         </state>
         <state id="Compute">
-            <qt:editorinfo geometry="-162.52;536.17;-83;-50;120;100" scenegeometry="-54.12;573.78;-137.12;523.78;120;100"/>
+            <qt:editorinfo geometry="-162.52;536.17;-83;-50;120;100" scenegeometry="-104.56;502.57;-187.56;452.57;120;100"/>
             <transition type="internal" target="RequestGotoNext" event="NextLoop">
                 <qt:editorinfo endTargetFactors="49.36;88.49"/>
             </transition>
             <transition type="internal" event="LoopFinished" target="Finish">
-                <qt:editorinfo startTargetFactors="91.74;72.48" endTargetFactors="74.19;86.68"/>
+                <qt:editorinfo endTargetFactors="74.19;86.68" startTargetFactors="91.74;72.48"/>
             </transition>
         </state>
         <transition type="internal" event="abort" target="Final_1"/>
     </state>
     <state id="Init" initial="RequestFrameReset">
-        <qt:editorinfo geometry="-218.70;-130.52;-460.59;-133.05;339.68;572.42" scenegeometry="-218.70;-130.52;-679.29;-263.57;339.68;572.42" stateColor="#3cb3fd"/>
+        <qt:editorinfo geometry="-218.70;-130.52;-460.59;-133.05;339.68;572.42" stateColor="#3cb3fd" scenegeometry="-218.70;-130.52;-679.29;-263.57;339.68;572.42"/>
         <state id="RequestGotoStart">
             <qt:editorinfo geometry="-368.39;290.56;-56.72;-49.51;176.72;101.51" scenegeometry="-587.09;160.04;-643.81;110.53;176.72;101.51"/>
             <transition type="internal" event="GotoStartDone" target="Loop">
@@ -99,13 +96,13 @@
             </transition>
         </state>
         <state id="RequestBacklash">
-            <qt:editorinfo geometry="-368.22;168.55;-53.50;-49.51;170.28;101.51" scenegeometry="-666.88;124.52;-720.38;75.01;170.28;101.51"/>
+            <qt:editorinfo geometry="-368.22;168.55;-53.50;-49.51;170.28;101.51" scenegeometry="-586.92;38.03;-640.42;-11.48;170.28;101.51"/>
             <transition type="internal" target="RequestGotoStart" event="BacklashDone">
                 <qt:editorinfo endTargetFactors="46.68;14.24"/>
             </transition>
         </state>
         <state id="RequestFrameReset">
-            <qt:editorinfo geometry="-359.28;12.65;-64.86;-49.51;193;136.60" scenegeometry="-657.94;-31.38;-722.80;-80.89;193;136.60"/>
+            <qt:editorinfo geometry="-359.28;12.65;-64.86;-49.51;193;136.60" scenegeometry="-577.98;-117.87;-642.84;-167.38;193;136.60"/>
             <transition type="internal" event="FrameResetDone" target="RequestBacklash"/>
         </state>
         <transition type="internal" event="abort" target="Final_1">
