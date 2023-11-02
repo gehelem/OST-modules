@@ -128,8 +128,57 @@
                 "label": "Backlash overshoot",
                 "value":100,
                 "format": "99999"
+            },
+            "zoning": {
+                "autoupdate":true,
+                "directedit":true,
+                "type":"int",
+                "label": "Zoning",
+                "value":2,
+                "format": "99999",
+                "min":1,
+                "max":64,
+                "listOfValues":[
+                    [1,"1x1"],
+                    [2,"2x2"],
+                    [3,"3x3"],
+                    [4,"4x4"],
+                    [5,"5x5"],
+                    [6,"6x6"],
+                    [7,"7x7"],
+                    [8,"8x8"],
+                    [9,"9x9"]
+                ]
+
+            }
+
+        }
+    },
+    "zones": {
+        "devcat": "Control",
+        "order":"Control050",
+        "group": "",
+        "permission": 0,
+        "hasArray":true,
+        "showArray":true,
+        "label": "Zoning results",
+        "elements": {
+            "zone": {
+                "order":"1",
+                "type":"string",
+                "label": "Zone id",
+                "value":0,
+                "format": "99.99"
+            },
+            "bestpos": {
+                "order":"2",
+                "type":"float",
+                "label": "Best position",
+                "value":0,
+                "format": "9999999"
             }
         }
     }
+
 }
 }

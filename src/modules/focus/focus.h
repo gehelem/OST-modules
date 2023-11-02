@@ -23,39 +23,6 @@ class MODULE_INIT Focus : public IndiModule
         ~Focus();
 
     signals:
-        void focuserPositionChanged(const double &newFocuserPosition);
-        //void expdone(IBLOB *bp);
-        void focuserReachedPosition();
-        void valueChanged(const double &newValue);
-        //void valueChanged(const QString qnewValue);
-
-        void RequestFrameResetDone();
-        void FrameResetDone();
-        void RequestBacklashDone();
-        void BacklashDone();
-        void RequestGotoStartDone();
-        void GotoStartDone();
-
-        void RequestExposureDone();
-        void ExposureDone();
-        void FindStarsDone();
-        void NextLoop();
-        void RequestGotoNextDone();
-        void GotoNextDone();
-        void LoopFinished();
-
-        void RequestBacklashBestDone();
-        void BacklashBestDone();
-        void RequestGotoBestDone();
-        void GotoBestDone();
-        void RequestExposureBestDone();
-        void ExposureBestDone();
-        void ComputeResultDone();
-        void InitLoopFrameDone();
-        void LoopFrameDone();
-        void NextFrame();
-
-        void blobloaded();
         void cameraAlert();
         void abort();
     public slots:
@@ -99,11 +66,15 @@ class MODULE_INIT Focus : public IndiModule
         int    _steps = 3000;
         int    _loopIterations = 2;
         int    _loopIteration;
+        QList<int> _zoneLoopIteration;
         double _loopHFRavg;
+        int mZoning = 2;
+        QList<double> _zoneloopHFRavg;
 
         int    _iteration;
         double _bestpos;
         double _bestposfit;
+        QList<double> _zoneBestposfit;
         double _besthfr;
         double  _focuserPosition;
         QScxmlStateMachine *pMachine;
@@ -111,6 +82,10 @@ class MODULE_INIT Focus : public IndiModule
         std::vector<double> _posvector;
         std::vector<double> _hfdvector;
         std::vector<double> _coefficients;
+
+        QList<std::vector<double>> _zonePosvector;
+        QList<std::vector<double>> _zoneHfdvector;
+        QList<std::vector<double>> _zoneCoefficients;
 
         QPointer<fileio> _image;
         Solver _solver;
