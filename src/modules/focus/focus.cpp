@@ -267,7 +267,7 @@ void Focus::SMFindStars()
 {
     //sendMessage("SMFindStars");
     stats = _image->getStats();
-    _solver.ResetSolver(stats, _image->getImageBuffer());
+    _solver.ResetSolver(stats, _image->getImageBuffer(), getInt("parameters", "zoning"));
     connect(&_solver, &Solver::successSEP, this, &Focus::OnSucessSEP);
     _solver.FindStars(_solver.stellarSolverProfiles[0]);
 }
