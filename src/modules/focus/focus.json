@@ -58,7 +58,6 @@
             }
         }
     },
-
     "results": {
         "devcat": "Control",
         "order":"Control050",
@@ -154,9 +153,26 @@
 
         }
     },
+    "progress":{
+        "devcat": "Control",
+        "group": "",
+        "permission": 0,
+        "order":"Control010",
+        "label":"Progress",
+        "elements": {
+            "global": {
+                "type": "prg",
+                "prgtype": "spinner",
+                "label": "",
+                "dynlabel": "",
+                "value": 0,
+                "order":0
+            }
+        }
+    },
     "zones": {
         "devcat": "Control",
-        "order":"Control050",
+        "order":"Control090",
         "group": "",
         "permission": 0,
         "hasArray":true,

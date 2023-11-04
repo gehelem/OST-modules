@@ -81,6 +81,8 @@ void Focus::OnMyExternalEvent(const QString &eventType, const QString  &eventMod
                         if (setOstElementValue(keyprop, keyelt, false, false))
                         {
                             getProperty(keyprop)->setState(OST::Ok);
+                            getValuePrg("progress", "global")->setValue(0, true);
+                            getValuePrg("progress", "global")->setDynLabel("Aborted", true);
                             pMachine->submitEvent("abort");
                         }
                     }
@@ -223,6 +225,8 @@ void Focus::startCoarse()
 
     pMachine->init();
     pMachine->start();
+    getValuePrg("progress", "global")->setValue(0, true);
+    getValuePrg("progress", "global")->setDynLabel("0/" + QString::number(_iterations), true);
 }
 
 void Focus::SMRequestFrameReset()
@@ -341,7 +345,10 @@ void Focus::SMCompute()
 
     getStore()["values"]->push();
 
-    if (_iteration < _iterations )
+    getValuePrg("progress", "global")->setValue(100 * _iteration / _iterations, true);
+    getValuePrg("progress", "global")->setDynLabel(QString::number(_iteration + 1) + "/" + QString::number(_iterations), true);
+
+    if (_iteration + 1 < _iterations )
     {
         _iteration++;
         pMachine->submitEvent("NextLoop");
@@ -419,6 +426,8 @@ void Focus::SMComputeResult()
 
     // what should i do here ?
     pMachine->submitEvent("ComputeResultDone");
+    getValuePrg("progress", "global")->setValue(100, true);
+    getValuePrg("progress", "global")->setDynLabel("Finished", true);
 
     getProperty("zones")->clearGrid();
 
