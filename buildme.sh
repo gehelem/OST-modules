@@ -15,7 +15,8 @@ wcslib-dev \
 libqt5scxml5-dev \
 libqt5websockets5-dev \
 libcfitsio-dev \
-ostserver
+ostserver \
+libopencv-dev 
 
 cd
 git clone https://github.com/gehelem/OST-modules.git

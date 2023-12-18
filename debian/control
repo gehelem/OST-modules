@@ -36,6 +36,7 @@ Build-Depends: cmake,
                libgsl-dev,
                libsecret-1-dev,
                libstellarsolver-dev,
+               libopencv-dev,
                ostserver
 Standards-Version: 4.6.0
 Homepage: https://github.com/gehelem/OST
