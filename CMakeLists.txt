@@ -29,10 +29,10 @@ find_package(ZLIB REQUIRED)
 find_package(Threads REQUIRED)
 find_package(Nova REQUIRED)
 find_package(GSL REQUIRED)
-#find_package(OpenCV REQUIRED )
+find_package(OpenCV REQUIRED )
 find_package(WCSLIB REQUIRED)
-find_package(QT NAMES Qt5 COMPONENTS Gui Widgets Core Concurrent Network WebSockets Sql Scxml REQUIRED)
-find_package(Qt5 5.15.2 REQUIRED COMPONENTS Gui Widgets Core Concurrent Network WebSockets Sql Scxml)
+find_package(QT NAMES Qt5 COMPONENTS Gui Widgets Core Concurrent Network WebSockets Sql Scxml Multimedia REQUIRED)
+find_package(Qt5 5.15.2 REQUIRED COMPONENTS Gui Widgets Core Concurrent Network WebSockets Sql Multimedia Scxml)
 find_package(StellarSolver REQUIRED)
 find_package(OSTSERVER REQUIRED)
 
@@ -210,6 +210,28 @@ target_link_libraries(ostmeteo PRIVATE
 )
 target_compile_definitions(ostmeteo PRIVATE METEO_MODULE)
 
+# Blind periodic error correction module
+add_library(ostblindpec SHARED
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/blindpec/blindpec.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/blindpec/blindpec.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/blindpec/blindpec.qrc
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/blindpec/CV_SubPix.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/blindpec/CV_SubPix.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/blindpec/tacquisitionvideo.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/blindpec/tacquisitionvideo.cpp
+)
+target_link_libraries(ostblindpec PRIVATE
+    ${OST_LIBRARY_INDI}
+    Qt${QT_VERSION_MAJOR}::Core
+    Qt${QT_VERSION_MAJOR}::Concurrent
+    Qt${QT_VERSION_MAJOR}::Widgets
+    Qt${QT_VERSION_MAJOR}::Multimedia
+    ${OpenCV_LIBS}
+    Threads::Threads
+    z
+)
+target_compile_definitions(ostblindpec PRIVATE GUIDER_MODULE)
+
 
 install(TARGETS
     ostallsky
@@ -221,6 +243,7 @@ install(TARGETS
     ostsequencer
     ostmeteo
     ostpolar
+    ostblindpec
     RUNTIME DESTINATION "/usr/bin"
     LIBRARY DESTINATION "/usr/lib"
 )
