@@ -79,23 +79,6 @@ target_link_libraries(ostfocus PRIVATE
 )
 target_compile_definitions(ostfocus PRIVATE FOCUS_MODULE)
 
-
-# Indipanel module
-add_library(ostindipanel SHARED
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/indipanel/indipanel.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/indipanel/indipanel.cpp
-)
-target_link_libraries(ostindipanel PRIVATE
-    ${OST_LIBRARY_INDI}
-    Qt${QT_VERSION_MAJOR}::Core
-    Qt${QT_VERSION_MAJOR}::Concurrent
-    Qt${QT_VERSION_MAJOR}::Widgets
-    Threads::Threads
-    z
-)
-target_compile_definitions(ostindipanel PRIVATE INDIPANEL_MODULE)
-
-
 # guider module
 add_library(ostguider SHARED
     ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/guider/guider.h
@@ -238,7 +221,6 @@ install(TARGETS
     ostinspector
     ostnavigator
     ostguider
-    ostindipanel
     ostfocus
     ostsequencer
     ostmeteo
