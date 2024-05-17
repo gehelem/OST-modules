@@ -174,7 +174,7 @@ void Guider::newBLOB(INDI::PropertyBlob pblob)
         im.save(getWebroot() + "/" + getModuleName() + ".jpeg", "JPG", 100);
         OST::ImgData dta = _image->ImgStats();
         dta.mUrlJpeg = getModuleName() + ".jpeg";
-        getValueImg("image", "image")->setValue(dta, true);
+        getEltImg("image", "image")->setValue(dta, true);
 
 
         //BOOST_LOG_TRIVIAL(debug) << "Emit Exposure done";
