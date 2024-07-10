@@ -83,6 +83,10 @@ void Focus::OnMyExternalEvent(const QString &eventType, const QString  &eventMod
                             getProperty(keyprop)->setState(OST::Ok);
                             getEltPrg("progress", "global")->setPrgValue(0, true);
                             getEltPrg("progress", "global")->setDynLabel("Aborted", true);
+                            getProperty("parms")->enable();
+                            getProperty("devices")->enable();
+                            getProperty("parameters")->enable();
+
                             pMachine->submitEvent("abort");
                         }
                     }
@@ -182,7 +186,10 @@ void Focus::SMAbort()
 
 void Focus::startCoarse()
 {
-    getStore()["values"]->clearGrid();
+    getProperty("values")->clearGrid();
+    getProperty("parms")->disable();
+    getProperty("devices")->disable();
+    getProperty("parameters")->disable();
     connectIndi();
     connectDevice(getString("devices", "camera"));
     connectDevice(getString("devices", "focuser"));
@@ -461,6 +468,9 @@ void Focus::SMComputeResult()
         getProperty("zones")->push();
     }
 
+    getProperty("parms")->enable();
+    getProperty("devices")->enable();
+    getProperty("parameters")->enable();
 
 
 }
