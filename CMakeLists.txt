@@ -216,19 +216,19 @@ target_compile_definitions(ostfocus PRIVATE FOCUS_MODULE)
 #target_compile_definitions(ostblindpec PRIVATE BLINDPEC_MODULE)
 
 
-#install(TARGETS
+install(TARGETS
 #    ostallsky
 #    ostinspector
 #    ostnavigator
 #    ostguider
-#    ostfocus
+    ostfocus
 #    ostsequencer
 #    ostmeteo
 #    ostpolar
 #    ostblindpec
-#    RUNTIME DESTINATION "/usr/bin"
-#    LIBRARY DESTINATION "/usr/lib"
-#)
+    RUNTIME DESTINATION "/usr/bin"
+    LIBRARY DESTINATION "/usr/lib"
+)
 
 #get_cmake_property(_variableNames VARIABLES)
 #list (SORT _variableNames)
