@@ -1,5 +1,6 @@
 <RCC>
     <qresource prefix="/">
         <file>focus.json</file>
+        <file>focus.scxml</file>
     </qresource>
 </RCC>

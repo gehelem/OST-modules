@@ -23,15 +23,15 @@ Allsky::Allsky(QString name, QString label, QString profile, QVariantMap availab
     defineMeAsSequencer();
 
 
-    OST::ValueBool* b = new OST::ValueBool("Loop", "0", "");
-    getProperty("actions")->addValue("loop", b);
-    b = new OST::ValueBool("Abort", "2", "");
-    getProperty("actions")->addValue("abort", b);
-    b = new OST::ValueBool("Timelapse", "1", "");
-    getProperty("actions")->addValue("timelapse", b);
+    OST::ElementBool* b = new OST::ElementBool("Loop", "0", "");
+    getProperty("actions")->addElt("loop", b);
+    b = new OST::ElementBool("Abort", "2", "");
+    getProperty("actions")->addElt("abort", b);
+    b = new OST::ElementBool("Timelapse", "1", "");
+    getProperty("actions")->addElt("timelapse", b);
 
-    getProperty("actions")->deleteValue("startsequence");
-    getProperty("actions")->deleteValue("abortsequence");
+    getProperty("actions")->deleteElt("startsequence");
+    getProperty("actions")->deleteElt("abortsequence");
 
 
     _process = new QProcess(this);
