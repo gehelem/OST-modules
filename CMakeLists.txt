@@ -79,22 +79,22 @@ target_link_libraries(ostfocus PRIVATE
 )
 target_compile_definitions(ostfocus PRIVATE FOCUS_MODULE)
 
-## guider module
-#add_library(ostguider SHARED
-#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/guider/guider.h
-#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/guider/guider.cpp
-#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/guider/guider.qrc
-#)
-#target_link_libraries(ostguider PRIVATE
-#    ${OST_LIBRARY_INDI}
-#    Qt${QT_VERSION_MAJOR}::Core
-#    Qt${QT_VERSION_MAJOR}::Concurrent
-#    Qt${QT_VERSION_MAJOR}::Widgets
-#    Threads::Threads
-#    z
-#)
-#target_compile_definitions(ostguider PRIVATE GUIDER_MODULE)
-#
+# guider module
+add_library(ostguider SHARED
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/guider/guider.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/guider/guider.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/guider/guider.qrc
+)
+target_link_libraries(ostguider PRIVATE
+    ${OST_LIBRARY_INDI}
+    Qt${QT_VERSION_MAJOR}::Core
+    Qt${QT_VERSION_MAJOR}::Concurrent
+    Qt${QT_VERSION_MAJOR}::Widgets
+    Threads::Threads
+    z
+)
+target_compile_definitions(ostguider PRIVATE GUIDER_MODULE)
+
 ## polar module
 #add_library(ostpolar SHARED
 #    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/polar/polar.h
@@ -220,7 +220,7 @@ install(TARGETS
 #    ostallsky
 #    ostinspector
 #    ostnavigator
-#    ostguider
+    ostguider
     ostfocus
 #    ostsequencer
 #    ostmeteo
