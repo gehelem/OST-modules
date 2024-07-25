@@ -64,11 +64,7 @@
                 "graphtype":"XY",
                 "params":{
                     "X":"RA",
-                    "Y":"DEC",
-                    "Xmin":-10,
-                    "Ymin":-10,
-                    "Xmax":10,
-                    "Ymax":10
+                    "Y":"DEC"
                 }
             },
             "RA": {
@@ -90,6 +86,7 @@
         "permission": 0,
         "label": "Guiding graph",
         "hasArray":true,
+        "arrayLimit":60,
         "showArray":false,
         "elements": {
             "graph": {
@@ -189,6 +186,41 @@
 
         }
     },
+    "pid": {
+        "devcat": "Parameters",
+        "group": "",
+        "order":"Parameters100",
+        "permission": 2,
+        "hasprofile":true,
+        "label": "PID Parameters",
+        "elements": {
+            "kp": {
+                "type":"float",
+                "autoupdate":true,
+                "directedit":true,
+                "label": "Kp",
+                "value":1000,
+                "format": "99"
+            },
+            "ki": {
+                "type":"float",
+                "autoupdate":true,
+                "directedit":true,
+                "label": "Ki",
+                "value":0,
+                "format": "99"
+            },
+            "kd": {
+                "type":"float",
+                "autoupdate":true,
+                "directedit":true,
+                "label": "Kd",
+                "value":0,
+                "format": "99"
+            }
+        }
+    },
+
     "guideParams": {
         "devcat": "Parameters",
         "group": "",
@@ -198,6 +230,23 @@
         "hasprofile":true,
         "label": "Guide parameters",
         "elements": {
+            "interval": {
+                "type":"int",
+                "autoupdate":true,
+                "directedit":true,
+                "label": "Frame interval (ms)",
+                "value":500,
+                "format": "99"
+            },
+            "graphsize": {
+                "type":"int",
+                "autoupdate":false,
+                "directedit":true,
+                "label": "Graph size",
+                "min":1,
+                "value":60,
+                "format": "99"
+            },
             "pulsemax": {
                 "type":"int",
                 "autoupdate":true,
@@ -229,7 +278,25 @@
                 "label": "DEC Agressivity",
                 "value":0.8,
                 "format": "99"
+            },
+            "pixsec": {
+                "type":"float",
+                "autoupdate":true,
+                "directedit":true,
+                "label": "Pixels / sec",
+                "value":0.8,
+                "format": "99"
+            },
+            "avgover": {
+                "type":"int",
+                "autoupdate":true,
+                "directedit":true,
+                "label": "Average over X frames",
+                "value":10,
+                "format": "99"
             }
+
+
         }
     },
     "revCorrections": {

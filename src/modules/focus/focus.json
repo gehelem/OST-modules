@@ -1,22 +1,20 @@
 {
 "properties":{
     "values": {
-        "hasArray":true,
-        "showArray":false,
+        "hasGrid":true,
+        "showGrid":true,
+        "showElts":false,
         "devcat": "Control",
         "order":"Control100",
         "group": "",
         "permission": 0,
         "label": "Values",
+        "graphType":"XY",
+        "graphParams":{
+            "X":"focpos",
+            "Y":"loopHFRavg"
+        },
         "elements": {
-            "graph": {
-                "type": "graph",
-                "graphtype":"XY",
-                "params":{
-                    "X":"focpos",
-                    "Y":"loopHFRavg"
-                }
-            },
             "loopHFRavg": {
                 "type":"float",
                 "label": "Average HFR",
@@ -175,8 +173,9 @@
         "order":"Control090",
         "group": "",
         "permission": 0,
-        "hasArray":true,
-        "showArray":true,
+        "hasGrid":true,
+        "showGrid":true,
+        "showElts":false,
         "label": "Zoning results",
         "elements": {
             "zone": {

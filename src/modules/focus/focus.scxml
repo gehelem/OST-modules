@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<scxml xmlns="http://www.w3.org/2005/07/scxml" version="1.0" binding="early" xmlns:qt="http://www.qt.io/2015/02/scxml-ext" name="SMFocus" qt:editorversion="11.0.2" initial="Init">
+<scxml xmlns="http://www.w3.org/2005/07/scxml" version="1.0" binding="early" xmlns:qt="http://www.qt.io/2015/02/scxml-ext" name="SMFocus" qt:editorversion="12.0.2" initial="Init">
     <qt:editorinfo initialGeometry="-544.25;-342.15;-20;-20;40;40"/>
     <final id="Final_1">
-        <qt:editorinfo geometry="-439.39;683.36;-20;-20;40;40" scenegeometry="-439.39;683.36;-459.39;663.36;40;40"/>
+        <qt:editorinfo geometry="7.05;780.48;-20;-20;40;40" scenegeometry="7.05;780.48;-12.95;760.48;40;40"/>
         <onentry>
             <log expr="Final"/>
         </onentry>
     </final>
     <state id="Finish">
-        <qt:editorinfo geometry="768.20;-92.05;-208.38;-153.13;364.46;905.11" stateColor="#c5bafc" scenegeometry="768.20;-92.05;559.82;-245.18;364.46;905.11"/>
+        <qt:editorinfo geometry="893.52;-115.82;-238.96;-153.13;395.04;905.11" stateColor="#c5bafc" scenegeometry="893.52;-115.82;654.56;-268.95;395.04;905.11"/>
         <state id="RequestBacklashBest">
             <qt:editorinfo geometry="-46.96;0;-106;-49.51;262.20;101.51" scenegeometry="721.24;-92.05;615.24;-141.56;262.20;101.51"/>
             <transition type="internal" target="RequestGotoBest" event="BacklashBestDone">
@@ -37,9 +37,12 @@
                 <qt:editorinfo endTargetFactors="24.38;48.43"/>
             </transition>
         </state>
+        <transition type="internal" event="abort" target="Final_1">
+            <qt:editorinfo startTargetFactors="48.71;98.75"/>
+        </transition>
     </state>
     <state id="Loop" initial="LoopFrame">
-        <qt:editorinfo geometry="57.96;-33.60;-364.68;-222.48;848.93;834.74" stateColor="#a2d700" scenegeometry="57.96;-33.60;-306.72;-256.08;848.93;834.74"/>
+        <qt:editorinfo geometry="59.53;-33.60;-364.68;-222.48;848.93;834.74" stateColor="#a2d700" scenegeometry="59.53;-33.60;-305.15;-256.08;848.93;834.74"/>
         <state id="RequestGotoNext">
             <qt:editorinfo geometry="67.28;473.33;-106;-50;166;100" scenegeometry="125.24;439.73;19.24;389.73;166;100"/>
             <transition type="internal" event="GotoNextDone" target="LoopFrame">
@@ -85,7 +88,9 @@
                 <qt:editorinfo endTargetFactors="74.19;86.68" startTargetFactors="91.74;72.48"/>
             </transition>
         </state>
-        <transition type="internal" event="abort" target="Final_1"/>
+        <transition type="internal" event="abort" target="Final_1">
+            <qt:editorinfo movePoint="0;2.58"/>
+        </transition>
     </state>
     <state id="Init" initial="RequestFrameReset">
         <qt:editorinfo geometry="-218.70;-130.52;-460.59;-133.05;339.68;572.42" stateColor="#3cb3fd" scenegeometry="-218.70;-130.52;-679.29;-263.57;339.68;572.42"/>
@@ -106,7 +111,7 @@
             <transition type="internal" event="FrameResetDone" target="RequestBacklash"/>
         </state>
         <transition type="internal" event="abort" target="Final_1">
-            <qt:editorinfo startTargetFactors="97.80;94.62"/>
+            <qt:editorinfo startTargetFactors="14.43;89.78"/>
         </transition>
     </state>
 </scxml>

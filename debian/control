@@ -13,6 +13,7 @@ Build-Depends: cmake,
                libqt5svg5-dev,
                libqt5scxml5-dev,
                libqt5sql5-sqlite,
+               qtmultimedia5-dev,
                libboost-dev,
                libboost-log-dev,
                kdoctools-dev | libkf5doctools-dev,
@@ -36,6 +37,7 @@ Build-Depends: cmake,
                libgsl-dev,
                libsecret-1-dev,
                libstellarsolver-dev,
+               libopencv-dev,
                ostserver
 Standards-Version: 4.6.0
 Homepage: https://github.com/gehelem/OST
