@@ -145,22 +145,22 @@ target_compile_definitions(ostguider PRIVATE GUIDER_MODULE)
 #)
 #target_compile_definitions(ostallsky PRIVATE ALLSKY_MODULE)
 #
-## sequencer module
-#add_library(ostsequencer SHARED
-#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/sequencer/sequencer.h
-#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/sequencer/sequencer.cpp
-#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/sequencer/sequencer.qrc
-#)
-#target_link_libraries(ostsequencer PRIVATE
-#    ${OST_LIBRARY_INDI}
-#    Qt${QT_VERSION_MAJOR}::Core
-#    Qt${QT_VERSION_MAJOR}::Concurrent
-#    Qt${QT_VERSION_MAJOR}::Widgets
-#    Threads::Threads
-#    z
-#)
-#target_compile_definitions(ostsequencer PRIVATE SEQUENCER_MODULE)
-#
+# sequencer module
+add_library(ostsequencer SHARED
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/sequencer/sequencer.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/sequencer/sequencer.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/sequencer/sequencer.qrc
+)
+target_link_libraries(ostsequencer PRIVATE
+    ${OST_LIBRARY_INDI}
+    Qt${QT_VERSION_MAJOR}::Core
+    Qt${QT_VERSION_MAJOR}::Concurrent
+    Qt${QT_VERSION_MAJOR}::Widgets
+    Threads::Threads
+    z
+)
+target_compile_definitions(ostsequencer PRIVATE SEQUENCER_MODULE)
+
 ## navigator module
 #add_library(ostnavigator SHARED
 #    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/navigator/navigator.h
@@ -222,7 +222,7 @@ install(TARGETS
 #    ostnavigator
     ostguider
     ostfocus
-#    ostsequencer
+    ostsequencer
 #    ostmeteo
 #    ostpolar
 #    ostblindpec
