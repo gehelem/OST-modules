@@ -1,16 +1,20 @@
 {
+"properties":{
     "search": {
         "devcat": "Control",
         "order": "Control0000",
         "group": "",
         "permission": 2,
-        "value": "M13",
         "rule":0,
-        "propertyLabel": "",
+        "label": "Search object",
         "elements": {
-            "searchbtn": {
-                "elementLabel": "Search object",
-                "value":false
+            "name": {
+                "autoupdate":true,
+                "directedit":true,
+                "type": "string",
+                "posticon": "forward",
+                "label": "",
+                "value":"M13"
             }
         }
     },
@@ -20,84 +24,64 @@
         "group": "",
         "permission": 0,
         "grid":0,
-        "gridlimit":255,
+        "arrayLimit":255,
+        "hasArray":true,
         "rule":0,
-        "propertyLabel": "Results",
+        "label": "Results",
         "elements": {
             "catalog": {
-                "elementLabel": "Catalogue",
+                "type": "string",
+                "label": "Catalogue",
                 "order":"10",
                 "value":""
             },
             "code": {
-                "elementLabel": "Code",
+                "type": "string",
+                "label": "Code",
                 "order":"20",
                 "value":""
             },
             "RA": {
-                "elementLabel": "RA",
+                "type": "float",
+                "label": "RA",
                 "order":"30",
                 "value":0
             },
             "NS": {
-                "elementLabel": "N/S",
+                "type": "string",
+                "label": "N/S",
                 "order":"50",
                 "value":""
             },
             "DEC": {
-                "elementLabel": "DEC",
+                "type": "float",
+                "label": "DEC",
                 "order":"40",
                 "value":0
             },
             "diam": {
-                "elementLabel": "Diameter",
+                "type": "float",
+                "label": "Diameter",
                 "order":"60",
                 "value":0
             },
             "mag": {
-                "elementLabel": "Magnitude",
+                "type": "float",
+                "label": "Magnitude",
                 "order":"70",
                 "value":0
             },
             "name": {
-                "elementLabel": "Name",
+                "type": "string",
+                "label": "Name",
                 "order":"80",
                 "value":""
             },
             "alias": {
-                "elementLabel": "Alias",
+                "type": "string",
+                "label": "Alias",
                 "order":"90",
                 "value":""
-            }
-        }
-    },
-    "selection": {
-        "devcat": "Control",
-        "order": "Control0007",
-        "group": "",
-        "permission": 2,
-        "rule":0,
-        "propertyLabel": "Selection",
-        "elements": {
-            "code": {
-                "elementLabel": "Code",
-                "order":"10",
-                "value":""
-            },
-            "RA": {
-                "elementLabel": "RA",
-                "order":"20",
-                "value":0
-            },
-            "NS": {
-                "elementLabel": "N/S",
-                "order":"40",
-                "value":""
-            },
-            "DEC": {
-                "elementLabel": "DEC",
-                "order":"30",
-                "value":0
             }
         }
     },
@@ -107,89 +91,67 @@
         "group": "",
         "permission": 0,
         "rule":0,
-        "propertyLabel": "Selection converted to now",
+        "label": "Selection converted to now",
         "elements": {
             "jd": {
-                "elementLabel": "Julian day",
+                "type": "string",
+                "label": "Julian day",
                 "order":"05",
                 "value":""
             },
             "code": {
-                "elementLabel": "Code",
+                "type": "string",
+                "label": "Code",
                 "order":"10",
                 "value":""
             },
             "RA": {
-                "elementLabel": "RA",
+                "type": "float",
+                "label": "RA",
                 "order":"20",
                 "value":0
             },
             "NS": {
-                "elementLabel": "N/S",
+                "type": "string",
+                "label": "N/S",
                 "order":"40",
                 "value":""
             },
             "DEC": {
-                "elementLabel": "DEC",
+                "type": "float",
+                "label": "DEC",
                 "order":"30",
                 "value":0
             }
         }
-    },
-    "actions": {
-        "devcat": "Control",
-        "group": "",
-        "order":"Control0010",
-        "permission": 2,
-        "rule":0,
-        "propertyLabel": "Actions",
-        "elements": {
-            "slew": {
-                "elementLabel": "Slew",
-                "order":"10",
-                "value":false
-            },
-            "sync": {
-                "elementLabel": "Sync mount",
-                "order":"20",
-                "value":false
-            },
-            "slewsolv": {
-                "elementLabel": "Slew and solve",
-                "order":"30",
-                "value":false
-            }
-        }
-    },
-    "image": {
-        "devcat": "Control",
-        "group": "",
-        "order":"Control8888",
-        "permission": 0,
-        "propertyLabel": "",
-        "URL": ""
     },
     "popcat": {
         "devcat": "Control",
         "order": "Control9999",
         "group": "",
         "permission": 2,
-        "value": "messier",
-        "listOfValues":{
-            "messier":"messier",
-            "ngc":"ngc",
-            "ldn":"ldn",
-            "sh2":"sh2",
-            "ic":"ic",
-            "stars":"stars"
-        },
         "rule":0,
-        "propertyLabel": "Populate catalog",
+        "label": "Populate catalog",
         "elements": {
             "go": {
-                "elementLabel": "GO",
+                "type":"bool",
+                "label": "GO",
                 "value":false
+            },
+            "catlg":{
+                "autoupdate":true,
+                "type":"string",
+                "label": "Catalog",
+                "value":"messier",
+                "listOfValues":[
+                    ["messier","Messier"],
+                    ["ngc","NGC"],
+                    ["ldn","LDN"],
+                    ["sh2","SH2"],
+                    ["ic","IC"]
+                ]
             }
         }
     }
+}
 }
