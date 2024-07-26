@@ -10,13 +10,13 @@
 #  define MODULE_INIT Q_DECL_IMPORT
 #endif
 
-class MODULE_INIT SequencerModule : public IndiModule
+class MODULE_INIT Sequencer: public IndiModule
 {
         Q_OBJECT
 
     public:
-        SequencerModule(QString name, QString label, QString profile, QVariantMap availableModuleLibs);
-        ~SequencerModule();
+        Sequencer(QString name, QString label, QString profile, QVariantMap availableModuleLibs);
+        ~Sequencer();
 
     signals:
 
@@ -50,6 +50,7 @@ class MODULE_INIT SequencerModule : public IndiModule
         void newBLOB(INDI::PropertyBlob pblob);
         void newProperty(INDI::Property property) override;
         void updateProperty(INDI::Property property) override;
+        void newExp(INDI::PropertyNumber exp);
 
         void Shoot();
         void SMAlert();
@@ -60,8 +61,8 @@ class MODULE_INIT SequencerModule : public IndiModule
         void StartSequence();
         void StartLine();
 
-        QString _camera  = "CCD Simulator";
-        QString _fw  = "Filter Simulator";
+        void refreshFilterLov();
+
         bool    _newblob;
 
         QPointer<fileio> _image;
@@ -73,7 +74,6 @@ class MODULE_INIT SequencerModule : public IndiModule
         int    _loopIterations = 2;
         int    _loopIteration;
         double _loopHFRavg;
-        double _exposure = 2;
 
         int currentLine = 0;
         int currentCount = 0;
@@ -90,7 +90,7 @@ class MODULE_INIT SequencerModule : public IndiModule
 
 };
 
-extern "C" MODULE_INIT SequencerModule *initialize(QString name, QString label, QString profile,
+extern "C" MODULE_INIT Sequencer *initialize(QString name, QString label, QString profile,
         QVariantMap availableModuleLibs);
 
 #endif

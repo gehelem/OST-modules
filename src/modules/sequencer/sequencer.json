@@ -1,168 +1,103 @@
 {
-    "actions": {
+"properties":{
+    "progress":{
         "devcat": "Control",
         "group": "",
-        "permission": 2,
-        "order":0,
-        "rule":1,
-        "propertyLabel": "Actions",
+        "permission": 0,
+        "order":2,
+        "label":"Progress",
         "elements": {
-            "run": {
-                "elementLabel": "Run sequence"
-                ,"value":false
+            "global": {
+                "type": "prg",
+                "prgtype": "spinner",
+                "label": "Global",
+                "dynlabel": "",
+                "value": 0,
+                "order":0
             },
-            "abort": {
-                "elementLabel": "Abort"
-                ,"value":false
+            "current": {
+                "type": "prg",
+                "prgtype": "spinner",
+                "label": "Current",
+                "dynlabel": "",
+                "value": 0,
+                "order":1
+            },
+            "exposure": {
+                "type": "prg",
+                "prgtype": "spinner",
+                "label": "Exposure",
+                "dynlabel": "",
+                "value": 0,
+                "order":2
             }
         }
     },
-    "imagevalues": {
-        "devcat": "Results",
-        "rule":0,
-        "elements": {
-                "width": {
-                    "elementLabel": "Width",
-                    "value":0
-                },
-                "height": {
-                    "elementLabel": "Height",
-                    "value":0
-                },
-                "min": {
-                    "elementLabel": "Min ADU",
-                    "value":0
-                },
-                "max": {
-                    "elementLabel": "Max ADU",
-                    "value":0
-                },
-                "mean": {
-                    "elementLabel": "Mean ADU",
-                    "value":0
-                },
-                "median": {
-                    "elementLabel": "Median ADU",
-                    "value":0
-                },
-                "stddev": {
-                    "elementLabel": "StdDev",
-                    "value":0
-                },
-                "snr": {
-                    "elementLabel": "SNR",
-                    "value":0
-                },
-                "imgHFR": {
-                    "elementLabel": "Image HFR",
-                    "value":0
-                },
-                "starscount": {
-                    "elementLabel": "Stars found",
-                    "value":0
-                }
-
-        },
-        "group": "",
-        "permission": 0,
-        "propertyLabel": "Last image statistics"
-    },
     "sequence": {
+        "hasArray":true,
         "devcat": "Control",
         "group": "",
         "permission": 2,
         "order":1,
         "grid":0,
         "hasprofile":true,
-        "propertyLabel": "Sequence",
+        "label": "Sequence",
         "elements": {
             "frametype": {
-                "elementLabel": "Frame type",
+                "type":"string",
+                "label": "Frame type",
                 "value":"L",
-                "gridvalues":["L","L","L","L","D"],
-                "listOfValues":{
-                    "L":"Light",
-                    "B":"Bias",
-                    "D":"Dark",
-                    "F":"Flat"
-                }
+                "gridvalues":[],
+                "listOfValues":[
+                    ["L","Light"],
+                    ["B","Bias"],
+                    ["D","Dark"],
+                    ["F","Flat"]
+                ]
             },
             "filter": {
-                "elementLabel": "Filter",
-                "value":"L",
-                "gridvalues":["L","R","G","B",""],
-                "listOfValues":{
-                    "L":"Luminance",
-                    "R":"Red",
-                    "G":"Green",
-                    "B":"Blue"
-                }
+                "type":"int",
+                "label": "Filter",
+                "gridvalues":[],
+                "listOfValues":[
+                ]
             },
             "exposure": {
-                "elementLabel": "Exposure",
+                "type":"float",
+                "label": "Exposure",
                 "value":10,
-                "gridvalues":[10,10,10,10,10],
+                "gridvalues":[],
                 "format": "99"
             },
             "count": {
-                "elementLabel": "Count",
+                "type":"int",
+                "label": "Count",
                 "value":5,
-                "gridvalues":[2,2,2,2,2],
+                "gridvalues":[],
                 "format": "99"
             },
             "gain": {
-                "elementLabel": "Gain",
+                "type":"int",
+                "label": "Gain",
                 "value":5,
-                "gridvalues":[100,100,100,100,100],
+                "gridvalues":[],
                 "format": "99"
             },
             "offset": {
-                "elementLabel": "Offset",
+                "type":"int",
+                "label": "Offset",
                 "value":5,
-                "gridvalues":[10,10,10,10,10],
+                "gridvalues":[],
                 "format": "99"
             },
             "status": {
-                "elementLabel": "Status",
+                "type":"string",
+                "label": "Status",
                 "value":"idle",
-                "gridvalues":["","","","",""]
+                "gridvalues":[]
 
             }
         }
-    },
-    "image": {
-        "devcat": "Results",
-        "group": "",
-        "permission": 0,
-        "propertyLabel": "Last image",
-        "URL": ""
-    },
-    "imagemap": {
-        "devcat": "Results",
-        "group": "",
-        "permission": 0,
-        "propertyLabel": "Image map",
-        "URL": ""
-    },
-    "histogram": {
-        "devcat": "Results",
-        "rule":0,
-        "grid":0,
-        "GXY":{
-            "X":"i",
-            "Y":"n"
-        },
-        "elements": {
-                "i": {
-                    "elementLabel": "I"
-                },
-                "n": {
-                    "elementLabel": "N"
-                }
-        },
-        "group": "",
-        "permission": 0,
-        "propertyLabel": "Histogram"
     }
-
+}
 }
