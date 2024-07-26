@@ -70,7 +70,7 @@ void Focus::OnMyExternalEvent(const QString &eventType, const QString  &eventMod
                 {
                     if (keyelt == "autofocus")
                     {
-                        if (setOstElementValue(keyprop, keyelt, false, false))
+                        if (getEltBool(keyprop, keyelt)->setValue(false))
                         {
                             getProperty(keyprop)->setState(OST::Busy);
                             startCoarse();
@@ -78,7 +78,7 @@ void Focus::OnMyExternalEvent(const QString &eventType, const QString  &eventMod
                     }
                     if (keyelt == "abortfocus")
                     {
-                        if (setOstElementValue(keyprop, keyelt, false, false))
+                        if (getEltBool(keyprop, keyelt)->setValue(false))
                         {
                             getProperty(keyprop)->setState(OST::Ok);
                             getEltPrg("progress", "global")->setPrgValue(0, true);
@@ -92,7 +92,7 @@ void Focus::OnMyExternalEvent(const QString &eventType, const QString  &eventMod
                     }
                     if (keyelt == "loop")
                     {
-                        if (setOstElementValue(keyprop, keyelt, false, false))
+                        if (getEltBool(keyprop, keyelt)->setValue(false))
                         {
                             getProperty(keyprop)->setState(OST::Ok);
                         }
@@ -120,7 +120,7 @@ void Focus::updateProperty(INDI::Property p)
     )
     {
         INDI::PropertyNumber n = p;
-        setOstElementValue("values", "focpos", n[0].value, true);
+        getEltInt("values", "focpos")->setValue(n[0].value, true);
 
         if (n.getState() == IPS_OK)
         {
@@ -344,11 +344,11 @@ void Focus::SMCompute()
         _bestpos = _startpos + _iteration * _steps;
     }
 
-    setOstElementValue("values", "loopHFRavg", _loopHFRavg, false);
-    setOstElementValue("values", "bestpos",   _bestpos, false);
-    setOstElementValue("values", "bestposfit", _bestposfit, false);
-    setOstElementValue("values", "focpos",    _startpos + _iteration * _steps, false);
-    setOstElementValue("values", "iteration", _iteration, true);
+    getEltFloat("values", "loopHFRavg")->setValue(_loopHFRavg);
+    getEltInt("values", "bestpos")->setValue(_bestpos);
+    getEltFloat("values", "bestposfit")->setValue(_bestposfit);
+    getEltInt("values", "focpos")->setValue(_startpos + _iteration * _steps);
+    getEltInt("values", "iteration")->setValue(_iteration, true);
 
     getStore()["values"]->push();
     getEltPrg("progress", "global")->setPrgValue(100 * _iteration / _iterations, true);
@@ -416,15 +416,16 @@ void Focus::SMRequestExposureBest()
         pMachine->submitEvent("abort");
         return;
     }
-    setOstElementValue("results", "pos", mFinalPos, true);
+    getEltFloat("results", "pos")->setValue(mFinalPos, true);
     pMachine->submitEvent("RequestExposureBestDone");
 }
 
 void Focus::SMComputeResult()
 {
     //sendMessage("SMComputeResult");
-    setOstElementValue("values", "imgHFR", _solver.HFRavg, true);
-    setOstElementValue("results", "hfr", _solver.HFRavg, true);
+    getEltFloat("values", "imgHFR")->setValue(_solver.HFRavg, true);
+    getEltFloat("results", "hfr")->setValue(_solver.HFRavg, true);
+
     OST::ImgData dta = getEltImg("image", "image")->value();
     dta.HFRavg = _solver.HFRavg;
     dta.starsCount = _solver.stars.size();
@@ -492,7 +493,8 @@ void Focus::SMInitLoopFrame()
         _zonePosvector.append(std::vector<double>());
         _zoneHfdvector.append(std::vector<double>());
     }
-    setOstElementValue("values", "loopHFRavg", _loopHFRavg, true);
+    getEltFloat("values", "loopHFRavg")->setValue(_loopHFRavg, true);
+
     pMachine->submitEvent("InitLoopFrameDone");
 
 }
@@ -511,8 +513,8 @@ void Focus::SMComputeLoopFrame()
 
         }
     }
-    setOstElementValue("values", "loopHFRavg", _loopHFRavg, false);
-    setOstElementValue("values", "imgHFR", _solver.HFRavg, true);
+    getEltFloat("values", "loopHFRavg")->setValue(_loopHFRavg, true);
+    getEltFloat("values", "imgHFR")->setValue(_solver.HFRavg, true);
 
     //qDebug() << "Loop    " << _loopIteration << "/" << _loopIterations << " = " <<  _solver.HFRavg;
 
@@ -536,7 +538,8 @@ void Focus::SMAlert()
 void Focus::SMFocusDone()
 {
     sendMessage("Focus done");
-    setOstElementValue("results", "hfr", _solver.HFRavg, false);
+    getEltFloat("results", "hfr")->setValue(_solver.HFRavg, true);
+
     getProperty("actions")->setState(OST::Ok);
     pMachine->stop();
 }
