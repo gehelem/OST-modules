@@ -184,10 +184,11 @@ void Inspector::OnSucessSEP()
     QImage immap = rawImage.convertToFormat(QImage::Format_RGB32);
     immap.setColorTable(rawImage.colorTable());
 
+    double ech = getSampling();
     im.save(getWebroot()  + "/" + getModuleName() + ".jpeg", "JPG", 100);
     OST::ImgData dta = _image->ImgStats();
     dta.mUrlJpeg = getModuleName() + ".jpeg";
-    dta.HFRavg = _solver.HFRavg;
+    dta.HFRavg = ech * _solver.HFRavg;
     dta.starsCount = _solver.stars.size();
     getEltImg("image", "image")->setValue(dta, true);
 
@@ -225,22 +226,22 @@ void Inspector::OnSucessSEP()
     {
         if ( (s.x < (im.width() / 2)) && (s.y < (im.height() / 2) ))
         {
-            upperLeftHFR = ( upperLeftI * upperLeftHFR + s.HFR) / (upperLeftI + 1);
+            upperLeftHFR = ( upperLeftI * upperLeftHFR + s.HFR * ech) / (upperLeftI + 1);
             upperLeftI++;
         }
         if ( (s.x > (im.width() / 2)) && (s.y < (im.height() / 2) ))
         {
-            upperRightHFR = (upperRightI * upperRightHFR + s.HFR ) / (upperRightI + 1);
+            upperRightHFR = (upperRightI * upperRightHFR + s.HFR * ech ) / (upperRightI + 1);
             upperRightI++;
         }
         if ( (s.x < (im.width() / 2)) && (s.y > (im.height() / 2) ))
         {
-            lowerLeftHFR = (lowerLeftI * lowerLeftHFR + s.HFR) / (lowerLeftI + 1);
+            lowerLeftHFR = (lowerLeftI * lowerLeftHFR + s.HFR * ech) / (lowerLeftI + 1);
             lowerLeftI++;
         }
         if ( (s.x > (im.width() / 2)) && (s.y > (im.height() / 2) ))
         {
-            lowerRightHFR = (lowerRightI * lowerRightHFR + s.HFR ) / (lowerRightI + 1);
+            lowerRightHFR = (lowerRightI * lowerRightHFR + s.HFR * ech) / (lowerRightI + 1);
             lowerRightI++;
         }
     };
@@ -248,17 +249,17 @@ void Inspector::OnSucessSEP()
     p.setPen(QPen(Qt::white));
     int mul = 200;
     QVector<QPointF> hexPoints;
-    hexPoints << QPointF(1 * im.width() / 4 - mul*(upperLeftHFR - _solver.HFRavg),
-                         1 * im.height() / 4 - mul*(upperLeftHFR - _solver.HFRavg));
-    hexPoints << QPointF(3 * im.width() / 4 + mul*(upperRightHFR - _solver.HFRavg),
-                         1 * im.height() / 4 - mul*(upperRightHFR - _solver.HFRavg));
-    hexPoints << QPointF(3 * im.width() / 4 - mul*(lowerRightHFR - _solver.HFRavg),
-                         3 * im.height() / 4 + mul*(lowerRightHFR - _solver.HFRavg));
-    hexPoints << QPointF(1 * im.width() / 4 + mul*(lowerLeftHFR - _solver.HFRavg),
-                         3 * im.height() / 4 + mul*(lowerLeftHFR - _solver.HFRavg));
+    hexPoints << QPointF(1 * im.width() / 4 - mul*(upperLeftHFR - _solver.HFRavg*ech),
+                         1 * im.height() / 4 - mul*(upperLeftHFR - _solver.HFRavg*ech));
+    hexPoints << QPointF(3 * im.width() / 4 + mul*(upperRightHFR - _solver.HFRavg*ech),
+                         1 * im.height() / 4 - mul*(upperRightHFR - _solver.HFRavg*ech));
+    hexPoints << QPointF(3 * im.width() / 4 - mul*(lowerRightHFR - _solver.HFRavg*ech),
+                         3 * im.height() / 4 + mul*(lowerRightHFR - _solver.HFRavg*ech));
+    hexPoints << QPointF(1 * im.width() / 4 + mul*(lowerLeftHFR - _solver.HFRavg*ech),
+                         3 * im.height() / 4 + mul*(lowerLeftHFR - _solver.HFRavg*ech));
     p.drawPolygon(hexPoints);
     p.setFont(QFont("Courrier", im.width() / 50, QFont::Normal));
-    p.drawText(  QRect(0, 0, im.width(), im.height()), Qt::AlignCenter, QString::number(_solver.HFRavg, 'f', 3));
+    p.drawText(  QRect(0, 0, im.width(), im.height()), Qt::AlignCenter, QString::number(_solver.HFRavg*ech, 'f', 3));
     p.drawText(1 * im.width() / 4, 1 * im.height() / 4, QString::number(upperLeftHFR, 'f', 3));
     p.drawText(3 * im.width() / 4, 1 * im.height() / 4, QString::number(upperRightHFR, 'f', 3));
     p.drawText(1 * im.width() / 4, 3 * im.height() / 4, QString::number(lowerLeftHFR, 'f', 3));
