@@ -161,22 +161,22 @@ target_link_libraries(ostsequencer PRIVATE
 )
 target_compile_definitions(ostsequencer PRIVATE SEQUENCER_MODULE)
 
-## navigator module
-#add_library(ostnavigator SHARED
-#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/navigator/navigator.h
-#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/navigator/navigator.cpp
-#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/navigator/navigator.qrc
-#)
-#target_link_libraries(ostnavigator PRIVATE
-#    ${OST_LIBRARY_INDI}
-#    Qt${QT_VERSION_MAJOR}::Core
-#    Qt${QT_VERSION_MAJOR}::Concurrent
-#    Qt${QT_VERSION_MAJOR}::Widgets
-#    Threads::Threads
-#    z
-#)
-#target_compile_definitions(ostnavigator PRIVATE NAVIGATOR_MODULE)
-#
+# navigator module
+add_library(ostnavigator SHARED
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/navigator/navigator.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/navigator/navigator.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/navigator/navigator.qrc
+)
+target_link_libraries(ostnavigator PRIVATE
+    ${OST_LIBRARY_INDI}
+    Qt${QT_VERSION_MAJOR}::Core
+    Qt${QT_VERSION_MAJOR}::Concurrent
+    Qt${QT_VERSION_MAJOR}::Widgets
+    Threads::Threads
+    z
+)
+target_compile_definitions(ostnavigator PRIVATE NAVIGATOR_MODULE)
+
 ## meteo module
 #add_library(ostmeteo SHARED
 #    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/meteo/meteo.h
