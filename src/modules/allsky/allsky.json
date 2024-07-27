@@ -1,109 +1,9 @@
 {
-    "actions": {
-        "devcat": "Control",
-        "group": "",
-        "permission": 2,
-        "rule":2,
-        "label": "Actions",
-        "elements": {
-            "loop": {
-                "type":"bool",
-                "label": "Infinite loop"
-                ,"value":false
-            },
-            "abort": {
-                "type":"bool",
-                "label": "Abort"
-                ,"value":false
-            },
-            "batch": {
-                "type":"bool",
-                "label": "Generate timelapse"
-                ,"value":false
-            }
-        }
-    },
-    "imagevalues": {
-        "devcat": "Control",
-        "rule":0,
-        "elements": {
-                "width": {
-                    "label": "Width",
-                    "type":"int",
-                    "value":0
-                },
-                "height": {
-                    "label": "Height",
-                    "type":"int",
-                    "value":0
-                },
-                "min": {
-                    "label": "Min ADU",
-                    "type":"int",
-                    "value":0
-                },
-                "max": {
-                    "label": "Max ADU",
-                    "type":"int",
-                    "value":0
-                },
-                "mean": {
-                    "label": "Mean ADU",
-                    "type":"float",
-                    "value":0
-                },
-                "median": {
-                    "label": "Median ADU",
-                    "type":"float",
-                    "value":0
-                },
-                "stddev": {
-                    "label": "StdDev",
-                    "type":"float",
-                    "value":0
-                },
-                "snr": {
-                    "label": "SNR",
-                    "type":"float",
-                    "value":0
-                }
-        },
-        "group": "",
-        "permission": 0,
-        "label": "Last image statistics"
-    },
-    "parameters": {
-        "devcat": "Control",
-        "group": "",
-        "permission": 2,
-        "hasprofile":true,
-        "label": "Parameters",
-        "elements": {
-            "exposure": {
-                "label": "Exposure",
-                "autoupdate":true,
-                "type":"float",
-                "value":10,
-                "format": "99.99"
-            }
-        }
-    },
-    "image": {
-        "devcat": "Results",
-        "group": "",
-        "permission": 0,
-        "label": "Last image",
-        "elements": {
-            "image1": {
-                "type": "img",
-                "label": "First image",
-                "urljpeg":"./dummy.jpg"
-            }
-        }
-    },
+"properties":{
     "timelapse": {
         "devcat": "Results",
         "group": "",
+        "order":"Results200",
         "permission": 0,
         "label": "Timelapse",
         "elements": {
@@ -117,6 +17,7 @@
     "kheogram": {
         "devcat": "Results",
         "group": "",
+        "order":"Results999",
         "permission": 0,
         "label": "Kheogram",
         "elements": {
@@ -132,6 +33,7 @@
         "devcat": "Results",
         "grid":[],
         "rule":0,
+        "order":"Results100",
         "hasArray":true,
         "showArray":false,
         "elements": {
@@ -158,4 +60,5 @@
         "permission": 0,
         "label": "Log"
     }
+}
 }

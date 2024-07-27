@@ -16,29 +16,14 @@ Guider::Guider(QString name, QString label, QString profile, QVariantMap availab
     setModuleDescription("Guider module - work in progress");
     setModuleVersion("0.1");
 
-    createOstElementText("devices", "camera", "Camera", true);
-    createOstElementText("devices", "mount", "Mount", true);
-    setOstElementValue("devices", "camera",   _camera, false);
-    setOstElementValue("devices", "mount",    _mount, true);
-
-
-    //    _grid = new GridProperty(_modulename,"Control","root","grid","Grid property label",0,0,"PXY","Set","DX","DY","","");
-    //    emit propertyCreated(_grid,&_modulename);
-    //    _propertyStore.add(_grid);
-    //
-    //    _states = new LightProperty(_modulename,"Control","root","states","State",0,0);
-    //    _states->addLight(new LightValue("idle"  ,"Idle","hint",1));
-    //    _states->addLight(new LightValue("cal"   ,"Calibrating","hint",0));
-    //    _states->addLight(new LightValue("guide" ,"Guiding","hint",0));
-    //    _states->addLight(new LightValue("error" ,"Error","hint",0));
-    //    emit propertyCreated(_states,&_modulename);
-    //    _propertyStore.add(_states);
-
     buildInitStateMachines();
     buildCalStateMachines();
     buildGuideStateMachines();
 
+    giveMeADevice("camera", "Camera", INDI::BaseDevice::CCD_INTERFACE);
+    giveMeADevice("guider", "Guide via", INDI::BaseDevice::GUIDER_INTERFACE);
 
+    defineMeAsGuider();
 
 }
 
@@ -60,77 +45,11 @@ void Guider::OnMyExternalEvent(const QString &eventType, const QString  &eventMo
             foreach(const QString &keyelt, eventData[keyprop].toMap()["elements"].toMap().keys())
             {
                 QVariant val = eventData[keyprop].toMap()["elements"].toMap()[keyelt].toMap()["value"];
-                if (keyprop == "commonParams")
-                {
-                    if (keyelt == "exposure")
-                    {
-                        if (setOstElementValue(keyprop, keyelt, val, true))
-                        {
-                            _exposure = val.toDouble();
-                        }
-                    }
-                }
-                if (keyprop == "calParams")
-                {
-                    if (keyelt == "pulse")
-                    {
-                        if (setOstElementValue(keyprop, keyelt, val, true))
-                        {
-                            _pulse = val.toInt();
-                        }
-                    }
-                    if (keyelt == "calsteps")
-                    {
-                        if (setOstElementValue(keyprop, keyelt, val, true))
-                        {
-                            _calSteps = val.toInt();
-                        }
-                    }
-                }
-                if (keyprop == "guideParams")
-                {
-                    if (keyelt == "pulsemax")
-                    {
-                        if (setOstElementValue(keyprop, keyelt, val, true))
-                        {
-                            _pulseMax = val.toInt();
-                        }
-                    }
-                    if (keyelt == "pulsemin")
-                    {
-                        if (setOstElementValue(keyprop, keyelt, val, true))
-                        {
-                            _pulseMin = val.toInt();
-                        }
-                    }
-                    if (keyelt == "raAgr")
-                    {
-                        if (setOstElementValue(keyprop, keyelt, val, true))
-                        {
-                            _raAgr = val.toDouble();
-                        }
-                    }
-                    if (keyelt == "deAgr")
-                    {
-                        if (setOstElementValue(keyprop, keyelt, val, true))
-                        {
-                            _deAgr = val.toDouble();
-                        }
-                    }
-                }
-                if (keyprop == "revCorrections"  && (keyelt == "revRA" || keyelt == "revDE" ))
-                {
-                    setOstElementValue(keyprop, keyelt, val, true);
-                }
-                if (keyprop == "disCorrections"  && (keyelt == "disRA+" || keyelt == "disRA-" || keyelt == "disDE+" || keyelt == "disDE-"))
-                {
-                    setOstElementValue(keyprop, keyelt, val, true);
-                }
                 if (keyprop == "actions")
                 {
                     if (keyelt == "calguide")
                     {
-                        if (setOstElementValue(keyprop, keyelt, false, false))
+                        if (getEltBool(keyprop, keyelt)->setValue(false))
                         {
                             getProperty(keyprop)->setState(OST::Busy);
 
@@ -141,18 +60,18 @@ void Guider::OnMyExternalEvent(const QString &eventType, const QString  &eventMo
                             _SMInit.start();
                         }
                     }
-                    if (keyelt == "abort")
+                    if (keyelt == "abortguider")
                     {
-                        if (setOstElementValue(keyprop, keyelt, false, false))
+                        if (getEltBool(keyprop, keyelt)->setValue(false))
                         {
                             getProperty(keyprop)->setState(OST::Ok);
 
                             emit Abort();
                         }
                     }
-                    if (keyelt == "calibration")
+                    if (keyelt == "calibrate")
                     {
-                        if (setOstElementValue(keyprop, keyelt, false, false))
+                        if (getEltBool(keyprop, keyelt)->setValue(false))
                         {
                             getProperty(keyprop)->setState(OST::Ok);
                             disconnect(&_SMInit,        &QStateMachine::finished, nullptr, nullptr);
@@ -164,7 +83,7 @@ void Guider::OnMyExternalEvent(const QString &eventType, const QString  &eventMo
                     }
                     if (keyelt == "guide")
                     {
-                        if (setOstElementValue(keyprop, keyelt, false, false))
+                        if (getEltBool(keyprop, keyelt)->setValue(false))
                         {
                             getProperty(keyprop)->setState(OST::Ok);
                             disconnect(&_SMInit,        &QStateMachine::finished, nullptr, nullptr);
@@ -197,7 +116,7 @@ void Guider::updateProperty(INDI::Property property)
         emit FrameResetDone();
     }
     if (
-        (property.getDeviceName() == getString("devices", "mount")) &&
+        (property.getDeviceName() == getString("devices", "guider")) &&
         (QString(property.getName())   == "TELESCOPE_TIMED_GUIDE_NS") &&
         (property.getState()  == IPS_IDLE)
 
@@ -207,7 +126,7 @@ void Guider::updateProperty(INDI::Property property)
     }
 
     if (
-        (property.getDeviceName() == getString("devices", "mount")) &&
+        (property.getDeviceName() == getString("devices", "guider")) &&
         (QString(property.getName())  == "TELESCOPE_TIMED_GUIDE_WE") &&
         (property.getState()  == IPS_IDLE)
 
@@ -217,7 +136,7 @@ void Guider::updateProperty(INDI::Property property)
     }
 
     if (
-        (property.getDeviceName() == getString("devices", "mount")) &&
+        (property.getDeviceName() == getString("devices", "guider")) &&
         ( (QString(property.getName())   == "TELESCOPE_TIMED_GUIDE_WE") ||
           (QString(property.getName())  == "TELESCOPE_TIMED_GUIDE_NS") ) &&
         (property.getState()  == IPS_IDLE)
@@ -238,16 +157,16 @@ void Guider::newBLOB(INDI::PropertyBlob pblob)
     {
         delete _image;
         _image = new fileio();
-        _image->loadBlob(pblob);
+        _image->loadBlob(pblob, 64);
         stats = _image->getStats();
         QImage rawImage = _image->getRawQImage();
         QImage im = rawImage.convertToFormat(QImage::Format_RGB32);
         im.setColorTable(rawImage.colorTable());
 
         im.save(getWebroot() + "/" + getModuleName() + ".jpeg", "JPG", 100);
-        OST::ImgData dta;
+        OST::ImgData dta = _image->ImgStats();
         dta.mUrlJpeg = getModuleName() + ".jpeg";
-        getValueImg("image", "image1")->setValue(dta, true);
+        getEltImg("image", "image")->setValue(dta, true);
 
 
         //BOOST_LOG_TRIVIAL(debug) << "Emit Exposure done";
@@ -394,11 +313,14 @@ void Guider::SMInitInit()
     {
         connectIndi();
         connectDevice(getString("devices", "camera"));
-        connectDevice(getString("devices", "mount"));
+        connectDevice(getString("devices", "guider"));
         setBLOBMode(B_ALSO, getString("devices", "camera").toStdString().c_str(), nullptr);
         enableDirectBlobAccess(getString("devices", "camera").toStdString().c_str(), nullptr);
         frameReset(getString("devices", "camera"));
-        sendModNewNumber(getString("devices", "camera"), "SIMULATOR_SETTINGS", "SIM_TIME_FACTOR", 1 );
+        if (getString("devices", "camera") == "CCD Simulator")
+        {
+            sendModNewNumber(getString("devices", "camera"), "SIMULATOR_SETTINGS", "SIM_TIME_FACTOR", 0.01 );
+        }
         getProperty("actions")->setState(OST::Busy);
         getProperty("drift")->clearGrid();
         getProperty("guiding")->clearGrid();
@@ -413,21 +335,21 @@ void Guider::SMInitInit()
     }
 
     /* get mount DEC */
-    if (!getModNumber(getString("devices", "mount"), "EQUATORIAL_EOD_COORD", "DEC",
+    if (!getModNumber(getString("devices", "guider"), "EQUATORIAL_EOD_COORD", "DEC",
                       _mountDEC))
     {
         emit Abort();
         return;
     }
     /* get mount RA */
-    if (!getModNumber(getString("devices", "mount"), "EQUATORIAL_EOD_COORD", "RA",
+    if (!getModNumber(getString("devices", "guider"), "EQUATORIAL_EOD_COORD", "RA",
                       _mountRA))
     {
         emit Abort();
         return;
     }
     /* get mount Pier position  */
-    if (!getModSwitch(getString("devices", "mount"), "TELESCOPE_PIER_SIDE", "PIER_WEST",
+    if (!getModSwitch(getString("devices", "guider"), "TELESCOPE_PIER_SIDE", "PIER_WEST",
                       _mountPointingWest))
     {
         emit Abort();
@@ -455,15 +377,14 @@ void Guider::SMInitCal()
     _calPulseS = 0;
     _calPulseE = 0;
     _calPulseW = 0;
-    setOstElementValue("values", "calPulseN", _calPulseN, false);
-    setOstElementValue("values", "calPulseS", _calPulseS, false);
-    setOstElementValue("values", "calPulseE", _calPulseE, false);
-    setOstElementValue("values", "calPulseW", _calPulseW, true);
-
+    getEltInt("values", "calPulseN")->setValue(_calPulseN);
+    getEltInt("values", "calPulseS")->setValue(_calPulseS);
+    getEltInt("values", "calPulseE")->setValue(_calPulseE);
+    getEltInt("values", "calPulseW")->setValue(_calPulseW, true);
     _pulseN = 0;
     _pulseS = 0;
     _pulseE = 0;
-    _pulseW = _pulse;
+    _pulseW = getInt("calParams", "pulse");
     _trigCurrent.clear();
     _trigPrev = _trigFirst;
     _dxvector.clear();
@@ -523,7 +444,8 @@ void Guider::SMRequestExposure()
 {
     //BOOST_LOG_TRIVIAL(debug) << "SMRequestExposure";
     //sendMessage("SMRequestExposure");
-    if (!sendModNewNumber(getString("devices", "camera"), "CCD_EXPOSURE", "CCD_EXPOSURE_VALUE", _exposure))
+    if (!requestCapture(getString("devices", "camera"), getFloat("parms", "exposure"), getInt("parms", "gain"), getInt("parms",
+                        "offset")))
     {
         emit Abort();
         return;
@@ -591,7 +513,7 @@ void Guider::SMComputeCal()
     _pulseE = 0;
     _pulseW = 0;
     _calStep++;
-    if (_calStep >= _calSteps)
+    if (_calStep >= getInt("calParams", "calsteps") )
     {
         double ddx = 0;
         double ddy = 0;
@@ -609,7 +531,7 @@ void Guider::SMComputeCal()
         //ddy));
         if (_calState == 0)
         {
-            _calPulseW = _pulse / sqrt(square(ddy) + square(ddy));
+            _calPulseW = getInt("calParams", "pulse") / sqrt(square(ddy) + square(ddy));
             _ccdOrientation = a;
             _calMountPointingWest = _mountPointingWest;
             _calCcdOrientation = _ccdOrientation;
@@ -623,7 +545,7 @@ void Guider::SMComputeCal()
         }
         if (_calState == 1)
         {
-            _calPulseE = _pulse / sqrt(square(ddy) + square(ddy));
+            _calPulseE = getInt("calParams", "pulse") / sqrt(square(ddy) + square(ddy));
             //BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " Drift orientation =  " << a * 180 / PI;
             //BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " E drift (px) " <<  sqrt(square(ddy) + square(
             //                             ddy));
@@ -633,7 +555,7 @@ void Guider::SMComputeCal()
         }
         if (_calState == 2)
         {
-            _calPulseN = _pulse / sqrt(square(ddy) + square(ddy));
+            _calPulseN = getInt("calParams", "pulse") / sqrt(square(ddy) + square(ddy));
             //BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " Drift orientation =  " << a * 180 / PI;
             //BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " N drift (px) " <<  sqrt(square(ddy) + square(
             //                             ddy));
@@ -643,7 +565,7 @@ void Guider::SMComputeCal()
         }
         if (_calState == 3)
         {
-            _calPulseS = _pulse / sqrt(square(ddy) + square(ddy));
+            _calPulseS = getInt("calParams", "pulse") / sqrt(square(ddy) + square(ddy));
             //BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " Drift orientation =  " << a * 180 / PI;
             //BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " S drift (px) " <<  sqrt(square(ddy) + square(
             //                             ddy));
@@ -665,11 +587,10 @@ void Guider::SMComputeCal()
             //BOOST_LOG_TRIVIAL(debug) << "*********************** cal E " << _calPulseE;
             //BOOST_LOG_TRIVIAL(debug) << "*********************** cal N " << _calPulseN;
             //BOOST_LOG_TRIVIAL(debug) << "*********************** cal S " << _calPulseS;
-            setOstElementValue("values", "calPulseN", _calPulseN, false);
-            setOstElementValue("values", "calPulseS", _calPulseS, false);
-            setOstElementValue("values", "calPulseE", _calPulseE, false);
-            setOstElementValue("values", "calPulseW", _calPulseW, true);
-
+            getEltInt("values", "calPulseN")->setValue(_calPulseN);
+            getEltInt("values", "calPulseS")->setValue(_calPulseS);
+            getEltInt("values", "calPulseE")->setValue(_calPulseE);
+            getEltInt("values", "calPulseW")->setValue(_calPulseW, true);
             emit CalibrationDone();
             _trigFirst = _trigCurrent;
             return;
@@ -677,20 +598,26 @@ void Guider::SMComputeCal()
     }
     if (_calState == 0)
     {
-        _pulseW = _pulse;
+        _pulseW = getInt("calParams", "pulse");
     }
     if (_calState == 1)
     {
-        _pulseE = _pulse;
+        _pulseE = getInt("calParams", "pulse");
     }
     if (_calState == 2)
     {
-        _pulseN = _pulse;
+        _pulseN = getInt("calParams", "pulse");
     }
     if (_calState == 3)
     {
-        _pulseS = _pulse;
+        _pulseS = getInt("calParams", "pulse");
     }
+    double _driftRA =  _dxFirst * cos(_calCcdOrientation) + _dyFirst * sin(_calCcdOrientation);
+    double _driftDE = -_dxFirst * sin(_calCcdOrientation) + _dyFirst * cos(_calCcdOrientation);
+    getEltFloat("drift", "RA")->setValue(_driftRA);
+    getEltFloat("drift", "DEC")->setValue(_driftDE);
+    getProperty("drift")->push();
+
 
     emit ComputeCalDone();
 }
@@ -733,62 +660,62 @@ void Guider::SMComputeGuide()
 
     if (revRA * _driftRA > 0 && !disRAO)
     {
-        _pulseW = _raAgr * revRA * _driftRA * _calPulseW;
-        if (_pulseW > _pulseMax) _pulseW = _pulseMax;
-        if (_pulseW < _pulseMin) _pulseW = 0;
+        _pulseW = getFloat("guideParams", "raAgr") * revRA * _driftRA * _calPulseW;
+        if (_pulseW > getInt("guideParams", "pulsemax")) _pulseW = getInt("guideParams", "pulsemax");
+        if (_pulseW < getInt("guideParams", "pulsemin")) _pulseW = 0;
     }
     else _pulseW = 0;
     //if (_pulseW > 0) sendMessage("*********************** guide  W pulse " + QString::number(_pulseW));
 
     if (revRA * _driftRA < 0 && !disRAE)
     {
-        _pulseE = -_raAgr * revRA * _driftRA * _calPulseE;
-        if (_pulseE > _pulseMax) _pulseE = _pulseMax;
-        if (_pulseE < _pulseMin) _pulseE = 0;
+        _pulseE = - getFloat("guideParams", "raAgr")  * revRA * _driftRA * _calPulseE;
+        if (_pulseE > getInt("guideParams", "pulsemax")) _pulseE = getInt("guideParams", "pulsemax");
+        if (_pulseE < getInt("guideParams", "pulsemin")) _pulseE = 0;
     }
     else _pulseE = 0;
     //if (_pulseE > 0) sendMessage("*********************** guide  E pulse " + QString::number(_pulseE));
 
     if (revDE * _driftDE > 0 && !disDEN)
     {
-        _pulseS = _deAgr * revDE * _driftDE * _calPulseS;
-        if (_pulseS > _pulseMax) _pulseS = _pulseMax;
-        if (_pulseS < _pulseMin) _pulseS = 0;
+        _pulseS = getFloat("guideParams", "deAgr")  * revDE * _driftDE * _calPulseS;
+        if (_pulseS > getInt("guideParams", "pulsemax")) _pulseS = getInt("guideParams", "pulsemax");
+        if (_pulseS < getInt("guideParams", "pulsemin")) _pulseS = 0;
     }
     else _pulseS = 0;
     //if (_pulseS > 0) sendMessage("*********************** guide  S pulse " + QString::number(_pulseS));
 
     if (revDE * _driftDE < 0 && !disDES)
     {
-        _pulseN = -_deAgr * revDE * _driftDE * _calPulseN;
-        if (_pulseN > _pulseMax) _pulseN = _pulseMax;
-        if (_pulseN < _pulseMin) _pulseN = 0;
+        _pulseN = -getFloat("guideParams", "deAgr") * revDE * _driftDE * _calPulseN;
+        if (_pulseN > getInt("guideParams", "pulsemax")) _pulseN = getInt("guideParams", "pulsemax");
+        if (_pulseN < getInt("guideParams", "pulsemin")) _pulseN = 0;
     }
     else _pulseN = 0;
     //if (_pulseN > 0) sendMessage("*********************** guide  N pulse " + QString::number(_pulseN));
 
     _itt++;
 
-    setOstElementValue("values", "pulseN", _pulseN, false);
-    setOstElementValue("values", "pulseS", _pulseS, false);
-    setOstElementValue("values", "pulseE", _pulseE, false);
-    setOstElementValue("values", "pulseW", _pulseW, true);
-    setOstElementValue("drift", "RA", _driftRA, false);
-    setOstElementValue("drift", "DEC", _driftDE, false);
+    getEltInt("values", "pulseN")->setValue(_pulseN);
+    getEltInt("values", "pulseS")->setValue(_pulseS);
+    getEltInt("values", "pulseE")->setValue(_pulseE);
+    getEltInt("values", "pulseW")->setValue(_pulseW, true);
+    getEltFloat("drift", "RA")->setValue(_driftRA);
+    getEltFloat("drift", "DEC")->setValue(_driftDE, true);
     getProperty("drift")->push();
 
     //setOstElementValue("guiding", "time", QDateTime::currentDateTime().toString("dd/MM/yyyy hh:mm:ss zzz"), false);
     double tt = QDateTime::currentDateTime().toMSecsSinceEpoch();
-    setOstElementValue("guiding", "time", tt, false);
-    setOstElementValue("guiding", "RA", _driftRA, false);
-    setOstElementValue("guiding", "DE", _driftDE, false);
-    setOstElementValue("guiding", "pDE", _pulseN - _pulseS, false);
-    setOstElementValue("guiding", "pRA", _pulseE - _pulseW, false);
+    getEltFloat("guiding", "time")->setValue(tt);
+    getEltFloat("guiding", "RA")->setValue(_driftRA);
+    getEltFloat("guiding", "DE")->setValue(_driftDE);
+    getEltFloat("guiding", "pDE")->setValue(_pulseN - _pulseS);
+    getEltFloat("guiding", "pRA")->setValue( _pulseE - _pulseW);
     getProperty("guiding")->push();
 
     //setOstElementValue("snr", "time", QDateTime::currentDateTime().toString("dd/MM/yyyy hh:mm:ss zzz"), false);
-    setOstElementValue("snr", "time", tt, false);
-    setOstElementValue("snr", "snr", _image->getStats().SNR, false);
+    getEltFloat("snr", "time")->setValue(tt);
+    getEltFloat("snr", "snr")->setValue(_image->getStats().SNR);
     getProperty("snr")->push();
 
     emit ComputeGuideDone();
@@ -802,7 +729,7 @@ void Guider::SMRequestPulses()
     {
         //BOOST_LOG_TRIVIAL(debug) << "********* Pulse  N " << _pulseN;
         _pulseDECfinished = false;
-        if (!sendModNewNumber(getString("devices", "mount"), "TELESCOPE_TIMED_GUIDE_NS", "TIMED_GUIDE_N",
+        if (!sendModNewNumber(getString("devices", "guider"), "TELESCOPE_TIMED_GUIDE_NS", "TIMED_GUIDE_N",
                               _pulseN))
         {
             emit abort();
@@ -814,7 +741,7 @@ void Guider::SMRequestPulses()
     {
         _pulseDECfinished = false;
         //BOOST_LOG_TRIVIAL(debug) << "********* Pulse  S " << _pulseS;
-        if (!sendModNewNumber(getString("devices", "mount"), "TELESCOPE_TIMED_GUIDE_NS", "TIMED_GUIDE_S",
+        if (!sendModNewNumber(getString("devices", "guider"), "TELESCOPE_TIMED_GUIDE_NS", "TIMED_GUIDE_S",
                               _pulseS))
         {
             emit abort();
@@ -826,7 +753,7 @@ void Guider::SMRequestPulses()
     {
         _pulseRAfinished = false;
         //BOOST_LOG_TRIVIAL(debug) << "********* Pulse  E " << _pulseE;
-        if (!sendModNewNumber(getString("devices", "mount"), "TELESCOPE_TIMED_GUIDE_WE", "TIMED_GUIDE_E",
+        if (!sendModNewNumber(getString("devices", "guider"), "TELESCOPE_TIMED_GUIDE_WE", "TIMED_GUIDE_E",
                               _pulseE))
         {
             emit abort();
@@ -838,7 +765,7 @@ void Guider::SMRequestPulses()
     {
         _pulseRAfinished = false;
         //BOOST_LOG_TRIVIAL(debug) << "********* Pulse  W " << _pulseW;
-        if (!sendModNewNumber(getString("devices", "mount"), "TELESCOPE_TIMED_GUIDE_WE", "TIMED_GUIDE_W",
+        if (!sendModNewNumber(getString("devices", "guider"), "TELESCOPE_TIMED_GUIDE_WE", "TIMED_GUIDE_W",
                               _pulseW))
         {
             emit abort();
@@ -873,6 +800,10 @@ void Guider::SMFindStars()
 void Guider::OnSucessSEP()
 {
     //BOOST_LOG_TRIVIAL(debug) << "OnSucessSEP";
+    OST::ImgData dta = getEltImg("image", "image")->value();
+    dta.HFRavg = _solver.HFRavg;
+    dta.starsCount = _solver.stars.size();
+    getEltImg("image", "image")->setValue(dta, true);
 
     //sendMessage("SEP finished");
     disconnect(&_solver, &Solver::successSEP, this, &Guider::OnSucessSEP);

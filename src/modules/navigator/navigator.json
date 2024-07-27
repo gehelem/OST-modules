@@ -1,22 +1,20 @@
 {
+"properties":{
     "search": {
         "devcat": "Control",
         "order": "Control0000",
         "group": "",
         "permission": 2,
         "rule":0,
-        "label": "",
+        "label": "Search object",
         "elements": {
             "name": {
                 "autoupdate":true,
+                "directedit":true,
                 "type": "string",
-                "label": "name",
+                "posticon": "forward",
+                "label": "",
                 "value":"M13"
-            },
-            "searchbtn": {
-                "type": "bool",
-                "label": "Search object",
-                "value":false
             }
         }
     },
@@ -26,8 +24,10 @@
         "group": "",
         "permission": 0,
         "grid":0,
-        "gridlimit":255,
-        "hasArray":true,
+        "arrayLimit":255,
+        "hasGrid":true,
+        "showGrid":true,
+        "showElts":false,
         "rule":0,
         "label": "Results",
         "elements": {
@@ -87,40 +87,6 @@
             }
         }
     },
-    "selection": {
-        "devcat": "Control",
-        "order": "Control0007",
-        "group": "",
-        "permission": 2,
-        "rule":0,
-        "label": "Selection",
-        "elements": {
-            "code": {
-                "type": "string",
-                "label": "Code",
-                "order":"10",
-                "value":""
-            },
-            "RA": {
-                "type": "float",
-                "label": "RA",
-                "order":"20",
-                "value":0
-            },
-            "NS": {
-                "type": "string",
-                "label": "N/S",
-                "order":"40",
-                "value":""
-            },
-            "DEC": {
-                "type": "float",
-                "label": "DEC",
-                "order":"30",
-                "value":0
-            }
-        }
-    },
     "selectnow": {
         "devcat": "Control",
         "order": "Control0008",
@@ -161,48 +127,6 @@
             }
         }
     },
-    "actions": {
-        "devcat": "Control",
-        "group": "",
-        "order":"Control0010",
-        "permission": 2,
-        "rule":0,
-        "label": "Actions",
-        "elements": {
-            "slew": {
-                "type": "bool",
-                "label": "Slew",
-                "order":"10",
-                "value":false
-            },
-            "sync": {
-                "type": "bool",
-                "label": "Sync mount",
-                "order":"20",
-                "value":false
-            },
-            "slewsolv": {
-                "type": "bool",
-                "label": "Slew and solve",
-                "order":"30",
-                "value":false
-            }
-        }
-    },
-    "image": {
-        "devcat": "Control",
-        "group": "",
-        "order":"Control8888",
-        "permission": 0,
-        "label": "",
-        "elements": {
-            "image1": {
-                "type": "img",
-                "label": "Navimage",
-                "urljpeg":"./dummy.jpg"
-            }
-        }
-    },
     "popcat": {
         "devcat": "Control",
         "order": "Control9999",
@@ -231,4 +155,5 @@
             }
         }
     }
+}
 }

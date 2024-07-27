@@ -80,12 +80,6 @@ class MODULE_INIT Guider  : public IndiModule
         Solver _solver;
         FITSImage::Statistic stats;
 
-        double _exposure = 0.5;
-        int    _pulse  = 1000;
-        int    _pulseMax  = 2000;
-        int    _pulseMin  = 20;
-        double _raAgr = 0.8;
-        double _deAgr = 0.8;
         int    _pulseN = 0;
         int    _pulseS = 0;
         int    _pulseE = 0;
@@ -98,7 +92,6 @@ class MODULE_INIT Guider  : public IndiModule
         int    _calPulseDEC = 0;
         int    _calState = 0;
         int    _calStep = 0;
-        int    _calSteps = 3;
         bool   _pulseRAfinished = true;
         bool   _pulseDECfinished = true;
         double _dxFirst = 0;
@@ -114,9 +107,6 @@ class MODULE_INIT Guider  : public IndiModule
         double _ccdSampling = 206 * 5.2 / 800;
         int _itt = 0;
 
-
-        QString _camera  = "CCD Simulator";
-        QString _mount  = "Telescope Simulator";
         QStateMachine *_machine;
         QStateMachine _SMInit;
         QStateMachine _SMCalibration;
