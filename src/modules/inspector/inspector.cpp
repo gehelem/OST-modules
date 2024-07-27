@@ -21,20 +21,20 @@ Inspector::Inspector(QString name, QString label, QString profile, QVariantMap a
     giveMeADevice("camera", "Camera", INDI::BaseDevice::CCD_INTERFACE);
     defineMeAsSequencer();
 
-    OST::ValueBool* b = new OST::ValueBool("Shoot", "0", "");
-    getProperty("actions")->addValue("shoot", b);
-    b = new OST::ValueBool("Loop", "2", "");
+    OST::ElementBool* b = new OST::ElementBool("Shoot", "0", "");
+    getProperty("actions")->addElt("shoot", b);
+    b = new OST::ElementBool("Loop", "2", "");
     b->setValue(false, false);
-    getProperty("actions")->addValue("loop", b);
-    b = new OST::ValueBool("Abort", "2", "");
-    getProperty("actions")->addValue("abort", b);
+    getProperty("actions")->addElt("loop", b);
+    b = new OST::ElementBool("Abort", "2", "");
+    getProperty("actions")->addElt("abort", b);
     b->setValue(false, false);
 
-    getProperty("actions")->deleteValue("startsequence");
-    getProperty("actions")->deleteValue("abortsequence");
+    getProperty("actions")->deleteElt("startsequence");
+    getProperty("actions")->deleteElt("abortsequence");
 
-    OST::ValueImg* im = new OST::ValueImg("Image map", "2", "");
-    getProperty("image")->addValue("imagemap", im);
+    OST::ElementImg* im = new OST::ElementImg("Image map", "2", "");
+    getProperty("image")->addElt("imagemap", im);
 
 }
 
@@ -55,12 +55,11 @@ void Inspector::OnMyExternalEvent(const QString &eventType, const QString  &even
         {
             foreach(const QString &keyelt, eventData[keyprop].toMap()["elements"].toMap().keys())
             {
-                setOstElementValue(keyprop, keyelt, eventData[keyprop].toMap()["elements"].toMap()[keyelt].toMap()["value"], true);
                 if (keyprop == "actions")
                 {
                     if (keyelt == "shoot")
                     {
-                        if (setOstElementValue(keyprop, keyelt, true, true))
+                        if (getEltBool(keyprop, keyelt)->setValue(false))
                         {
                             mState = "single";
                             initIndi();
@@ -69,7 +68,7 @@ void Inspector::OnMyExternalEvent(const QString &eventType, const QString  &even
                     }
                     if (keyelt == "loop")
                     {
-                        if (setOstElementValue(keyprop, keyelt, true, true))
+                        if (getEltBool(keyprop, keyelt)->setValue(true, true))
                         {
                             mState = "loop";
                             initIndi();
@@ -78,8 +77,9 @@ void Inspector::OnMyExternalEvent(const QString &eventType, const QString  &even
                     }
                     if (keyelt == "abort")
                     {
-                        if (setOstElementValue(keyprop, keyelt, false, false))
+                        if (getEltBool(keyprop, keyelt)->setValue(false, true))
                         {
+                            getEltBool("actions", "loop")->setValue(false, true);
                             emit Abort();
                             mState = "idle";
                             getProperty("actions")->setState(OST::Ok);
@@ -169,7 +169,7 @@ void Inspector::initIndi()
 
 void Inspector::OnSucessSEP()
 {
-    qDebug() << "OnSucessSEP";
+    //qDebug() << "OnSucessSEP";
 
     getProperty("actions")->setState(OST::Ok);
 
@@ -189,7 +189,7 @@ void Inspector::OnSucessSEP()
     dta.mUrlJpeg = getModuleName() + ".jpeg";
     dta.HFRavg = _solver.HFRavg;
     dta.starsCount = _solver.stars.size();
-    getValueImg("image", "image")->setValue(dta, true);
+    getEltImg("image", "image")->setValue(dta, true);
 
     //QRect r;
     //r.setRect(0,0,im.width(),im.height());
@@ -270,7 +270,7 @@ void Inspector::OnSucessSEP()
     immap.save(getWebroot() + "/" + getModuleName() + "map.jpeg", "JPG", 100);
     OST::ImgData dta2 = _image->ImgStats();
     dta2.mUrlJpeg = getModuleName() + "map.jpeg";
-    getValueImg("image", "imagemap")->setValue(dta2, true);
+    getEltImg("image", "imagemap")->setValue(dta2, true);
 
     if (mState == "single")
     {
