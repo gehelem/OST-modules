@@ -57,7 +57,7 @@ void Navigator::OnMyExternalEvent(const QString &pEventType, const QString  &pEv
                 {
                     if (keyelt == "go")
                     {
-                        if (setOstElementValue(keyprop, keyelt, true, true))
+                        if (getEltBool(keyprop, keyelt)->setValue(true, true))
                         {
                             getProperty(keyprop)->setState(OST::Busy);
                             /* we should avoid this, and do this in a different thread. We'll see later */
@@ -81,13 +81,14 @@ void Navigator::OnMyExternalEvent(const QString &pEventType, const QString  &pEv
             if (pEventType == "Flselect")
             {
                 double line = pEventData[keyprop].toMap()["line"].toDouble();
-                QString code = getValueString("results", "code")->getGrid()[line];
-                float ra = getValueFloat("results", "RA")->getGrid()[line];
-                float dec = getValueFloat("results", "DEC")->getGrid()[line];
-                QString ns = getValueString("results", "NS")->getGrid()[line];
-                setOstElementValue("actions", "targetname", code, false);
-                setOstElementValue("actions", "targetra", ra, false);
-                setOstElementValue("actions", "targetde", dec, false);
+                getProperty("results")->fetchLine(line);
+                QString code = getString("results", "code");
+                float ra = getFloat("results", "RA");
+                float dec = getFloat("results", "DEC");
+                QString ns = getString("results", "NS");
+                getEltString("actions", "targetname")->setValue(code);
+                getEltFloat("actions", "targetra")->setValue(ra);
+                getEltFloat("actions", "targetde")->setValue(dec, true);
                 convertSelection();
             }
         }
@@ -214,7 +215,7 @@ void Navigator::OnSucessSolve()
     dta.solverDE = mSolver.stellarSolver.getSolution().dec;
     dta.isSolved = true;
     qDebug() << "RA=" << dta.solverRA << " DE=" << dta.solverDE;
-    getValueImg("image", "image")->setValue(dta, true);
+    getEltImg("image", "image")->setValue(dta, true);
 
     mState = "idle";
     disconnect(&mSolver, &Solver::successSolve, this, &Navigator::OnSucessSolve);
@@ -233,6 +234,7 @@ void Navigator::updateSearchList(void)
         sendWarning("Searching " + getString("search", "name") + " gives no result");
         return;
     }
+    sendMessage("Searching " + getString("search", "name") + " gives " + QString::number(results.count()) + " results");
 
     int max = 20;
     if (max < results.count())
@@ -247,15 +249,16 @@ void Navigator::updateSearchList(void)
 
     for (int i = 0; i < max; i++)
     {
-        setOstElementValue("results", "catalog", results[i].catalog, false);
-        setOstElementValue("results", "code", results[i].code, false);
-        setOstElementValue("results", "RA", results[i].RA, false);
-        setOstElementValue("results", "NS", results[i].NS, false);
-        setOstElementValue("results", "DEC", results[i].DEC, false);
-        setOstElementValue("results", "diam", results[i].diam, false);
-        setOstElementValue("results", "mag", results[i].mag, false);
-        setOstElementValue("results", "name", results[i].name, false);
-        setOstElementValue("results", "alias", results[i].alias, false);
+        qDebug() << results[i].name << results[i].RA;
+        getEltString("results", "catalog")->setValue(results[i].catalog);
+        getEltString("results", "code")->setValue(results[i].code);
+        getEltString("results", "NS")->setValue(results[i].NS);
+        getEltString("results", "name")->setValue(results[i].name);
+        getEltString("results", "alias")->setValue(results[i].alias);
+        getEltFloat("results", "RA")->setValue(results[i].RA);
+        getEltFloat("results", "DEC")->setValue(results[i].DEC);
+        getEltFloat("results", "diam")->setValue(results[i].diam);
+        getEltFloat("results", "mag")->setValue(results[i].mag);
         getProperty("results")->push();
     }
 
@@ -296,8 +299,8 @@ void Navigator::convertSelection(void)
     j2000pos.rightascension = ra;
 
     INDI::J2000toObserved(&j2000pos, jd, &observed);
-    setOstElementValue("selectnow", "jd", "", false); // we'll see that later
-    setOstElementValue("selectnow", "code", code, false);
-    setOstElementValue("selectnow", "RA", observed.rightascension, false);
-    setOstElementValue("selectnow", "DEC", observed.declination, false);
+    getEltString("selectnow", "jd")->setValue(""); // we'll see that later
+    getEltString("selectnow", "code")->setValue(code);
+    getEltFloat("selectnow", "RA")->setValue(observed.rightascension);
+    getEltFloat("selectnow", "DEC")->setValue(observed.declination, true);
 }
