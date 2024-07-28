@@ -84,7 +84,7 @@
         "group": "",
         "permission": 2,
         "hasprofile":true,
-        "label": "Parameters",
+        "label": "Focus parameters",
         "elements": {
             "startpos": {
                 "autoupdate":true,
@@ -116,6 +116,14 @@
                 "type":"int",
                 "label": "Average over",
                 "value":3,
+                "format": "99"
+            },
+            "aroundinitial": {
+                "autoupdate":true,
+                "directedit":true,
+                "type":"bool",
+                "label": "Focus around actual",
+                "value":true,
                 "format": "99"
             },
             "backlash": {
