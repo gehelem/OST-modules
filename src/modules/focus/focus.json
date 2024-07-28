@@ -17,7 +17,7 @@
         "elements": {
             "loopHFRavg": {
                 "type":"float",
-                "label": "Average HFR",
+                "label": "Average HFR ('')",
                 "value":0,
                 "format": "99.99"
             },
@@ -43,7 +43,7 @@
             },
             "imgHFR": {
                 "type":"float",
-                "label": "Last imgage HFR",
+                "label": "Last imgage HFR ('')",
                 "value":0,
                 "format": "99.99"
             },
@@ -65,7 +65,7 @@
         "elements": {
             "hfr": {
                 "type":"float",
-                "label": "Average HFR result",
+                "label": "Average HFR result ('')",
                 "value":0,
                 "format": "99.99"
             },
@@ -84,9 +84,10 @@
         "group": "",
         "permission": 2,
         "hasprofile":true,
-        "label": "Parameters",
+        "label": "Focus parameters",
         "elements": {
             "startpos": {
+                "order":"10",
                 "autoupdate":true,
                 "directedit":true,
                 "type":"int",
@@ -95,6 +96,7 @@
                 "format": "999999"
             },
             "steps": {
+                "order":"20",
                 "autoupdate":true,
                 "directedit":true,
                 "type":"int",
@@ -103,6 +105,7 @@
                 "format": "999999"
             },
             "iterations": {
+                "order":"30",
                 "autoupdate":true,
                 "directedit":true,
                 "type":"int",
@@ -111,6 +114,7 @@
                 "format": "99"
             },
             "loopIterations": {
+                "order":"40",
                 "autoupdate":true,
                 "directedit":true,
                 "type":"int",
@@ -118,7 +122,17 @@
                 "value":3,
                 "format": "99"
             },
+            "aroundinitial": {
+                "order":"15",
+                "autoupdate":true,
+                "directedit":true,
+                "type":"bool",
+                "label": "Focus around actual",
+                "value":true,
+                "format": "99"
+            },
             "backlash": {
+                "order":"60",
                 "autoupdate":true,
                 "directedit":true,
                 "type":"int",
@@ -127,6 +141,7 @@
                 "format": "99999"
             },
             "zoning": {
+                "order":"70",
                 "autoupdate":true,
                 "directedit":true,
                 "type":"int",
