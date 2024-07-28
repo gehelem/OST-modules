@@ -299,7 +299,8 @@ void Focus::OnSucessSEP()
 {
     disconnect(&_solver, &Solver::successSEP, this, &Focus::OnSucessSEP);
     OST::ImgData dta = getEltImg("image", "image")->value();
-    dta.HFRavg = _solver.HFRavg;
+    double ech = getSampling();
+    dta.HFRavg = _solver.HFRavg * ech;
     dta.starsCount = _solver.stars.size();
     getEltImg("image", "image")->setValue(dta, true);
     pMachine->submitEvent("FindStarsDone");
@@ -423,11 +424,12 @@ void Focus::SMRequestExposureBest()
 void Focus::SMComputeResult()
 {
     //sendMessage("SMComputeResult");
-    getEltFloat("values", "imgHFR")->setValue(_solver.HFRavg, true);
-    getEltFloat("results", "hfr")->setValue(_solver.HFRavg, true);
+    double ech = getSampling();
+    getEltFloat("values", "imgHFR")->setValue(_solver.HFRavg * ech, true);
+    getEltFloat("results", "hfr")->setValue(_solver.HFRavg * ech, true);
 
     OST::ImgData dta = getEltImg("image", "image")->value();
-    dta.HFRavg = _solver.HFRavg;
+    dta.HFRavg = _solver.HFRavg * ech;
     dta.starsCount = _solver.stars.size();
     getEltImg("image", "image")->setValue(dta, true);
 
@@ -502,13 +504,15 @@ void Focus::SMInitLoopFrame()
 void Focus::SMComputeLoopFrame()
 {
     //sendMessage("SMComputeLoopFrame");
+    double ech = getSampling();
     _loopIteration++;
-    _loopHFRavg = ((_loopIteration - 1) * _loopHFRavg + _solver.HFRavg) / _loopIteration;
+    _loopHFRavg = ((_loopIteration - 1) * _loopHFRavg + _solver.HFRavg * ech) / _loopIteration;
     for (int i = 0; i < mZoning * mZoning; i++)
     {
         if (_solver.HFRavgZone[i] != 99)
         {
-            _zoneloopHFRavg[i] = (_zoneLoopIteration[i] * _zoneloopHFRavg[i] + _solver.HFRavgZone[i]) / (_zoneLoopIteration[i] + 1);
+            _zoneloopHFRavg[i] = (_zoneLoopIteration[i] * _zoneloopHFRavg[i] + _solver.HFRavgZone[i] * ech) /
+                                 (_zoneLoopIteration[i] + 1);
             _zoneLoopIteration[i]++;
 
         }
@@ -537,8 +541,9 @@ void Focus::SMAlert()
 
 void Focus::SMFocusDone()
 {
+    double ech = getSampling();
     sendMessage("Focus done");
-    getEltFloat("results", "hfr")->setValue(_solver.HFRavg, true);
+    getEltFloat("results", "hfr")->setValue(_solver.HFRavg * ech, true);
 
     getProperty("actions")->setState(OST::Ok);
     pMachine->stop();

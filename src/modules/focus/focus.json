@@ -17,7 +17,7 @@
         "elements": {
             "loopHFRavg": {
                 "type":"float",
-                "label": "Average HFR",
+                "label": "Average HFR ('')",
                 "value":0,
                 "format": "99.99"
             },
@@ -43,7 +43,7 @@
             },
             "imgHFR": {
                 "type":"float",
-                "label": "Last imgage HFR",
+                "label": "Last imgage HFR ('')",
                 "value":0,
                 "format": "99.99"
             },
@@ -65,7 +65,7 @@
         "elements": {
             "hfr": {
                 "type":"float",
-                "label": "Average HFR result",
+                "label": "Average HFR result ('')",
                 "value":0,
                 "format": "99.99"
             },
