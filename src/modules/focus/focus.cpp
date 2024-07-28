@@ -190,7 +190,7 @@ void Focus::startCoarse()
     getProperty("parms")->disable();
     getProperty("devices")->disable();
     getProperty("parameters")->disable();
-    connectIndi();
+    if (!isServerConnected()) connectIndi();
     connectDevice(getString("devices", "camera"));
     connectDevice(getString("devices", "focuser"));
     connectDevice(getString("devices", "filter"));
@@ -216,15 +216,30 @@ void Focus::startCoarse()
     _zoneBestposfit.clear();
 
     mZoning =  getInt("parameters", "zoning");
+    getProperty("zones")->clearGrid();
+
 
     for (int i = 0; i < mZoning * mZoning; i++)
     {
         _zoneBestposfit.append(0);
     }
 
-    _startpos =          getEltInt("parameters", "startpos")->value();
     _steps =             getEltInt("parameters", "steps")->value();
     _iterations =        getEltInt("parameters", "iterations")->value();
+    if (getBool("parameters", "aroundinitial"))
+    {
+        double p = 0;
+        if (!getModNumber(getString("devices", "focuser"), "ABS_FOCUS_POSITION", "FOCUS_ABSOLUTE_POSITION", p))
+        {
+            pMachine->submitEvent("abort");
+            return;
+        }
+        _startpos = p -  _steps * _iterations / 2;
+    }
+    else
+    {
+        _startpos =          getEltInt("parameters", "startpos")->value();
+    }
     _loopIterations =    getEltInt("parameters", "loopIterations")->value();
     _backlash =          getEltInt("parameters", "backlash")->value();
 
