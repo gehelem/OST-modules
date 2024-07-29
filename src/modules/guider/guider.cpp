@@ -471,7 +471,7 @@ void Guider::SMComputeFirst()
 }
 void Guider::SMComputeCal()
 {
-    //BOOST_LOG_TRIVIAL(debug) << "SMComputeCal";
+    qDebug()  << "SMComputeCal" << _calStep << _calState;
     buildIndexes(_solver, _trigCurrent);
     _ccdOrientation = 0;
 
@@ -497,7 +497,7 @@ void Guider::SMComputeCal()
     }
     else
     {
-        //BOOST_LOG_TRIVIAL(debug) << "houston, we have a problem";
+        qDebug() << "houston, we have a problem";
     }
     //BOOST_LOG_TRIVIAL(debug) << "Drifts // prev " << sqrt(square(_dxPrev) + square(_dyPrev));
     _trigPrev = _trigCurrent;
@@ -531,7 +531,7 @@ void Guider::SMComputeCal()
         //ddy));
         if (_calState == 0)
         {
-            _calPulseW = getInt("calParams", "pulse") / sqrt(square(ddy) + square(ddy));
+            _calPulseW = getInt("calParams", "pulse") / sqrt(square(ddx) + square(ddy));
             _ccdOrientation = a;
             _calMountPointingWest = _mountPointingWest;
             _calCcdOrientation = _ccdOrientation;
@@ -545,7 +545,7 @@ void Guider::SMComputeCal()
         }
         if (_calState == 1)
         {
-            _calPulseE = getInt("calParams", "pulse") / sqrt(square(ddy) + square(ddy));
+            _calPulseE = getInt("calParams", "pulse") / sqrt(square(ddx) + square(ddy));
             //BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " Drift orientation =  " << a * 180 / PI;
             //BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " E drift (px) " <<  sqrt(square(ddy) + square(
             //                             ddy));
@@ -555,7 +555,7 @@ void Guider::SMComputeCal()
         }
         if (_calState == 2)
         {
-            _calPulseN = getInt("calParams", "pulse") / sqrt(square(ddy) + square(ddy));
+            _calPulseN = getInt("calParams", "pulse") / sqrt(square(ddx) + square(ddy));
             //BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " Drift orientation =  " << a * 180 / PI;
             //BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " N drift (px) " <<  sqrt(square(ddy) + square(
             //                             ddy));
@@ -565,7 +565,7 @@ void Guider::SMComputeCal()
         }
         if (_calState == 3)
         {
-            _calPulseS = getInt("calParams", "pulse") / sqrt(square(ddy) + square(ddy));
+            _calPulseS = getInt("calParams", "pulse") / sqrt(square(ddx) + square(ddy));
             //BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " Drift orientation =  " << a * 180 / PI;
             //BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " S drift (px) " <<  sqrt(square(ddy) + square(
             //                             ddy));
@@ -613,7 +613,7 @@ void Guider::SMComputeCal()
         _pulseS = getInt("calParams", "pulse");
     }
     double _driftRA =  _dxFirst * cos(_calCcdOrientation) + _dyFirst * sin(_calCcdOrientation);
-    double _driftDE = -_dxFirst * sin(_calCcdOrientation) + _dyFirst * cos(_calCcdOrientation);
+    double _driftDE =  _dxFirst * sin(_calCcdOrientation) + _dyFirst * cos(_calCcdOrientation);
     getEltFloat("drift", "RA")->setValue(_driftRA);
     getEltFloat("drift", "DEC")->setValue(_driftDE);
     getProperty("drift")->push();
@@ -724,53 +724,70 @@ void Guider::SMRequestPulses()
 {
 
     //sendMessage("SMRequestPulses");
+    INDI::BaseDevice dp = getDevice(getString("devices", "guider").toStdString().c_str());
 
     if (_pulseN > 0)
     {
-        //BOOST_LOG_TRIVIAL(debug) << "********* Pulse  N " << _pulseN;
+        qDebug() << "********* Pulse  N " << _pulseN;
         _pulseDECfinished = false;
-        if (!sendModNewNumber(getString("devices", "guider"), "TELESCOPE_TIMED_GUIDE_NS", "TIMED_GUIDE_N",
-                              _pulseN))
+        INDI::PropertyNumber prop = dp.getNumber("TELESCOPE_TIMED_GUIDE_NS");
+        for (std::size_t i = 0; i < prop.size(); i++)
         {
-            emit abort();
-            return;
+            if (strcmp(prop[i].name, "TIMED_GUIDE_N") == 0)
+            {
+                prop[i].value = _pulseN;
+            }
+            else prop[i].value = 0;
         }
+        sendNewNumber(prop);
     }
 
     if (_pulseS > 0)
     {
         _pulseDECfinished = false;
-        //BOOST_LOG_TRIVIAL(debug) << "********* Pulse  S " << _pulseS;
-        if (!sendModNewNumber(getString("devices", "guider"), "TELESCOPE_TIMED_GUIDE_NS", "TIMED_GUIDE_S",
-                              _pulseS))
+        qDebug()  << "********* Pulse  S " << _pulseS;
+        INDI::PropertyNumber prop = dp.getNumber("TELESCOPE_TIMED_GUIDE_NS");
+        for (std::size_t i = 0; i < prop.size(); i++)
         {
-            emit abort();
-            return;
+            if (strcmp(prop[i].name, "TIMED_GUIDE_S") == 0)
+            {
+                prop[i].value = _pulseS;
+            }
+            else prop[i].value = 0;
         }
+        sendNewNumber(prop);
     }
 
     if (_pulseE > 0)
     {
         _pulseRAfinished = false;
-        //BOOST_LOG_TRIVIAL(debug) << "********* Pulse  E " << _pulseE;
-        if (!sendModNewNumber(getString("devices", "guider"), "TELESCOPE_TIMED_GUIDE_WE", "TIMED_GUIDE_E",
-                              _pulseE))
+        qDebug()  << "********* Pulse  E " << _pulseE;
+        INDI::PropertyNumber prop = dp.getNumber("TELESCOPE_TIMED_GUIDE_WE");
+        for (std::size_t i = 0; i < prop.size(); i++)
         {
-            emit abort();
-            return;
+            if (strcmp(prop[i].name, "TIMED_GUIDE_E") == 0)
+            {
+                prop[i].value = _pulseE;
+            }
+            else prop[i].value = 0;
         }
+        sendNewNumber(prop);
     }
 
     if (_pulseW > 0)
     {
         _pulseRAfinished = false;
-        //BOOST_LOG_TRIVIAL(debug) << "********* Pulse  W " << _pulseW;
-        if (!sendModNewNumber(getString("devices", "guider"), "TELESCOPE_TIMED_GUIDE_WE", "TIMED_GUIDE_W",
-                              _pulseW))
+        qDebug()  << "********* Pulse  W " << _pulseW;
+        INDI::PropertyNumber prop = dp.getNumber("TELESCOPE_TIMED_GUIDE_WE");
+        for (std::size_t i = 0; i < prop.size(); i++)
         {
-            emit abort();
-            return;
+            if (strcmp(prop[i].name, "TIMED_GUIDE_W") == 0)
+            {
+                prop[i].value = _pulseW;
+            }
+            else prop[i].value = 0;
         }
+        sendNewNumber(prop);
     }
 
     //BOOST_LOG_TRIVIAL(debug) << "SMRequestPulses before";
