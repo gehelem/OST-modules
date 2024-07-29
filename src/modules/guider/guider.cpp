@@ -471,7 +471,7 @@ void Guider::SMComputeFirst()
 }
 void Guider::SMComputeCal()
 {
-    qDebug()  << "SMComputeCal" << _calStep << _calState;
+    //qDebug()  << "SMComputeCal" << _calStep << _calState;
     buildIndexes(_solver, _trigCurrent);
     _ccdOrientation = 0;
 
@@ -728,7 +728,7 @@ void Guider::SMRequestPulses()
 
     if (_pulseN > 0)
     {
-        qDebug() << "********* Pulse  N " << _pulseN;
+        //qDebug() << "********* Pulse  N " << _pulseN;
         _pulseDECfinished = false;
         INDI::PropertyNumber prop = dp.getNumber("TELESCOPE_TIMED_GUIDE_NS");
         for (std::size_t i = 0; i < prop.size(); i++)
@@ -745,7 +745,7 @@ void Guider::SMRequestPulses()
     if (_pulseS > 0)
     {
         _pulseDECfinished = false;
-        qDebug()  << "********* Pulse  S " << _pulseS;
+        //qDebug()  << "********* Pulse  S " << _pulseS;
         INDI::PropertyNumber prop = dp.getNumber("TELESCOPE_TIMED_GUIDE_NS");
         for (std::size_t i = 0; i < prop.size(); i++)
         {
@@ -761,7 +761,7 @@ void Guider::SMRequestPulses()
     if (_pulseE > 0)
     {
         _pulseRAfinished = false;
-        qDebug()  << "********* Pulse  E " << _pulseE;
+        //qDebug()  << "********* Pulse  E " << _pulseE;
         INDI::PropertyNumber prop = dp.getNumber("TELESCOPE_TIMED_GUIDE_WE");
         for (std::size_t i = 0; i < prop.size(); i++)
         {
@@ -777,7 +777,7 @@ void Guider::SMRequestPulses()
     if (_pulseW > 0)
     {
         _pulseRAfinished = false;
-        qDebug()  << "********* Pulse  W " << _pulseW;
+        //qDebug()  << "********* Pulse  W " << _pulseW;
         INDI::PropertyNumber prop = dp.getNumber("TELESCOPE_TIMED_GUIDE_WE");
         for (std::size_t i = 0; i < prop.size(); i++)
         {
