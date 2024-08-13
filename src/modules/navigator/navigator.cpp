@@ -15,13 +15,14 @@ Navigator::Navigator(QString name, QString label, QString profile, QVariantMap a
     loadOstPropertiesFromFile(":navigator.json");
     setClassName(QString(metaObject()->className()).toLower());
 
-    setModuleDescription("Navigator module - work in progress");
+    setModuleDescription("Navigator module");
     setModuleVersion("0.1");
 
-    createOstElement("devices", "camera", "Camera", false);
-    setOstElementValue("devices", "camera",   mCamera, false);
-    createOstElement("devices", "mount", "Mount", false);
-    setOstElementValue("devices", "mount",   mMount, true);
+    giveMeADevice("camera", "Camera", INDI::BaseDevice::CCD_INTERFACE);
+    giveMeADevice("mount", "Mount", INDI::BaseDevice::TELESCOPE_INTERFACE);
+
+    defineMeAsNavigator();
+
     connectIndi();
     connectAllDevices();
 
@@ -42,54 +43,37 @@ void Navigator::OnMyExternalEvent(const QString &pEventType, const QString  &pEv
     {
         foreach(const QString &keyprop, pEventData.keys())
         {
-            if (pEventData[keyprop].toMap().contains("value"))
-            {
-                QVariant val = pEventData[keyprop].toMap()["value"];
-                setOstPropertyValue(keyprop, val, true);
-            }
-
             foreach(const QString &keyelt, pEventData[keyprop].toMap()["elements"].toMap().keys())
             {
-                if (keyprop == "devices")
+                if (pEventType == "Fposticon")
                 {
-                    if ((keyelt == "camera") || (keyelt == "mount"))
+                    if ((keyprop == "search") && (keyelt == "name"))
                     {
-                        if (setOstElementValue(keyprop, keyelt, pEventData[keyprop].toMap()["elements"].toMap()[keyelt].toMap()["value"], false))
-                        {
-                            setOstPropertyAttribute(keyprop, "status", IPS_OK, true);
-                        }
+                        updateSearchList();
                     }
                 }
 
-                if (keyprop == "search")
-                {
-                    if (keyelt == "searchbtn")
-                    {
-                        if (setOstElementValue(keyprop, keyelt, true, true))
-                        {
-                            updateSearchList();
-                        }
-                    }
-                }
                 if (keyprop == "popcat")
                 {
                     if (keyelt == "go")
                     {
-                        if (setOstElementValue(keyprop, keyelt, true, true))
+                        if (getEltBool(keyprop, keyelt)->setValue(true, true))
                         {
-                            setOstPropertyAttribute(keyprop, "status", IPS_BUSY, true);
-                            /* we should avoid this, and do this in a differnet thread. We'll see later */
-                            populateCatalog(":" + getOstPropertyValue("popcat").toString() + ".txt", getOstPropertyValue("popcat").toString());
-                            setOstPropertyAttribute(keyprop, "status", IPS_OK, true);
+                            getProperty(keyprop)->setState(OST::Busy);
+                            /* we should avoid this, and do this in a different thread. We'll see later */
+                            populateCatalog(":" + getString("popcat", "catlg") + ".txt", getString("popcat", "catlg"));
+                            getProperty(keyprop)->setState(OST::Ok);
                         }
                     }
                 }
 
                 if (keyprop == "actions")
                 {
-                    setOstPropertyAttribute(keyprop, "status", IPS_BUSY, true);
-                    if (keyelt == "slew")
+                    getProperty(keyprop)->setState(OST::Busy);
+                    if (keyelt == "gototarget")
                     {
+                        mState = "running";
+                        initIndi();
                         slewToSelection();
                     }
                 }
@@ -97,14 +81,14 @@ void Navigator::OnMyExternalEvent(const QString &pEventType, const QString  &pEv
             if (pEventType == "Flselect")
             {
                 double line = pEventData[keyprop].toMap()["line"].toDouble();
-                QString code = getOstElementLineValue("results", "code", line).toString();
-                float ra = getOstElementLineValue("results", "RA", line).toFloat();
-                float dec = getOstElementLineValue("results", "DEC", line).toFloat();
-                QString ns = getOstElementLineValue("results", "NS", line).toString();
-                setOstElementValue("selection", "code", code, false);
-                setOstElementValue("selection", "RA", ra, false);
-                setOstElementValue("selection", "DEC", dec, false);
-                setOstElementValue("selection", "NS", ns, true);
+                getProperty("results")->fetchLine(line);
+                QString code = getString("results", "code");
+                float ra = getFloat("results", "RA");
+                float dec = getFloat("results", "DEC");
+                QString ns = getString("results", "NS");
+                getEltString("actions", "targetname")->setValue(code);
+                getEltFloat("actions", "targetra")->setValue(ra);
+                getEltFloat("actions", "targetde")->setValue(dec, true);
                 convertSelection();
             }
         }
@@ -116,17 +100,36 @@ void Navigator::newBLOB(INDI::PropertyBlob pblob)
 {
 
     if (
-        (QString(pblob.getDeviceName()) == getOstElementValue("devices", "camera").toString()) && (mState != "idle")
+        (QString(pblob.getDeviceName()) == getString("devices", "camera")) && (mState != "idle")
     )
     {
-        setOstPropertyAttribute("actions", "status", IPS_OK, true);
-        delete pImage;
-        pImage = new fileio();
-        pImage->loadBlob(pblob);
-        mStats = pImage->getStats();
-        mSolver.ResetSolver(mStats, pImage->getImageBuffer());
-        connect(&mSolver, &Solver::successSEP, this, &Navigator::OnSucessSEP);
-        mSolver.FindStars(mSolver.stellarSolverProfiles[0]);
+        double ra, dec;
+        if (
+            !getModNumber(getString("devices", "mount"), "EQUATORIAL_EOD_COORD", "DEC", dec)
+            || !getModNumber(getString("devices", "mount"), "EQUATORIAL_EOD_COORD", "RA", ra)
+        )
+        {
+            sendMessage("Can't find mount device " + getString("devices", "mount") + " solve aborted");
+        }
+        else
+        {
+            getProperty("actions")->setState(OST::Idle);
+            delete pImage;
+            pImage = new fileio();
+            pImage->loadBlob(pblob, 64);
+            mStats = pImage->getStats();
+            QStringList folders;
+            folders.append("/usr/share/astrometry");
+            mSolver.stellarSolver.setIndexFolderPaths(folders);
+            mSolver.ResetSolver(mStats, pImage->getImageBuffer());
+            mSolver.stellarSolver.setSearchPositionInDegrees(ra * 360 / 24, dec);
+            connect(&mSolver, &Solver::successSolve, this, &Navigator::OnSucessSolve);
+            connect(&mSolver, &Solver::solverLog, this, &Navigator::OnSolverLog);
+            mSolver.SolveStars(mSolver.stellarSolverProfiles[0]);
+        }
+
+
+
     }
 
 
@@ -141,7 +144,7 @@ void Navigator::updateProperty(INDI::Property property)
         newBLOB(property);
     }
     if (
-        (property.getDeviceName() == getOstElementValue("devices", "camera").toString())
+        (property.getDeviceName() == getString("devices", "camera"))
         &&  (property.getState() == IPS_ALERT)
     )
     {
@@ -151,7 +154,7 @@ void Navigator::updateProperty(INDI::Property property)
 
 
     if (
-        (property.getDeviceName() == getOstElementValue("devices", "camera").toString())
+        (property.getDeviceName() == getString("devices", "camera"))
         &&  (property.getName()   == std::string("CCD_FRAME_RESET"))
         &&  (property.getState() == IPS_OK)
     )
@@ -160,66 +163,78 @@ void Navigator::updateProperty(INDI::Property property)
         emit FrameResetDone();
     }
     if (
-        (property.getDeviceName() == getOstElementValue("devices", "mount").toString())
+        (property.getDeviceName() == getString("devices", "mount"))
         &&  (property.getName()   == std::string("EQUATORIAL_EOD_COORD"))
         &&  (property.getState() == IPS_OK)
     )
     {
         sendMessage("Slew finished");
-        setOstPropertyAttribute("actions", "status", IPS_OK, true);
+        Shoot();
     }
 }
 void Navigator::Shoot()
 {
-    if (connectDevice(getOstElementValue("devices", "camera").toString()))
+    //sendMessage("SMRequestExposure");
+    if (!requestCapture(getString("devices", "camera"), getFloat("parms", "exposure"), getInt("parms", "gain"), getInt("parms",
+                        "offset")))
     {
-        frameReset(getOstElementValue("devices", "camera").toString());
-        sendModNewNumber(getOstElementValue("devices", "camera").toString(), "CCD_EXPOSURE", "CCD_EXPOSURE_VALUE",
-                         getOstElementValue("parameters", "exposure").toFloat());
-        setOstPropertyAttribute("actions", "status", IPS_BUSY, true);
+        emit abort();
+        return;
     }
-    else
-    {
-        setOstPropertyAttribute("actions", "status", IPS_ALERT, true);
-    }
+    getProperty("actions")->setState(OST::Error);
 }
 void Navigator::initIndi()
 {
     connectIndi();
-    connectDevice(getOstElementValue("devices", "camera").toString());
-    connectDevice(getOstElementValue("devices", "mount").toString());
-    setBLOBMode(B_ALSO, getOstElementValue("devices", "camera").toString().toStdString().c_str(), nullptr);
-    sendModNewNumber(getOstElementValue("devices", "camera").toString(), "SIMULATOR_SETTINGS", "SIM_TIME_FACTOR", 0.01 );
-    enableDirectBlobAccess(getOstElementValue("devices", "camera").toString().toStdString().c_str(), nullptr);
+    connectDevice(getString("devices", "camera"));
+    connectDevice(getString("devices", "mount"));
+    setBLOBMode(B_ALSO, getString("devices", "camera").toStdString().c_str(), nullptr);
+    if (getString("devices", "camera") == "CCD Simulator")
+    {
+        sendModNewNumber(getString("devices", "camera"), "SIMULATOR_SETTINGS", "SIM_TIME_FACTOR", 0.01 );
+    }
+    sendModNewNumber(getString("devices", "camera"), "SIMULATOR_SETTINGS", "SIM_TIME_FACTOR", 0.01 );
+    enableDirectBlobAccess(getString("devices", "camera").toStdString().c_str(), nullptr);
 
 }
-void Navigator::OnSucessSEP()
+void Navigator::OnSolverLog(QString &text)
 {
-    setOstPropertyAttribute("actions", "status", IPS_OK, true);
-    setOstElementValue("imagevalues", "imgHFR", mSolver.HFRavg, false);
-    setOstElementValue("imagevalues", "starscount", mSolver.stars.size(), true);
+    sendMessage(text);
+}
+void Navigator::OnSucessSolve()
+{
+    getProperty("actions")->setState(OST::Ok);
 
-    QList<fileio::Record> rec = pImage->getRecords();
     QImage rawImage = pImage->getRawQImage();
     QImage im = rawImage.convertToFormat(QImage::Format_RGB32);
     im.setColorTable(rawImage.colorTable());
-
     im.save(getWebroot()  + "/" + getModuleName() + ".jpeg", "JPG", 100);
-    setOstPropertyAttribute("image", "URL", getModuleName() + ".jpeg", true);
+    OST::ImgData dta = pImage->ImgStats();
+    dta.mUrlJpeg = getModuleName() + ".jpeg";
+    dta.solverRA = mSolver.stellarSolver.getSolution().ra;
+    dta.solverDE = mSolver.stellarSolver.getSolution().dec;
+    dta.isSolved = true;
+    qDebug() << "RA=" << dta.solverRA << " DE=" << dta.solverDE;
+    getEltImg("image", "image")->setValue(dta, true);
 
-    emit FindStarsDone();
+    mState = "idle";
+    disconnect(&mSolver, &Solver::successSolve, this, &Navigator::OnSucessSolve);
+    disconnect(&mSolver, &Solver::solverLog, this, &Navigator::OnSolverLog);
+
+
 }
 void Navigator::updateSearchList(void)
 {
-    sendMessage("Searching " + getOstPropertyValue("search").toString());
-    resetOstElements("results");
+    sendMessage("Searching " + getString("search", "name"));
+    getProperty("results")->clearGrid();
     QList<catalogResult> results;
-    searchCatalog(getOstPropertyValue("search").toString(), results);
+    searchCatalog(getString("search", "name"), results);
     if (results.count() == 0)
     {
-        sendWarning("Searching " + getOstPropertyValue("search").toString() + " gives no result");
+        sendWarning("Searching " + getString("search", "name") + " gives no result");
         return;
     }
+    sendMessage("Searching " + getString("search", "name") + " gives " + QString::number(results.count()) + " results");
 
     int max = 20;
     if (max < results.count())
@@ -234,25 +249,26 @@ void Navigator::updateSearchList(void)
 
     for (int i = 0; i < max; i++)
     {
-        setOstElementValue("results", "catalog", results[i].catalog, false);
-        setOstElementValue("results", "code", results[i].code, false);
-        setOstElementValue("results", "RA", results[i].RA, false);
-        setOstElementValue("results", "NS", results[i].NS, false);
-        setOstElementValue("results", "DEC", results[i].DEC, false);
-        setOstElementValue("results", "diam", results[i].diam, false);
-        setOstElementValue("results", "mag", results[i].mag, false);
-        setOstElementValue("results", "name", results[i].name, false);
-        setOstElementValue("results", "alias", results[i].alias, false);
-        pushOstElements("results");
+        qDebug() << results[i].name << results[i].RA;
+        getEltString("results", "catalog")->setValue(results[i].catalog);
+        getEltString("results", "code")->setValue(results[i].code);
+        getEltString("results", "NS")->setValue(results[i].NS);
+        getEltString("results", "name")->setValue(results[i].name);
+        getEltString("results", "alias")->setValue(results[i].alias);
+        getEltFloat("results", "RA")->setValue(results[i].RA);
+        getEltFloat("results", "DEC")->setValue(results[i].DEC);
+        getEltFloat("results", "diam")->setValue(results[i].diam);
+        getEltFloat("results", "mag")->setValue(results[i].mag);
+        getProperty("results")->push();
     }
 
 }
 void Navigator::slewToSelection(void)
 {
-    QString mount = getOstElementValue("devices", "mount").toString();
-    QString cam  = getOstElementValue("devices", "camera").toString();
-    double ra  = getOstElementValue("selectnow", "RA").toDouble();
-    double dec  = getOstElementValue("selectnow", "DEC").toDouble();
+    QString mount = getString("devices", "mount");
+    QString cam  = getString("devices", "camera");
+    double ra  = getFloat("selectnow", "RA");
+    double dec  = getFloat("selectnow", "DEC");
     INDI::BaseDevice dp = getDevice(mount.toStdString().c_str());
     if (!dp.isValid())
     {
@@ -268,15 +284,14 @@ void Navigator::slewToSelection(void)
     prop.findWidgetByName("RA")->value = ra;
     prop.findWidgetByName("DEC")->value = dec;
     sendNewNumber(prop);
-    sendMessage("Slewing to " + getOstElementValue("selection", "code").toString());
+    sendMessage("Slewing to " + getString("actions", "targetname"));
 
 }
 void Navigator::convertSelection(void)
 {
-    QString code = getOstElementValue("selection", "code").toString();
-    float ra = getOstElementValue("selection", "RA").toFloat();
-    float dec = getOstElementValue("selection", "DEC").toFloat();
-    QString ns = getOstElementValue("selection", "NS").toString();
+    QString code = getString("actions", "targetname");
+    float ra = getFloat("actions", "targetra");
+    float dec = getFloat("actions", "targetde");
     double jd = ln_get_julian_from_sys();
     INDI::IEquatorialCoordinates j2000pos;
     INDI::IEquatorialCoordinates observed;
@@ -284,9 +299,8 @@ void Navigator::convertSelection(void)
     j2000pos.rightascension = ra;
 
     INDI::J2000toObserved(&j2000pos, jd, &observed);
-    setOstElementValue("selectnow", "jd", "", false); // we'll see that later
-    setOstElementValue("selectnow", "code", code, false);
-    setOstElementValue("selectnow", "RA", observed.rightascension, false);
-    setOstElementValue("selectnow", "DEC", observed.declination, false);
-    setOstElementValue("selectnow", "NS", ns, true);
+    getEltString("selectnow", "jd")->setValue(""); // we'll see that later
+    getEltString("selectnow", "code")->setValue(code);
+    getEltFloat("selectnow", "RA")->setValue(observed.rightascension);
+    getEltFloat("selectnow", "DEC")->setValue(observed.declination, true);
 }

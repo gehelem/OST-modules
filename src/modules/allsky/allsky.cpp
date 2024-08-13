@@ -19,12 +19,20 @@ Allsky::Allsky(QString name, QString label, QString profile, QVariantMap availab
     setModuleDescription("Simple allsky camera module");
     setModuleVersion("0.1");
 
+    giveMeADevice("camera", "Camera", INDI::BaseDevice::CCD_INTERFACE);
+    defineMeAsSequencer();
 
-    createOstElement("devices", "camera", "Camera", true);
-    setOstElementValue("devices", "camera",   _camera, false);
 
-    //saveAttributesToFile("allsky.json");
-    _camera = getOstElementValue("devices", "camera").toString();
+    OST::ElementBool* b = new OST::ElementBool("Loop", "0", "");
+    getProperty("actions")->addElt("loop", b);
+    b = new OST::ElementBool("Abort", "2", "");
+    getProperty("actions")->addElt("abort", b);
+    b = new OST::ElementBool("Timelapse", "1", "");
+    getProperty("actions")->addElt("timelapse", b);
+
+    getProperty("actions")->deleteElt("startsequence");
+    getProperty("actions")->deleteElt("abortsequence");
+
 
     _process = new QProcess(this);
     connect(_process, &QProcess::readyReadStandardOutput, this, &Allsky::processOutput);
@@ -51,43 +59,30 @@ void Allsky::OnMyExternalEvent(const QString &eventType, const QString  &eventMo
         {
             foreach(const QString &keyelt, eventData[keyprop].toMap()["elements"].toMap().keys())
             {
-                setOstElementValue(keyprop, keyelt, eventData[keyprop].toMap()["elements"].toMap()[keyelt].toMap()["value"], true);
-                if (keyprop == "devices")
-                {
-                    if (keyelt == "camera")
-                    {
-                        if (setOstElementValue(keyprop, keyelt, eventData[keyprop].toMap()["elements"].toMap()[keyelt].toMap()["value"], false))
-                        {
-                            setOstPropertyAttribute(keyprop, "status", IPS_OK, true);
-                            _camera = getOstElementValue("devices", "camera").toString();
-                        }
-                    }
-                }
-
                 if (keyprop == "actions")
                 {
-                    if (keyelt == "batch")
+                    if (keyelt == "timelapse")
                     {
-                        if (setOstElementValue(keyprop, keyelt, true, true))
+                        if (getEltBool(keyprop, keyelt)->setValue(false))
                         {
                             startBatch();
                         }
                     }
                     if (keyelt == "loop")
                     {
-                        if (setOstElementValue(keyprop, keyelt, true, false))
+                        if (getEltBool(keyprop, keyelt)->setValue(true))
                         {
-                            setOstPropertyAttribute("actions", "status", IPS_BUSY, true);
+                            getProperty("actions")->setState(OST::Busy);
                             startLoop();
                         }
                     }
                     if (keyelt == "abort")
                     {
-                        if (setOstElementValue(keyprop, keyelt, false, false))
+                        if (getEltBool(keyprop, keyelt)->setValue(false))
                         {
                             _isLooping = false;
-                            setOstElementValue(keyprop, "loop", false, false);
-                            setOstPropertyAttribute("actions", "status", IPS_OK, true);
+                            getEltBool(keyprop, "loop")->setValue(false);
+                            getProperty("actions")->setState(OST::Ok);
 
                         }
                     }
@@ -102,7 +97,7 @@ void Allsky::startLoop()
     _index = 0;
     mKheog = QImage();
 
-    resetOstElements("log");
+    getProperty("log")->clearGrid();
 
     QDir dir0(getWebroot() + "/" + getModuleName() + "/batch/", {"*"});
     for(const QString &filename : dir0.entryList())
@@ -113,17 +108,14 @@ void Allsky::startLoop()
     QDir dir;
     dir.mkdir(getWebroot() + "/" + getModuleName());
     dir.mkdir(getWebroot() + "/" + getModuleName() + "/batch/");
-    _camera = getOstElementValue("devices", "camera").toString();
     connectIndi();
-    connectDevice(_camera);
-    setBLOBMode(B_ALSO, _camera.toStdString().c_str(), nullptr);
-    //sendModNewNumber(_camera,"SIMULATOR_SETTINGS","SIM_TIME_FACTOR",0.01 );
-    setBLOBMode(B_ALSO, _camera.toStdString().c_str(), nullptr);
-    enableDirectBlobAccess(_camera.toStdString().c_str(), nullptr);
-    if (!sendModNewNumber(_camera, "CCD_EXPOSURE", "CCD_EXPOSURE_VALUE", getOstElementValue("parameters",
-                          "exposure").toDouble()))
+    connectDevice(getString("devices", "camera"));
+    setBLOBMode(B_ALSO, getString("devices", "camera").toStdString().c_str(), nullptr);
+    enableDirectBlobAccess(getString("devices", "camera").toStdString().c_str(), nullptr);
+    if (!requestCapture(getString("devices", "camera"), getFloat("parms", "exposure"), getInt("parms", "gain"), getInt("parms",
+                        "offset")))
     {
-        setOstPropertyAttribute("actions", "status", IPS_ALERT, true);
+        getProperty("actions")->setState(OST::Error);
     }
 }
 void Allsky::startBatch()
@@ -154,8 +146,9 @@ void Allsky::startBatch()
 void Allsky::processFinished(int exitCode, QProcess::ExitStatus exitStatus)
 {
     Q_UNUSED(exitStatus);
-
-    setOstPropertyAttribute("timelapse", "video", getModuleName() + "/batch/" + getModuleName() + ".mp4", true);
+    OST::VideoData v;
+    v.url = getModuleName() + "/batch/" + getModuleName() + ".mp4";
+    getEltVideo("timelapse", "video1")->setValue(v, true);
     sendMessage("PROCESS FINISHED (" + QString::number(exitCode) + ")");
 }
 void Allsky::processOutput()
@@ -172,22 +165,14 @@ void Allsky::newBLOB(INDI::PropertyBlob pblob)
 {
     if
     (
-        (QString(pblob.getDeviceName()) == _camera)
+        (QString(pblob.getDeviceName()) == getString("devices", "camera"))
     )
     {
-        setOstPropertyAttribute("actions", "status", IPS_OK, true);
+        getProperty("actions")->setState(OST::Ok);
         delete _image;
         _image = new fileio();
-        _image->loadBlob(pblob);
+        _image->loadBlob(pblob, 64);
 
-        setOstElementValue("imagevalues", "width", _image->getStats().width, false);
-        setOstElementValue("imagevalues", "height", _image->getStats().height, false);
-        setOstElementValue("imagevalues", "min", _image->getStats().min[0], false);
-        setOstElementValue("imagevalues", "max", _image->getStats().max[0], false);
-        setOstElementValue("imagevalues", "mean", _image->getStats().mean[0], false);
-        setOstElementValue("imagevalues", "median", _image->getStats().median[0], false);
-        setOstElementValue("imagevalues", "stddev", _image->getStats().stddev[0], false);
-        setOstElementValue("imagevalues", "snr", _image->getStats().SNR, true);
         QList<fileio::Record> rec = _image->getRecords();
         stats = _image->getStats();
         _image->saveAsFITS(getWebroot() + "/" + getModuleName() + QString(pblob.getDeviceName()) + ".FITS", stats,
@@ -210,7 +195,9 @@ void Allsky::newBLOB(INDI::PropertyBlob pblob)
         mKheog = result;
 
         mKheog.save(getWebroot() + "/" + getModuleName() + "-KHEOGRAM" + ".jpeg", "JPG", 100);
-        setOstPropertyAttribute("kheogram", "URL", getModuleName() + "-KHEOGRAM" + ".jpeg", true);
+        OST::ImgData kh;
+        kh.mUrlJpeg = getModuleName() + "-KHEOGRAM" + ".jpeg";
+        getEltImg("kheogram", "image1")->setValue(kh, true);
 
         r.setRect(0, 0, im.width(), im.height() / 10);
         QPainter p;
@@ -223,25 +210,27 @@ void Allsky::newBLOB(INDI::PropertyBlob pblob)
 
 
         im.save(getWebroot() + "/" + getModuleName() + QString(pblob.getDeviceName()) + ".jpeg", "JPG", 100);
-        setOstPropertyAttribute("image", "URL", getModuleName() + QString(pblob.getDeviceName()) + ".jpeg", true);
+        OST::ImgData dta = _image->ImgStats();
+        dta.mUrlJpeg = getModuleName() + QString(pblob.getDeviceName()) + ".jpeg";
+        getEltImg("image", "image")->setValue(dta, true);
+
         QString _n = QStringLiteral("%1").arg(_index, 10, 10, QLatin1Char('0'));
         im.save(getWebroot() + "/" + getModuleName() + "/batch/" + _n + ".jpeg", "JPG", 100);
 
-        setOstPropertyAttribute("actions", "status", IPS_BUSY, true);
+        getProperty("actions")->setState(OST::Busy);
         if (_isLooping)
         {
-            if (!sendModNewNumber(_camera, "CCD_EXPOSURE", "CCD_EXPOSURE_VALUE", getOstElementValue("parameters",
-                                  "exposure").toDouble()))
+            if (!sendModNewNumber(getString("devices", "camera"), "CCD_EXPOSURE", "CCD_EXPOSURE_VALUE", getFloat("parms",
+                                  "exposure")))
             {
-                setOstPropertyAttribute("actions", "status", IPS_ALERT, true);
+                getProperty("actions")->setState(OST::Error);
                 _isLooping = false;
             }
         }
         double tt = QDateTime::currentDateTime().toMSecsSinceEpoch();
-        setOstElementValue("log", "time", tt, false);
-        setOstElementValue("log", "snr", _image->getStats().SNR, true);
-        pushOstElements("log");
-
+        getEltFloat("log", "time")->setValue(tt, false);
+        getEltFloat("log", "snr")->setValue(_image->getStats().SNR, true);
+        getProperty("log")->push();
 
     }
 
@@ -249,9 +238,6 @@ void Allsky::newBLOB(INDI::PropertyBlob pblob)
 }
 void Allsky::updateProperty(INDI::Property property)
 {
-    if (strcmp(property.getName(), "CCD Simulator") == 0)
-    {
-    }
     if (strcmp(property.getName(), "CCD1") == 0)
     {
         newBLOB(property);
