@@ -21,21 +21,6 @@
                 }
             }
         }
-    },
-    "limit": {
-        "devcat": "Control",
-        "order": "Control200",
-        "group": "",
-        "permission": 2,
-        "value": 200,
-        "rule":0,
-        "propertyLabel": "Number of values ​​to keep",
-        "elements": {
-            "save": {
-                "elementLabel": "Set",
-                "value":false
-            }
-        }
     }
 }
 }
