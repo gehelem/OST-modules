@@ -60,9 +60,8 @@ void Meteo::OnMyExternalEvent(const QString &pEventType, const QString  &pEventM
                         mTimer.start(getInt("parms", "interval") * 1000);
                     }
                 }
-
-
             }
+
             if (pEventType == "Fldelete" && keyprop == "selection")
             {
                 double line = pEventData[keyprop].toMap()["line"].toDouble();
@@ -70,6 +69,7 @@ void Meteo::OnMyExternalEvent(const QString &pEventType, const QString  &pEventM
                 getStore()[keyprop]->deleteLine(line);
                 deleteOstProperty(id);
             }
+
             if (pEventType == "Flcreate" && keyprop == "selection")
             {
                 getStore()[keyprop]->newLine(pEventData[keyprop].toMap()["elements"].toMap());
@@ -81,8 +81,7 @@ void Meteo::OnMyExternalEvent(const QString &pEventType, const QString  &pEventM
 
     }
 }
-
-void Meteo::updateProperty(INDI::Property property)
+void Meteo::newProperty(INDI::Property property)
 {
     if (property.getType() == INDI_NUMBER)
     {
@@ -105,6 +104,31 @@ void Meteo::updateProperty(INDI::Property property)
             if ( propnames.contains(propname))
             {
                 declareNewGraph(propname);
+                getEltFloat(propname, "time")->setValue(QDateTime::currentDateTime().toMSecsSinceEpoch(), false);
+                getEltFloat(propname, propname)->setValue(n[i].getValue(), false);
+            }
+        }
+    }
+
+
+}
+void Meteo::updateProperty(INDI::Property property)
+{
+    if (property.getType() == INDI_NUMBER)
+    {
+        INDI::PropertyNumber n = property;
+        for (unsigned int i = 0; i < n.count(); i++)
+        {
+            QString propname = QString(n.getDeviceName()) +  "-" + n.getName() + "-" + n[i].getName();
+            QStringList propnames;
+            for (int i = 0; i < getProperty("selection")->getGrid().size(); i++)
+            {
+                propnames.append(getString("selection", "dpv", i));
+            }
+            if ( propnames.contains(propname))
+            {
+                declareNewGraph(propname);
+                getProperty(propname)->setGridLimit(getInt("parms", "histo"));
                 getEltFloat(propname, "time")->setValue(QDateTime::currentDateTime().toMSecsSinceEpoch(), false);
                 getEltFloat(propname, propname)->setValue(n[i].getValue(), false);
             }

@@ -26,6 +26,7 @@ class MODULE_INIT Meteo : public IndiModule
 
     private:
         void updateProperty(INDI::Property property) override;
+        void newProperty(INDI::Property property) override;
 
         void initIndi(void);
         void declareNewGraph(const QString  &pName);
