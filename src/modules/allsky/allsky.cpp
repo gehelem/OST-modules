@@ -59,19 +59,18 @@ void Allsky::OnMyExternalEvent(const QString &eventType, const QString  &eventMo
         {
             foreach(const QString &keyelt, eventData[keyprop].toMap()["elements"].toMap().keys())
             {
-                setOstElementValue(keyprop, keyelt, eventData[keyprop].toMap()["elements"].toMap()[keyelt].toMap()["value"], true);
                 if (keyprop == "actions")
                 {
                     if (keyelt == "timelapse")
                     {
-                        if (setOstElementValue(keyprop, keyelt, true, true))
+                        if (getEltBool(keyprop, keyelt)->setValue(false))
                         {
                             startBatch();
                         }
                     }
                     if (keyelt == "loop")
                     {
-                        if (setOstElementValue(keyprop, keyelt, true, false))
+                        if (getEltBool(keyprop, keyelt)->setValue(true))
                         {
                             getProperty("actions")->setState(OST::Busy);
                             startLoop();
@@ -79,10 +78,10 @@ void Allsky::OnMyExternalEvent(const QString &eventType, const QString  &eventMo
                     }
                     if (keyelt == "abort")
                     {
-                        if (setOstElementValue(keyprop, keyelt, false, false))
+                        if (getEltBool(keyprop, keyelt)->setValue(false))
                         {
                             _isLooping = false;
-                            setOstElementValue(keyprop, "loop", false, false);
+                            getEltBool(keyprop, "loop")->setValue(false);
                             getProperty("actions")->setState(OST::Ok);
 
                         }
@@ -229,8 +228,8 @@ void Allsky::newBLOB(INDI::PropertyBlob pblob)
             }
         }
         double tt = QDateTime::currentDateTime().toMSecsSinceEpoch();
-        setOstElementValue("log", "time", tt, false);
-        setOstElementValue("log", "snr", _image->getStats().SNR, true);
+        getEltFloat("log", "time")->setValue(tt, false);
+        getEltFloat("log", "snr")->setValue(_image->getStats().SNR, true);
         getProperty("log")->push();
 
     }
