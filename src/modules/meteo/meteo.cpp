@@ -73,8 +73,7 @@ void Meteo::OnMyExternalEvent(const QString &pEventType, const QString  &pEventM
             if (pEventType == "Flcreate" && keyprop == "selection")
             {
                 getStore()[keyprop]->newLine(pEventData[keyprop].toMap()["elements"].toMap());
-                //QString id = getString("selection", "dpv", getOstElementGrid(keyprop, "dpv").size() - 1);
-                QString id = QString::number(getProperty("selection")->getGrid().size() - 1);
+                QString id = getString("selection", "dpv", getProperty("selection")->getGrid().size() - 1);
                 declareNewGraph(id);
             }
 
@@ -98,8 +97,12 @@ void Meteo::updateProperty(INDI::Property property)
                 getEltString("selection", "dpv")->lovAdd(propname, lab);
                 //sendMessage(lab);
             }
-
-            if ( getOstElementGrid("selection", "dpv").contains(propname))
+            QStringList propnames;
+            for (int i = 0; i < getProperty("selection")->getGrid().size(); i++)
+            {
+                propnames.append(getString("selection", "dpv", i));
+            }
+            if ( propnames.contains(propname))
             {
                 declareNewGraph(propname);
                 getEltFloat(propname, "time")->setValue(QDateTime::currentDateTime().toMSecsSinceEpoch(), false);
@@ -115,19 +118,23 @@ void Meteo::initIndi()
 }
 void Meteo::OnTimer()
 {
-    QVariantList propnames = getOstElementGrid("selection", "dpv");
+    //QVariantList propnames = getOstElementGrid("selection", "dpv");
+    QStringList propnames;
+
+    for (int i = 0; i < getProperty("selection")->getGrid().size(); i++)
+    {
+        propnames.append(getString("selection", "dpv", i));
+    }
     for (int i = 0; i < propnames.count(); i++)
     {
-        QString propname = propnames[i].toString();
+        QString propname = propnames[i];
         declareNewGraph(propname);
         if (getStore().contains(propname))
         {
             getProperty(propname)->setGridLimit(getInt("parms", "histo"));
-
             getEltFloat(propname, "time")->setValue(QDateTime::currentDateTime().toMSecsSinceEpoch(), true);
             getProperty(propname)->push();
         }
-
     }
 
 
@@ -147,6 +154,7 @@ void Meteo::declareNewGraph(const QString  &pName)
     OST::PropertyMulti* pm = new OST::PropertyMulti(pName, lab, OST::ReadOnly, "Measures", "", 0, false, true);
     pm->setShowGrid(false);
     pm->setGridLimit(getInt("parms", "histo"));
+    pm->setShowElts(false);
     auto* t = new OST::ElementFloat("Time", "", "");
     pm->addElt("time", t);
     t = new OST::ElementFloat(pName, "", "");
