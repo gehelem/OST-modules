@@ -15,7 +15,7 @@
         "elements": {
             "dpv": {
                 "type":"string",
-                "elementLabel": "Device - Property - Value",
+                "label": "Device - Property - Element",
                 "value":"",
                 "listOfValues":{
                 }
