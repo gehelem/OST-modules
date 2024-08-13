@@ -147,7 +147,9 @@ void Allsky::startBatch()
 void Allsky::processFinished(int exitCode, QProcess::ExitStatus exitStatus)
 {
     Q_UNUSED(exitStatus);
-    getValueVideo("timelapse", "video1")->setValue(getModuleName() + "/batch/" + getModuleName() + ".mp4", true);
+    OST::VideoData v;
+    v.url = getModuleName() + "/batch/" + getModuleName() + ".mp4";
+    getEltVideo("timelapse", "video1")->setValue(v, true);
     sendMessage("PROCESS FINISHED (" + QString::number(exitCode) + ")");
 }
 void Allsky::processOutput()
@@ -196,7 +198,7 @@ void Allsky::newBLOB(INDI::PropertyBlob pblob)
         mKheog.save(getWebroot() + "/" + getModuleName() + "-KHEOGRAM" + ".jpeg", "JPG", 100);
         OST::ImgData kh;
         kh.mUrlJpeg = getModuleName() + "-KHEOGRAM" + ".jpeg";
-        getValueImg("kheogram", "image1")->setValue(kh, true);
+        getEltImg("kheogram", "image1")->setValue(kh, true);
 
         r.setRect(0, 0, im.width(), im.height() / 10);
         QPainter p;
@@ -211,7 +213,7 @@ void Allsky::newBLOB(INDI::PropertyBlob pblob)
         im.save(getWebroot() + "/" + getModuleName() + QString(pblob.getDeviceName()) + ".jpeg", "JPG", 100);
         OST::ImgData dta = _image->ImgStats();
         dta.mUrlJpeg = getModuleName() + QString(pblob.getDeviceName()) + ".jpeg";
-        getValueImg("image", "image")->setValue(dta, true);
+        getEltImg("image", "image")->setValue(dta, true);
 
         QString _n = QStringLiteral("%1").arg(_index, 10, 10, QLatin1Char('0'));
         im.save(getWebroot() + "/" + getModuleName() + "/batch/" + _n + ".jpeg", "JPG", 100);
