@@ -1,0 +1,39 @@
+{
+"properties":{
+    "selection": {
+        "devcat": "Control",
+        "order": "Control000",
+        "group": "",
+        "permission": 2,
+        "rule":0,
+        "propertyLabel": "Indi widgets to watch",
+        "arrayLimit":255,
+        "hasArray":true,
+        "hasprofile":true,
+        "elements": {
+            "dpv": {
+                "type":"string",
+                "elementLabel": "Device - Property - Value",
+                "value":"",
+                "listOfValues":{
+                }
+            }
+        }
+    },
+    "limit": {
+        "devcat": "Control",
+        "order": "Control200",
+        "group": "",
+        "permission": 2,
+        "value": 200,
+        "rule":0,
+        "propertyLabel": "Number of values ​​to keep",
+        "elements": {
+            "save": {
+                "elementLabel": "Set",
+                "value":false
+            }
+        }
+    }
+}
+}

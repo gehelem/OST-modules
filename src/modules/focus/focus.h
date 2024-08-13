@@ -3,6 +3,7 @@
 #include <indimodule.h>
 #include <fileio.h>
 #include <solver.h>
+#include <QScxmlStateMachine>
 
 #if defined(FOCUS_MODULE)
 #  define MODULE_INIT Q_DECL_EXPORT
@@ -12,48 +13,16 @@
 
 #include <QStateMachine>
 
-class MODULE_INIT FocusModule : public IndiModule
+
+class MODULE_INIT Focus : public IndiModule
 {
         Q_OBJECT
 
     public:
-        FocusModule(QString name, QString label, QString profile, QVariantMap availableModuleLibs);
-        ~FocusModule();
+        Focus(QString name, QString label, QString profile, QVariantMap availableModuleLibs);
+        ~Focus();
 
     signals:
-        void focuserPositionChanged(const double &newFocuserPosition);
-        //void expdone(IBLOB *bp);
-        void focuserReachedPosition();
-        void valueChanged(const double &newValue);
-        //void valueChanged(const QString qnewValue);
-
-        void RequestFrameResetDone();
-        void FrameResetDone();
-        void RequestBacklashDone();
-        void BacklashDone();
-        void RequestGotoStartDone();
-        void GotoStartDone();
-
-        void RequestExposureDone();
-        void ExposureDone();
-        void FindStarsDone();
-        void NextLoop();
-        void RequestGotoNextDone();
-        void GotoNextDone();
-        void LoopFinished();
-
-        void RequestBacklashBestDone();
-        void BacklashBestDone();
-        void RequestGotoBestDone();
-        void GotoBestDone();
-        void RequestExposureBestDone();
-        void ExposureBestDone();
-        void ComputeResultDone();
-        void InitLoopFrameDone();
-        void LoopFrameDone();
-        void NextFrame();
-
-        void blobloaded();
         void cameraAlert();
         void abort();
     public slots:
@@ -89,30 +58,34 @@ class MODULE_INIT FocusModule : public IndiModule
         void startCoarse();
 
 
-        QString _camera  = "CCD Simulator";
-        QString _focuser = "Focuser Simulator";
-        QString _mount = "Telescope Simulator";
         bool    _newblob;
 
         int    _startpos = 30000;
         int    _backlash = 100;
         int    _iterations = 3;
         int    _steps = 3000;
-        int    _exposure = 2;
         int    _loopIterations = 2;
         int    _loopIteration;
+        QList<int> _zoneLoopIteration;
         double _loopHFRavg;
+        int mZoning = 2;
+        QList<double> _zoneloopHFRavg;
 
         int    _iteration;
         double _bestpos;
         double _bestposfit;
+        QList<double> _zoneBestposfit;
         double _besthfr;
         double  _focuserPosition;
-        QStateMachine _machine;
+        QScxmlStateMachine *pMachine;
 
         std::vector<double> _posvector;
         std::vector<double> _hfdvector;
         std::vector<double> _coefficients;
+
+        QList<std::vector<double>> _zonePosvector;
+        QList<std::vector<double>> _zoneHfdvector;
+        QList<std::vector<double>> _zoneCoefficients;
 
         QPointer<fileio> _image;
         Solver _solver;
@@ -121,7 +94,7 @@ class MODULE_INIT FocusModule : public IndiModule
 
 };
 
-extern "C" MODULE_INIT FocusModule *initialize(QString name, QString label, QString profile,
+extern "C" MODULE_INIT Focus *initialize(QString name, QString label, QString profile,
         QVariantMap availableModuleLibs);
 
 #endif

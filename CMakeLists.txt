@@ -20,6 +20,7 @@ add_compile_options(-fPIC)
 #endforeach()
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 
+
 #find_package(Qt5Core)
 find_package(CFITSIO REQUIRED)
 find_package(INDI REQUIRED)
@@ -28,10 +29,10 @@ find_package(ZLIB REQUIRED)
 find_package(Threads REQUIRED)
 find_package(Nova REQUIRED)
 find_package(GSL REQUIRED)
-#find_package(OpenCV REQUIRED )
+find_package(OpenCV REQUIRED )
 find_package(WCSLIB REQUIRED)
-find_package(QT NAMES Qt5 COMPONENTS Gui Widgets Core Concurrent Network WebSockets Sql REQUIRED)
-find_package(Qt5 REQUIRED COMPONENTS Gui Widgets Core Concurrent Network WebSockets Sql)
+find_package(QT NAMES Qt5 COMPONENTS Gui Widgets Core Concurrent Network WebSockets Sql Scxml Multimedia REQUIRED)
+find_package(Qt5 5.15.2 REQUIRED COMPONENTS Gui Widgets Core Concurrent Network WebSockets Sql Multimedia Scxml)
 find_package(StellarSolver REQUIRED)
 find_package(OSTSERVER REQUIRED)
 
@@ -59,7 +60,7 @@ include(CMakeCommon)
 # Focus module
 #list (APPEND RESOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/focus/focus.qrc)
 #qt5_add_resources (RCC_SOURCES ${RESOURCES})
-add_library(ostfocuser SHARED
+add_library(ostfocus SHARED
     ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/focus/focus.h
     ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/focus/focus.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/focus/focus.qrc
@@ -67,32 +68,16 @@ add_library(ostfocuser SHARED
     ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/focus/polynomialfit.h
     ${RCC_SOURCES}
 )
-target_link_libraries(ostfocuser PRIVATE
+target_link_libraries(ostfocus PRIVATE
     ${OST_LIBRARY_INDI}
     Qt${QT_VERSION_MAJOR}::Core
     Qt${QT_VERSION_MAJOR}::Concurrent
     Qt${QT_VERSION_MAJOR}::Widgets
+    Qt${QT_VERSION_MAJOR}::Scxml
     Threads::Threads
     z
 )
-target_compile_definitions(ostfocuser PRIVATE FOCUS_MODULE)
-
-
-# Indipanel module
-add_library(ostindipanel SHARED
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/indipanel/indipanel.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/indipanel/indipanel.cpp
-)
-target_link_libraries(ostindipanel PRIVATE
-    ${OST_LIBRARY_INDI}
-    Qt${QT_VERSION_MAJOR}::Core
-    Qt${QT_VERSION_MAJOR}::Concurrent
-    Qt${QT_VERSION_MAJOR}::Widgets
-    Threads::Threads
-    z
-)
-target_compile_definitions(ostindipanel PRIVATE INDIPANEL_MODULE)
-
+target_compile_definitions(ostfocus PRIVATE FOCUS_MODULE)
 
 # guider module
 add_library(ostguider SHARED
@@ -116,15 +101,15 @@ target_compile_definitions(ostguider PRIVATE GUIDER_MODULE)
 #    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/polar/polar.cpp
 #    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/polar/rotations.h
 #    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/polar/rotations.cpp
+#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/polar/polar.qrc
 #)
 #target_link_libraries(ostpolar PRIVATE
-#    indiclient
+#    ${OST_LIBRARY_INDI}
 #    Qt${QT_VERSION_MAJOR}::Core
 #    Qt${QT_VERSION_MAJOR}::Concurrent
-#    ${STELLARSOLVER_LIBRARIES}
-#    ${INDI_LIBRARIES} ${CFITSIO_LIBRARIES} ${ZLIB_LIBRARY}  ${NOVA_LIBRARIES}
-#    ${GSL_LIBRARIES} ${ZLIB_LIBRARY} ${CIMG_LIBRARIES} ${OpenCV_LIBS}
-#    z -lpthread
+#    Qt${QT_VERSION_MAJOR}::Widgets
+#    Threads::Threads
+#    z
 #)
 #target_compile_definitions(ostpolar PRIVATE POLAR_MODULE)
 #
@@ -144,22 +129,22 @@ target_link_libraries(ostinspector PRIVATE
 )
 target_compile_definitions(ostinspector PRIVATE INSPECTOR_MODULE)
 
-# Allsky module
-add_library(ostallsky SHARED
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/allsky/allsky.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/allsky/allsky.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/allsky/allsky.qrc
-)
-target_link_libraries(ostallsky PRIVATE
-    ${OST_LIBRARY_INDI}
-    Qt${QT_VERSION_MAJOR}::Core
-    Qt${QT_VERSION_MAJOR}::Concurrent
-    Qt${QT_VERSION_MAJOR}::Widgets
-    Threads::Threads
-    z
-)
-target_compile_definitions(ostallsky PRIVATE ALLSKY_MODULE)
-
+## Allsky module
+#add_library(ostallsky SHARED
+#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/allsky/allsky.h
+#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/allsky/allsky.cpp
+#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/allsky/allsky.qrc
+#)
+#target_link_libraries(ostallsky PRIVATE
+#    ${OST_LIBRARY_INDI}
+#    Qt${QT_VERSION_MAJOR}::Core
+#    Qt${QT_VERSION_MAJOR}::Concurrent
+#    Qt${QT_VERSION_MAJOR}::Widgets
+#    Threads::Threads
+#    z
+#)
+#target_compile_definitions(ostallsky PRIVATE ALLSKY_MODULE)
+#
 # sequencer module
 add_library(ostsequencer SHARED
     ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/sequencer/sequencer.h
@@ -192,16 +177,55 @@ target_link_libraries(ostnavigator PRIVATE
 )
 target_compile_definitions(ostnavigator PRIVATE NAVIGATOR_MODULE)
 
+## meteo module
+#add_library(ostmeteo SHARED
+#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/meteo/meteo.h
+#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/meteo/meteo.cpp
+#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/meteo/meteo.qrc
+#)
+#target_link_libraries(ostmeteo PRIVATE
+#    ${OST_LIBRARY_INDI}
+#    Qt${QT_VERSION_MAJOR}::Core
+#    Qt${QT_VERSION_MAJOR}::Concurrent
+#    Qt${QT_VERSION_MAJOR}::Widgets
+#    Threads::Threads
+#    z
+#)
+#target_compile_definitions(ostmeteo PRIVATE METEO_MODULE)
+#
+## Blind periodic error correction module
+#add_library(ostblindpec SHARED
+#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/blindpec/blindpec.h
+#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/blindpec/blindpec.cpp
+#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/blindpec/blindpec.qrc
+#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/blindpec/CV_SubPix.h
+#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/blindpec/CV_SubPix.cpp
+#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/blindpec/tacquisitionvideo.h
+#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/blindpec/tacquisitionvideo.cpp
+#)
+#target_link_libraries(ostblindpec PRIVATE
+#    ${OST_LIBRARY_INDI}
+#    Qt${QT_VERSION_MAJOR}::Core
+#    Qt${QT_VERSION_MAJOR}::Concurrent
+#    Qt${QT_VERSION_MAJOR}::Widgets
+#    Qt${QT_VERSION_MAJOR}::Multimedia
+#    ${OpenCV_LIBS}
+#    Threads::Threads
+#    z
+#)
+#target_compile_definitions(ostblindpec PRIVATE BLINDPEC_MODULE)
 
 
 install(TARGETS
-    ostallsky
+#    ostallsky
     ostinspector
     ostnavigator
     ostguider
-    ostindipanel
-    ostfocuser
+    ostfocus
     ostsequencer
+#    ostmeteo
+#    ostpolar
+#    ostblindpec
     RUNTIME DESTINATION "/usr/bin"
     LIBRARY DESTINATION "/usr/lib"
 )
@@ -216,5 +240,6 @@ install(TARGETS
 #message(STATUS "OST_INCLUDE_DIR=${OST_INCLUDE_DIR}")
 #message(STATUS "OST_LIBRARY_BASE=${OST_LIBRARY_BASE}")
 #message(STATUS "OST_LIBRARY_INDI=${OST_LIBRARY_INDI}")
+
 
 

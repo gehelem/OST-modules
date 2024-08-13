@@ -10,13 +10,13 @@
 #  define MODULE_INIT Q_DECL_IMPORT
 #endif
 
-class MODULE_INIT InspectorModule : public IndiModule
+class MODULE_INIT Inspector : public IndiModule
 {
         Q_OBJECT
 
     public:
-        InspectorModule(QString name, QString label, QString profile, QVariantMap availableModuleLibs);
-        ~InspectorModule();
+        Inspector(QString name, QString label, QString profile, QVariantMap availableModuleLibs);
+        ~Inspector();
 
     signals:
 
@@ -59,7 +59,6 @@ class MODULE_INIT InspectorModule : public IndiModule
         void SMAbort();
         void startCoarse();
 
-        QString _camera  = "CCD Simulator";
         bool    _newblob;
 
         QPointer<fileio> _image;
@@ -71,17 +70,20 @@ class MODULE_INIT InspectorModule : public IndiModule
         int    _loopIterations = 2;
         int    _loopIteration;
         double _loopHFRavg;
-        double _exposure = 2;
 
         int    _iteration;
         double _bestpos;
         double _bestposfit;
         double _besthfr;
         QString mState = "idle";
+        double upperLeftHFR;
+        double lowerLeftHFR;
+        double upperRightHFR;
+        double lowerRightHFR;
 
 };
 
-extern "C" MODULE_INIT InspectorModule *initialize(QString name, QString label, QString profile,
+extern "C" MODULE_INIT Inspector *initialize(QString name, QString label, QString profile,
         QVariantMap availableModuleLibs);
 
 #endif
