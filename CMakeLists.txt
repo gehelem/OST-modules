@@ -129,22 +129,22 @@ target_link_libraries(ostinspector PRIVATE
 )
 target_compile_definitions(ostinspector PRIVATE INSPECTOR_MODULE)
 
-## Allsky module
-#add_library(ostallsky SHARED
-#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/allsky/allsky.h
-#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/allsky/allsky.cpp
-#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/allsky/allsky.qrc
-#)
-#target_link_libraries(ostallsky PRIVATE
-#    ${OST_LIBRARY_INDI}
-#    Qt${QT_VERSION_MAJOR}::Core
-#    Qt${QT_VERSION_MAJOR}::Concurrent
-#    Qt${QT_VERSION_MAJOR}::Widgets
-#    Threads::Threads
-#    z
-#)
-#target_compile_definitions(ostallsky PRIVATE ALLSKY_MODULE)
-#
+# Allsky module
+add_library(ostallsky SHARED
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/allsky/allsky.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/allsky/allsky.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/allsky/allsky.qrc
+)
+target_link_libraries(ostallsky PRIVATE
+    ${OST_LIBRARY_INDI}
+    Qt${QT_VERSION_MAJOR}::Core
+    Qt${QT_VERSION_MAJOR}::Concurrent
+    Qt${QT_VERSION_MAJOR}::Widgets
+    Threads::Threads
+    z
+)
+target_compile_definitions(ostallsky PRIVATE ALLSKY_MODULE)
+
 # sequencer module
 add_library(ostsequencer SHARED
     ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/sequencer/sequencer.h
@@ -217,7 +217,7 @@ target_compile_definitions(ostnavigator PRIVATE NAVIGATOR_MODULE)
 
 
 install(TARGETS
-#    ostallsky
+    ostallsky
     ostinspector
     ostnavigator
     ostguider
