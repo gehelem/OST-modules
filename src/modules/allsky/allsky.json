@@ -31,11 +31,16 @@
     },
     "log": {
         "devcat": "Results",
-        "grid":[],
         "rule":0,
         "order":"Results100",
-        "hasArray":true,
-        "showArray":false,
+        "hasGrid":true,
+        "showGrid":false,
+        "showElts":true,
+        "graphType":"DY",
+        "graphParams":{
+            "D":"time",
+            "Y":"snr"
+        },
         "elements": {
                 "time": {
                     "label": "Time",
@@ -46,14 +51,6 @@
                     "label": "SNR",
                     "type": "float",
                     "value":0
-                },
-                "graph": {
-                    "type": "graph",
-                    "graphtype":"DY",
-                    "params":{
-                        "D":"time",
-                        "Y":"snr"
-                    }
                 }
         },
         "group": "",
