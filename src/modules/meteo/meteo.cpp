@@ -76,6 +76,20 @@ void Meteo::OnMyExternalEvent(const QString &pEventType, const QString  &pEventM
                 QString id = getString("selection", "dpv", getProperty("selection")->getGrid().size() - 1);
                 declareNewGraph(id);
             }
+            if (pEventType == "Fpropposticon1")
+            {
+                if (keyprop == "search")
+                {
+                    updateSearchList();
+                }
+            }
+            if (pEventType == "Fpropposticon2")
+            {
+                if (keyprop == "search")
+                {
+                    addMeasure(getString("search", "dpvsearchid"));
+                }
+            }
 
         }
 
@@ -192,4 +206,36 @@ void Meteo::declareNewGraph(const QString  &pName)
 
     createProperty(pName, pm);
 
+}
+void Meteo::updateSearchList(void)
+{
+    QString sid = getString("search", "dpvsearchid");
+    QString slab = getString("search", "dpvsearchlab");
+    sendMessage("Searching " + sid + "/" + slab);
+    getProperty("search")->clearGrid();
+
+    for (auto i = mAvailableMeasures.cbegin(), end = mAvailableMeasures.cend(); i != end; ++i)
+    {
+        if ((i.key().contains(sid)) && (i.value().contains(slab)))
+        {
+            getEltString("search", "dpvsearchid")->setValue(i.key(), false);
+            getEltString("search", "dpvsearchlab")->setValue(i.value(), false);
+            getProperty("search")->push();
+        }
+    }
+
+
+}
+
+void Meteo::addMeasure(QString s)
+{
+    for (auto i = mAvailableMeasures.cbegin(), end = mAvailableMeasures.cend(); i != end; ++i)
+    {
+        if (i.key() == s)
+        {
+            sendMessage("Adding " + s);
+            getEltString("selection", "dpv")->setValue(i.key(), false);
+            getProperty("selection")->push();
+        }
+    }
 }

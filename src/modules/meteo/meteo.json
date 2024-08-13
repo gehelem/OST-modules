@@ -6,11 +6,11 @@
         "group": "",
         "permission": 2,
         "rule":0,
-        "propertyLabel": "Indi widgets to watch",
+        "label": "Indi widgets to watch",
         "arrayLimit":255,
         "hasGrid":true,
         "showGrid":true,
-        "showElts":false,
+        "showElts":true,
         "hasprofile":true,
         "elements": {
             "dpv": {
@@ -21,6 +21,37 @@
                 }
             }
         }
+    },
+    "search": {
+        "devcat": "Control",
+        "order": "Control000",
+        "group": "",
+        "permission": 2,
+        "rule":0,
+        "label": "Indi widgets to search",
+        "arrayLimit":255,
+        "hasGrid":true,
+        "showGrid":true,
+        "showElts":true,
+        "hasprofile":false,
+        "posticon1":"autorenew",
+        "posticon2":"check_circle_outline",
+        "elements": {
+            "dpvsearchid": {
+                "directedit":true,
+                "autoupdate":true,
+                "type":"string",
+                "label": "Device - Property - Element (id)"
+            },
+            "dpvsearchlab": {
+                "directedit":true,
+                "autoupdate":true,
+                "type":"string",
+                "label": "Device - Property - Element (label)"
+            }
+
+        }
     }
+
 }
 }

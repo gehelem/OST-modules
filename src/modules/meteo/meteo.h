@@ -30,6 +30,8 @@ class MODULE_INIT Meteo : public IndiModule
 
         void initIndi(void);
         void declareNewGraph(const QString  &pName);
+        void updateSearchList(void);
+        void addMeasure(QString s);
 
         QString mState = "idle";
         QMap<QString, QString> mAvailableMeasures;
