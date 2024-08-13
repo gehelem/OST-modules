@@ -19,16 +19,17 @@ Meteo::Meteo(QString name, QString label, QString profile, QVariantMap available
 
     connectIndi();
     connectAllDevices();
-    OST::ValueInt* i = new OST::ValueInt("Refresh interval (s)", "0", "");
+
+    auto* i = new OST::ElementInt("Refresh interval (s)", "0", "");
     i->setValue(5, false);
     i->setDirectEdit(true);
     i->setAutoUpdate(true);
-    getProperty("parms")->addValue("interval", i);
-    i = new OST::ValueInt("Keep x values", "0", "");
+    getProperty("parms")->addElt("interval", i);
+    i = new OST::ElementInt("Keep x values", "0", "");
     i->setValue(10, false);
     i->setDirectEdit(true);
     i->setAutoUpdate(true);
-    getProperty("parms")->addValue("histo", i);
+    getProperty("parms")->addElt("histo", i);
     connect(&mTimer, &QTimer::timeout, this, &Meteo::OnTimer);
     mTimer.start(getInt("parms", "interval") * 1000);
 
@@ -72,9 +73,11 @@ void Meteo::OnMyExternalEvent(const QString &pEventType, const QString  &pEventM
             if (pEventType == "Flcreate" && keyprop == "selection")
             {
                 getStore()[keyprop]->newLine(pEventData[keyprop].toMap()["elements"].toMap());
-                QString id = getString("selection", "dpv", getOstElementGrid(keyprop, "dpv").size() - 1);
+                //QString id = getString("selection", "dpv", getOstElementGrid(keyprop, "dpv").size() - 1);
+                QString id = QString::number(getProperty("selection")->getGrid().size() - 1);
                 declareNewGraph(id);
             }
+
         }
 
     }
@@ -92,15 +95,15 @@ void Meteo::updateProperty(INDI::Property property)
             {
                 QString lab = QString(n.getDeviceName()) + "-" +  n.getLabel() + "-" + n[i].getLabel();
                 mAvailableMeasures[propname] = lab;
-                getValueString("selection", "dpv")->lovAdd(propname, lab);
+                getEltString("selection", "dpv")->lovAdd(propname, lab);
                 //sendMessage(lab);
             }
 
             if ( getOstElementGrid("selection", "dpv").contains(propname))
             {
                 declareNewGraph(propname);
-                getValueFloat(propname, "time")->setValue(QDateTime::currentDateTime().toMSecsSinceEpoch(), false);
-                getValueFloat(propname, propname)->setValue(n[i].getValue(), false);
+                getEltFloat(propname, "time")->setValue(QDateTime::currentDateTime().toMSecsSinceEpoch(), false);
+                getEltFloat(propname, propname)->setValue(n[i].getValue(), false);
             }
         }
     }
@@ -119,9 +122,9 @@ void Meteo::OnTimer()
         declareNewGraph(propname);
         if (getStore().contains(propname))
         {
-            getProperty(propname)->setArrayLimit(getInt("parms", "histo"));
+            getProperty(propname)->setGridLimit(getInt("parms", "histo"));
 
-            getValueFloat(propname, "time")->setValue(QDateTime::currentDateTime().toMSecsSinceEpoch(), true);
+            getEltFloat(propname, "time")->setValue(QDateTime::currentDateTime().toMSecsSinceEpoch(), true);
             getProperty(propname)->push();
         }
 
@@ -142,26 +145,19 @@ void Meteo::declareNewGraph(const QString  &pName)
     }
     QString lab = mAvailableMeasures[pName];
     OST::PropertyMulti* pm = new OST::PropertyMulti(pName, lab, OST::ReadOnly, "Measures", "", 0, false, true);
-    pm->setShowArray(false);
-    pm->setArrayLimit(getInt("parms", "histo"));
-    OST::ValueFloat* t = new OST::ValueFloat("Time", "", "");
-    pm->addValue("time", t);
-    t = new OST::ValueFloat(pName, "", "");
-    pm->addValue(pName, t);
-    OST::ValueGraph* g = new OST::ValueGraph("", "", "");
+    pm->setShowGrid(false);
+    pm->setGridLimit(getInt("parms", "histo"));
+    auto* t = new OST::ElementFloat("Time", "", "");
+    pm->addElt("time", t);
+    t = new OST::ElementFloat(pName, "", "");
+    pm->addElt(pName, t);
 
     OST::GraphDefs def;
     def.type = OST::GraphType::DY;
     def.params["D"] = "time";
     def.params["Y"] = pName;
-    g->setGraphDefs(def);
-    pm->addValue("graph" + pName, g);
+    pm->setGraphDefs(def);
 
     createProperty(pName, pm);
-
-
-    //setOstPropertyAttribute(pName, "gridlimit", 1000, false);
-    //setOstPropertyAttribute(pName, "grid", QVariantList(), false);
-    //setOstPropertyAttribute(pName, "GDY", gdy, true);
 
 }

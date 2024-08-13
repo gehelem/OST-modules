@@ -8,7 +8,9 @@
         "rule":0,
         "propertyLabel": "Indi widgets to watch",
         "arrayLimit":255,
-        "hasArray":true,
+        "hasGrid":true,
+        "showGrid":true,
+        "showElts":false,
         "hasprofile":true,
         "elements": {
             "dpv": {
