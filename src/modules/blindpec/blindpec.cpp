@@ -73,35 +73,26 @@ void BlindPec::OnMyExternalEvent(const QString &eventType, const QString  &event
             foreach(const QString &keyelt, eventData[keyprop].toMap()["elements"].toMap().keys())
             {
                 QVariant val = eventData[keyprop].toMap()["elements"].toMap()[keyelt].toMap()["value"];
-                if (keyprop == "revCorrections"  && (keyelt == "revRA" || keyelt == "revDE" ))
-                {
-                    setOstElementValue(keyprop, keyelt, val, true);
-                }
                 if (keyprop == "guideParams"  && keyelt == "graphsize" )
                 {
                     if (val.toInt() <= 0 )
                     {
                         sendWarning("Invalid graph size value(" + val.toString() + ")" );
-                        setOstElementValue("guideParams", "graphsize", (int)getInt("guideParams", "graphsize"), true);
                     }
                     else
                     {
-                        setOstElementValue("guideParams", "graphsize", val.toInt(), true);
-                        getProperty("guiding")->setArrayLimit(val.toInt());
+                        getEltInt("guideParams", "graphsize")->setValue(val.toInt(), true);
+                        getProperty("guiding")->setGridLimit(val.toInt());
 
                     }
                 }
                 if (keyprop == "disCorrections"  && (keyelt == "disRA+" || keyelt == "disRA-" || keyelt == "disDE+" || keyelt == "disDE-"))
                 {
-                    setOstElementValue(keyprop, keyelt, val, true);
                 }
                 if (keyprop == "actions")
                 {
                     if (keyelt == "calguide")
                     {
-                        if (setOstElementValue(keyprop, keyelt, false, false))
-                        {
-                        }
                     }
                     if (keyelt == "abortguider")
                     {
@@ -112,55 +103,44 @@ void BlindPec::OnMyExternalEvent(const QString &eventType, const QString  &event
                         acquisition->wait();
                         delete acquisition;
                         acquisition = NULL;
-                        if (setOstElementValue(keyprop, keyelt, false, false))
-                        {
-
-                        }
                     }
                     if (keyelt == "calibrate")
                     {
-                        if (setOstElementValue(keyprop, keyelt, false, false))
-                        {
-                        }
                     }
                     if (keyelt == "guide")
                     {
-                        if (setOstElementValue(keyprop, keyelt, false, false))
+                        qDebug() << "guide";
+                        getProperty("guiding")->clearGrid();
+                        QString strdt = QDateTime::currentDateTime().toString(Qt::ISODateWithMs);
+                        strdt.replace("T", " ");
+                        outfile.setFileName(QDateTime::currentDateTime().toString(Qt::ISODateWithMs) + ".csv");
+                        guidelog.setFileName("PHD2_GuideLog_" + QDateTime::currentDateTime().toString(Qt::ISODateWithMs) + ".txt");
+                        if (guidelog.open(QIODevice::WriteOnly | QIODevice::Append))
                         {
-                            qDebug() << "guide";
-                            getProperty("guiding")->clearGrid();
-                            QString strdt = QDateTime::currentDateTime().toString(Qt::ISODateWithMs);
-                            strdt.replace("T", " ");
-                            outfile.setFileName(QDateTime::currentDateTime().toString(Qt::ISODateWithMs) + ".csv");
-                            guidelog.setFileName("PHD2_GuideLog_" + QDateTime::currentDateTime().toString(Qt::ISODateWithMs) + ".txt");
-                            if (guidelog.open(QIODevice::WriteOnly | QIODevice::Append))
-                            {
-                                QTextStream in(&guidelog);
-                                in << "BlindPEC\n";
-                                in << "\n";
-                                in << "Guiding Begins at " << strdt << "\n";
-                                //in << "Pixel scale = 2.75 arc-sec/px, Binning = 1, Focal length = 180 mm\n";
-                                in << "Pixel scale = " << QString::number(15 / getFloat("guideParams", "pixsec")).replace(',',
-                                        '.') << " arc-sec/px, Binning = 1, Focal length = 800 mm\n";
-                                in << "RA = 03.48 hr, Dec = 0.0 deg, Hour angle = N/A hr, Pier side = East, Rotator pos = N/A, Alt = 52.1 deg, Az = 0.01 deg\n";
-                                in << "Mount = mount, xAngle = 263.6, xRate = 2.370, yAngle = 40.7, yRate = 6.464\n";
-                                in << "Frame,Time,mount,dx,dy,RARawDistance,DECRawDistance,RAGuideDistance,DECGuideDistance,RADuration,RADirection,DECDuration,DECDirection,XStep,YStep,StarMass,SNR,ErrorCode\n";
-                            }
-                            guidelog.close();
-                            numframe = 0;
-                            offset = 0;
-                            offsety = 0;
-                            driftprev = 0;
-                            drifts.clear();
-                            avgdrifts.clear();
-                            dtStart = QDateTime::currentDateTime();
-                            //mytimer.start(getInt("guideParams", "interval") );
-                            acquisition = new TAcquisitionVideo(QCameraInfo::availableCameras().count() - 1);
-                            connect(acquisition, &TAcquisitionVideo::nouvelleFrame, this, &BlindPec::traiterFrame);
-                            acquisition->start();
+                            QTextStream in(&guidelog);
+                            in << "BlindPEC\n";
+                            in << "\n";
+                            in << "Guiding Begins at " << strdt << "\n";
+                            //in << "Pixel scale = 2.75 arc-sec/px, Binning = 1, Focal length = 180 mm\n";
+                            in << "Pixel scale = " << QString::number(15 / getFloat("guideParams", "pixsec")).replace(',',
+                                    '.') << " arc-sec/px, Binning = 1, Focal length = 800 mm\n";
+                            in << "RA = 03.48 hr, Dec = 0.0 deg, Hour angle = N/A hr, Pier side = East, Rotator pos = N/A, Alt = 52.1 deg, Az = 0.01 deg\n";
+                            in << "Mount = mount, xAngle = 263.6, xRate = 2.370, yAngle = 40.7, yRate = 6.464\n";
+                            in << "Frame,Time,mount,dx,dy,RARawDistance,DECRawDistance,RAGuideDistance,DECGuideDistance,RADuration,RADirection,DECDuration,DECDirection,XStep,YStep,StarMass,SNR,ErrorCode\n";
                         }
+                        guidelog.close();
+                        numframe = 0;
+                        offset = 0;
+                        offsety = 0;
+                        driftprev = 0;
+                        drifts.clear();
+                        avgdrifts.clear();
+                        dtStart = QDateTime::currentDateTime();
+                        //mytimer.start(getInt("guideParams", "interval") );
+                        acquisition = new TAcquisitionVideo(QCameraInfo::availableCameras().count() - 1);
+                        connect(acquisition, &TAcquisitionVideo::nouvelleFrame, this, &BlindPec::traiterFrame);
+                        acquisition->start();
                     }
-
                 }
             }
         }
@@ -250,7 +230,7 @@ void BlindPec::newBLOB(INDI::PropertyBlob pblob)
         im.save(getWebroot() + "/" + getModuleName() + ".jpeg", "JPG", 100);
         OST::ImgData dta = _image->ImgStats();
         dta.mUrlJpeg = getModuleName() + ".jpeg";
-        getValueImg("image", "image")->setValue(dta, true);
+        getEltImg("image", "image")->setValue(dta, true);
 
         /**************************************************************************************/
         uint8_t *m_ImageBuffer { nullptr };
@@ -515,11 +495,11 @@ void BlindPec::traiterFrame(Mat frameIn)
             //qDebug() << "drift request " << avgdrift << ddrift << "->" << avgdrift << _pulseE << _pulseW;
 
             double tt = QDateTime::currentDateTime().toMSecsSinceEpoch();
-            setOstElementValue("guiding", "time", tt, false);
-            setOstElementValue("guiding", "RA", avgdrift * ech, false);
-            setOstElementValue("guiding", "DE", 0, false);
-            setOstElementValue("guiding", "pDE", 0, false);
-            setOstElementValue("guiding", "pRA", _pulseE - _pulseW, false);
+            getEltFloat("guiding", "time")->setValue(tt, false);
+            getEltFloat("guiding", "RA")->setValue(avgdrift * ech, false);
+            getEltFloat("guiding", "DE")->setValue(0, false);
+            getEltFloat("guiding", "pDE")->setValue(0, false);
+            getEltFloat("guiding", "pRA")->setValue(_pulseE - _pulseW, false);
             getProperty("guiding")->push();
 
 
@@ -590,7 +570,7 @@ void BlindPec::traiterFrame(Mat frameIn)
             image.save(getWebroot() + "/" + getModuleName() + ".jpeg", "JPG", 100);
             OST::ImgData dta;
             dta.mUrlJpeg = getModuleName() + ".jpeg";
-            getValueImg("image", "image")->setValue(dta, true);
+            getEltImg("image", "image")->setValue(dta, true);
 
 
 
