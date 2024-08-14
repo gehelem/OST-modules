@@ -95,24 +95,24 @@ target_link_libraries(ostguider PRIVATE
 )
 target_compile_definitions(ostguider PRIVATE GUIDER_MODULE)
 
-## polar module
-#add_library(ostpolar SHARED
-#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/polar/polar.h
-#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/polar/polar.cpp
-#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/polar/rotations.h
-#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/polar/rotations.cpp
-#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/polar/polar.qrc
-#)
-#target_link_libraries(ostpolar PRIVATE
-#    ${OST_LIBRARY_INDI}
-#    Qt${QT_VERSION_MAJOR}::Core
-#    Qt${QT_VERSION_MAJOR}::Concurrent
-#    Qt${QT_VERSION_MAJOR}::Widgets
-#    Threads::Threads
-#    z
-#)
-#target_compile_definitions(ostpolar PRIVATE POLAR_MODULE)
-#
+# polar module
+add_library(ostpolar SHARED
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/polar/polar.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/polar/polar.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/polar/rotations.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/polar/rotations.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/polar/polar.qrc
+)
+target_link_libraries(ostpolar PRIVATE
+    ${OST_LIBRARY_INDI}
+    Qt${QT_VERSION_MAJOR}::Core
+    Qt${QT_VERSION_MAJOR}::Concurrent
+    Qt${QT_VERSION_MAJOR}::Widgets
+    Threads::Threads
+    z
+)
+target_compile_definitions(ostpolar PRIVATE POLAR_MODULE)
+
 # inspector module
 add_library(ostinspector SHARED
     ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/inspector/inspector.h
@@ -224,7 +224,7 @@ install(TARGETS
     ostfocus
     ostsequencer
     ostmeteo
-#    ostpolar
+    ostpolar
 #    ostblindpec
     RUNTIME DESTINATION "/usr/bin"
     LIBRARY DESTINATION "/usr/lib"
