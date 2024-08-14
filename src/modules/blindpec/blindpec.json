@@ -56,17 +56,15 @@
         "order":"Control350",
         "permission": 0,
         "label": "Drift",
-        "hasArray":true,
-        "showArray":false,
+        "hasGrid":true,
+        "showGrid":false,
+        "gridLimit":200,
+        "graphType":"XY",
+        "graphParams":{
+            "X":"RA",
+            "Y":"DEC"
+        },
         "elements": {
-            "graph": {
-                "type": "graph",
-                "graphtype":"XY",
-                "params":{
-                    "X":"RA",
-                    "Y":"DEC"
-                }
-            },
             "RA": {
                 "type":"float",
                 "label": "RA",
@@ -85,21 +83,18 @@
         "order":"Control100",
         "permission": 0,
         "label": "Guiding graph",
-        "hasArray":true,
-        "arrayLimit":60,
-        "showArray":false,
+        "hasGrid":true,
+        "showGrid":false,
+        "gridLimit":20,
+        "graphType":"PHD",
+        "graphParams":{
+            "D":"time",
+            "RA":"RA",
+            "DE":"DE",
+            "pRA":"pRA",
+            "pDE":"pDE"
+        },
         "elements": {
-            "graph": {
-                "type": "graph",
-                "graphtype":"PHD",
-                "params":{
-                    "D":"time",
-                    "RA":"RA",
-                    "DE":"DE",
-                    "pRA":"pRA",
-                    "pDE":"pDE"
-                }
-            },
             "time": {
                 "type":"float",
                 "label": "time",
@@ -132,18 +127,15 @@
         "arrayLimit":50,
         "order":"Control300",
         "rule":0,
-        "hasArray":true,
-        "showArray":false,
+        "hasGrid":true,
+        "showGrid":false,
+        "gridLimit":20,
+        "graphType":"DY",
+        "graphParams":{
+            "D":"time",
+            "Y":"snr"
+        },
         "elements": {
-                "graph": {
-                    "type": "graph",
-                    "label": "graph",
-                    "graphtype":"DY",
-                    "params":{
-                        "D":"time",
-                        "Y":"snr"
-                    }
-                },
                 "time": {
                     "type":"float",
                     "label": "Time",
