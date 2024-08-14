@@ -199,13 +199,6 @@ void Polar::SMInit()
         return;
     }
 
-    /* get focal length */
-    if (!getModNumber(getString("devices", "mount"), "TELESCOPE_INFO", "TELESCOPE_FOCAL_LENGTH", _focalLength))
-    {
-        emit Abort();
-        return;
-    }
-
     /* get pixel size */
     if (!getModNumber(getString("devices", "camera"), "CCD_INFO", "CCD_PIXEL_SIZE", _pixelSize))
     {
@@ -227,8 +220,8 @@ void Polar::SMInit()
         return;
     }
 
-
-    _ccdSampling = 206 * _pixelSize / _focalLength;
+    _focalLength = getFloat("optic", "fl");
+    _ccdSampling = getSampling();
     _ccdFov = sqrt(square(_ccdX) + square(_ccdY)) * _ccdSampling;
 
     /* get mount Pier position  */
