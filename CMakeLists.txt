@@ -193,27 +193,27 @@ target_link_libraries(ostmeteo PRIVATE
 )
 target_compile_definitions(ostmeteo PRIVATE METEO_MODULE)
 
-## Blind periodic error correction module
-#add_library(ostblindpec SHARED
-#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/blindpec/blindpec.h
-#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/blindpec/blindpec.cpp
-#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/blindpec/blindpec.qrc
-#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/blindpec/CV_SubPix.h
-#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/blindpec/CV_SubPix.cpp
-#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/blindpec/tacquisitionvideo.h
-#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/blindpec/tacquisitionvideo.cpp
-#)
-#target_link_libraries(ostblindpec PRIVATE
-#    ${OST_LIBRARY_INDI}
-#    Qt${QT_VERSION_MAJOR}::Core
-#    Qt${QT_VERSION_MAJOR}::Concurrent
-#    Qt${QT_VERSION_MAJOR}::Widgets
-#    Qt${QT_VERSION_MAJOR}::Multimedia
-#    ${OpenCV_LIBS}
-#    Threads::Threads
-#    z
-#)
-#target_compile_definitions(ostblindpec PRIVATE BLINDPEC_MODULE)
+# Blind periodic error correction module
+add_library(ostblindpec SHARED
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/blindpec/blindpec.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/blindpec/blindpec.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/blindpec/blindpec.qrc
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/blindpec/CV_SubPix.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/blindpec/CV_SubPix.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/blindpec/tacquisitionvideo.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/blindpec/tacquisitionvideo.cpp
+)
+target_link_libraries(ostblindpec PRIVATE
+    ${OST_LIBRARY_INDI}
+    Qt${QT_VERSION_MAJOR}::Core
+    Qt${QT_VERSION_MAJOR}::Concurrent
+    Qt${QT_VERSION_MAJOR}::Widgets
+    Qt${QT_VERSION_MAJOR}::Multimedia
+    ${OpenCV_LIBS}
+    Threads::Threads
+    z
+)
+target_compile_definitions(ostblindpec PRIVATE BLINDPEC_MODULE)
 
 
 install(TARGETS
@@ -225,7 +225,7 @@ install(TARGETS
     ostsequencer
     ostmeteo
     ostpolar
-#    ostblindpec
+    ostblindpec
     RUNTIME DESTINATION "/usr/bin"
     LIBRARY DESTINATION "/usr/lib"
 )
