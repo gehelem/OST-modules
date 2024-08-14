@@ -19,16 +19,17 @@ Meteo::Meteo(QString name, QString label, QString profile, QVariantMap available
 
     connectIndi();
     connectAllDevices();
-    OST::ValueInt* i = new OST::ValueInt("Refresh interval (s)", "0", "");
+
+    auto* i = new OST::ElementInt("Refresh interval (s)", "0", "");
     i->setValue(5, false);
     i->setDirectEdit(true);
     i->setAutoUpdate(true);
-    getProperty("parms")->addValue("interval", i);
-    i = new OST::ValueInt("Keep x values", "0", "");
+    getProperty("parms")->addElt("interval", i);
+    i = new OST::ElementInt("Keep x values", "0", "");
     i->setValue(10, false);
     i->setDirectEdit(true);
     i->setAutoUpdate(true);
-    getProperty("parms")->addValue("histo", i);
+    getProperty("parms")->addElt("histo", i);
     connect(&mTimer, &QTimer::timeout, this, &Meteo::OnTimer);
     mTimer.start(getInt("parms", "interval") * 1000);
 
@@ -59,9 +60,8 @@ void Meteo::OnMyExternalEvent(const QString &pEventType, const QString  &pEventM
                         mTimer.start(getInt("parms", "interval") * 1000);
                     }
                 }
-
-
             }
+
             if (pEventType == "Fldelete" && keyprop == "selection")
             {
                 double line = pEventData[keyprop].toMap()["line"].toDouble();
@@ -69,18 +69,33 @@ void Meteo::OnMyExternalEvent(const QString &pEventType, const QString  &pEventM
                 getStore()[keyprop]->deleteLine(line);
                 deleteOstProperty(id);
             }
+
             if (pEventType == "Flcreate" && keyprop == "selection")
             {
                 getStore()[keyprop]->newLine(pEventData[keyprop].toMap()["elements"].toMap());
-                QString id = getString("selection", "dpv", getOstElementGrid(keyprop, "dpv").size() - 1);
+                QString id = getString("selection", "dpv", getProperty("selection")->getGrid().size() - 1);
                 declareNewGraph(id);
             }
+            if (pEventType == "Fpropposticon1")
+            {
+                if (keyprop == "search")
+                {
+                    updateSearchList();
+                }
+            }
+            if (pEventType == "Fpropposticon2")
+            {
+                if (keyprop == "search")
+                {
+                    addMeasure(getString("search", "dpvsearchid"));
+                }
+            }
+
         }
 
     }
 }
-
-void Meteo::updateProperty(INDI::Property property)
+void Meteo::newProperty(INDI::Property property)
 {
     if (property.getType() == INDI_NUMBER)
     {
@@ -92,15 +107,44 @@ void Meteo::updateProperty(INDI::Property property)
             {
                 QString lab = QString(n.getDeviceName()) + "-" +  n.getLabel() + "-" + n[i].getLabel();
                 mAvailableMeasures[propname] = lab;
-                getValueString("selection", "dpv")->lovAdd(propname, lab);
+                getEltString("selection", "dpv")->lovAdd(propname, lab);
                 //sendMessage(lab);
             }
-
-            if ( getOstElementGrid("selection", "dpv").contains(propname))
+            QStringList propnames;
+            for (int i = 0; i < getProperty("selection")->getGrid().size(); i++)
+            {
+                propnames.append(getString("selection", "dpv", i));
+            }
+            if ( propnames.contains(propname))
             {
                 declareNewGraph(propname);
-                getValueFloat(propname, "time")->setValue(QDateTime::currentDateTime().toMSecsSinceEpoch(), false);
-                getValueFloat(propname, propname)->setValue(n[i].getValue(), false);
+                getEltFloat(propname, "time")->setValue(QDateTime::currentDateTime().toMSecsSinceEpoch(), false);
+                getEltFloat(propname, propname)->setValue(n[i].getValue(), false);
+            }
+        }
+    }
+
+
+}
+void Meteo::updateProperty(INDI::Property property)
+{
+    if (property.getType() == INDI_NUMBER)
+    {
+        INDI::PropertyNumber n = property;
+        for (unsigned int i = 0; i < n.count(); i++)
+        {
+            QString propname = QString(n.getDeviceName()) +  "-" + n.getName() + "-" + n[i].getName();
+            QStringList propnames;
+            for (int i = 0; i < getProperty("selection")->getGrid().size(); i++)
+            {
+                propnames.append(getString("selection", "dpv", i));
+            }
+            if ( propnames.contains(propname))
+            {
+                declareNewGraph(propname);
+                getProperty(propname)->setGridLimit(getInt("parms", "histo"));
+                getEltFloat(propname, "time")->setValue(QDateTime::currentDateTime().toMSecsSinceEpoch(), false);
+                getEltFloat(propname, propname)->setValue(n[i].getValue(), false);
             }
         }
     }
@@ -112,19 +156,23 @@ void Meteo::initIndi()
 }
 void Meteo::OnTimer()
 {
-    QVariantList propnames = getOstElementGrid("selection", "dpv");
+    //QVariantList propnames = getOstElementGrid("selection", "dpv");
+    QStringList propnames;
+
+    for (int i = 0; i < getProperty("selection")->getGrid().size(); i++)
+    {
+        propnames.append(getString("selection", "dpv", i));
+    }
     for (int i = 0; i < propnames.count(); i++)
     {
-        QString propname = propnames[i].toString();
+        QString propname = propnames[i];
         declareNewGraph(propname);
         if (getStore().contains(propname))
         {
-            getProperty(propname)->setArrayLimit(getInt("parms", "histo"));
-
-            getValueFloat(propname, "time")->setValue(QDateTime::currentDateTime().toMSecsSinceEpoch(), true);
+            getProperty(propname)->setGridLimit(getInt("parms", "histo"));
+            getEltFloat(propname, "time")->setValue(QDateTime::currentDateTime().toMSecsSinceEpoch(), true);
             getProperty(propname)->push();
         }
-
     }
 
 
@@ -142,26 +190,52 @@ void Meteo::declareNewGraph(const QString  &pName)
     }
     QString lab = mAvailableMeasures[pName];
     OST::PropertyMulti* pm = new OST::PropertyMulti(pName, lab, OST::ReadOnly, "Measures", "", 0, false, true);
-    pm->setShowArray(false);
-    pm->setArrayLimit(getInt("parms", "histo"));
-    OST::ValueFloat* t = new OST::ValueFloat("Time", "", "");
-    pm->addValue("time", t);
-    t = new OST::ValueFloat(pName, "", "");
-    pm->addValue(pName, t);
-    OST::ValueGraph* g = new OST::ValueGraph("", "", "");
+    pm->setShowGrid(false);
+    pm->setGridLimit(getInt("parms", "histo"));
+    pm->setShowElts(false);
+    auto* t = new OST::ElementFloat("Time", "", "");
+    pm->addElt("time", t);
+    t = new OST::ElementFloat(pName, "", "");
+    pm->addElt(pName, t);
 
     OST::GraphDefs def;
     def.type = OST::GraphType::DY;
     def.params["D"] = "time";
     def.params["Y"] = pName;
-    g->setGraphDefs(def);
-    pm->addValue("graph" + pName, g);
+    pm->setGraphDefs(def);
 
     createProperty(pName, pm);
 
+}
+void Meteo::updateSearchList(void)
+{
+    QString sid = getString("search", "dpvsearchid");
+    QString slab = getString("search", "dpvsearchlab");
+    sendMessage("Searching " + sid + "/" + slab);
+    getProperty("search")->clearGrid();
 
-    //setOstPropertyAttribute(pName, "gridlimit", 1000, false);
-    //setOstPropertyAttribute(pName, "grid", QVariantList(), false);
-    //setOstPropertyAttribute(pName, "GDY", gdy, true);
+    for (auto i = mAvailableMeasures.cbegin(), end = mAvailableMeasures.cend(); i != end; ++i)
+    {
+        if ((i.key().contains(sid)) && (i.value().contains(slab)))
+        {
+            getEltString("search", "dpvsearchid")->setValue(i.key(), false);
+            getEltString("search", "dpvsearchlab")->setValue(i.value(), false);
+            getProperty("search")->push();
+        }
+    }
 
+
+}
+
+void Meteo::addMeasure(QString s)
+{
+    for (auto i = mAvailableMeasures.cbegin(), end = mAvailableMeasures.cend(); i != end; ++i)
+    {
+        if (i.key() == s)
+        {
+            sendMessage("Adding " + s);
+            getEltString("selection", "dpv")->setValue(i.key(), false);
+            getProperty("selection")->push();
+        }
+    }
 }
