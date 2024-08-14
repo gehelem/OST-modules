@@ -23,15 +23,15 @@ Allsky::Allsky(QString name, QString label, QString profile, QVariantMap availab
     defineMeAsSequencer();
 
 
-    OST::ValueBool* b = new OST::ValueBool("Loop", "0", "");
-    getProperty("actions")->addValue("loop", b);
-    b = new OST::ValueBool("Abort", "2", "");
-    getProperty("actions")->addValue("abort", b);
-    b = new OST::ValueBool("Timelapse", "1", "");
-    getProperty("actions")->addValue("timelapse", b);
+    OST::ElementBool* b = new OST::ElementBool("Loop", "0", "");
+    getProperty("actions")->addElt("loop", b);
+    b = new OST::ElementBool("Abort", "2", "");
+    getProperty("actions")->addElt("abort", b);
+    b = new OST::ElementBool("Timelapse", "1", "");
+    getProperty("actions")->addElt("timelapse", b);
 
-    getProperty("actions")->deleteValue("startsequence");
-    getProperty("actions")->deleteValue("abortsequence");
+    getProperty("actions")->deleteElt("startsequence");
+    getProperty("actions")->deleteElt("abortsequence");
 
 
     _process = new QProcess(this);
@@ -59,19 +59,18 @@ void Allsky::OnMyExternalEvent(const QString &eventType, const QString  &eventMo
         {
             foreach(const QString &keyelt, eventData[keyprop].toMap()["elements"].toMap().keys())
             {
-                setOstElementValue(keyprop, keyelt, eventData[keyprop].toMap()["elements"].toMap()[keyelt].toMap()["value"], true);
                 if (keyprop == "actions")
                 {
                     if (keyelt == "timelapse")
                     {
-                        if (setOstElementValue(keyprop, keyelt, true, true))
+                        if (getEltBool(keyprop, keyelt)->setValue(false))
                         {
                             startBatch();
                         }
                     }
                     if (keyelt == "loop")
                     {
-                        if (setOstElementValue(keyprop, keyelt, true, false))
+                        if (getEltBool(keyprop, keyelt)->setValue(true))
                         {
                             getProperty("actions")->setState(OST::Busy);
                             startLoop();
@@ -79,10 +78,10 @@ void Allsky::OnMyExternalEvent(const QString &eventType, const QString  &eventMo
                     }
                     if (keyelt == "abort")
                     {
-                        if (setOstElementValue(keyprop, keyelt, false, false))
+                        if (getEltBool(keyprop, keyelt)->setValue(false))
                         {
                             _isLooping = false;
-                            setOstElementValue(keyprop, "loop", false, false);
+                            getEltBool(keyprop, "loop")->setValue(false);
                             getProperty("actions")->setState(OST::Ok);
 
                         }
@@ -147,7 +146,9 @@ void Allsky::startBatch()
 void Allsky::processFinished(int exitCode, QProcess::ExitStatus exitStatus)
 {
     Q_UNUSED(exitStatus);
-    getValueVideo("timelapse", "video1")->setValue(getModuleName() + "/batch/" + getModuleName() + ".mp4", true);
+    OST::VideoData v;
+    v.url = getModuleName() + "/batch/" + getModuleName() + ".mp4";
+    getEltVideo("timelapse", "video1")->setValue(v, true);
     sendMessage("PROCESS FINISHED (" + QString::number(exitCode) + ")");
 }
 void Allsky::processOutput()
@@ -196,7 +197,7 @@ void Allsky::newBLOB(INDI::PropertyBlob pblob)
         mKheog.save(getWebroot() + "/" + getModuleName() + "-KHEOGRAM" + ".jpeg", "JPG", 100);
         OST::ImgData kh;
         kh.mUrlJpeg = getModuleName() + "-KHEOGRAM" + ".jpeg";
-        getValueImg("kheogram", "image1")->setValue(kh, true);
+        getEltImg("kheogram", "image1")->setValue(kh, true);
 
         r.setRect(0, 0, im.width(), im.height() / 10);
         QPainter p;
@@ -211,7 +212,7 @@ void Allsky::newBLOB(INDI::PropertyBlob pblob)
         im.save(getWebroot() + "/" + getModuleName() + QString(pblob.getDeviceName()) + ".jpeg", "JPG", 100);
         OST::ImgData dta = _image->ImgStats();
         dta.mUrlJpeg = getModuleName() + QString(pblob.getDeviceName()) + ".jpeg";
-        getValueImg("image", "image")->setValue(dta, true);
+        getEltImg("image", "image")->setValue(dta, true);
 
         QString _n = QStringLiteral("%1").arg(_index, 10, 10, QLatin1Char('0'));
         im.save(getWebroot() + "/" + getModuleName() + "/batch/" + _n + ".jpeg", "JPG", 100);
@@ -227,8 +228,8 @@ void Allsky::newBLOB(INDI::PropertyBlob pblob)
             }
         }
         double tt = QDateTime::currentDateTime().toMSecsSinceEpoch();
-        setOstElementValue("log", "time", tt, false);
-        setOstElementValue("log", "snr", _image->getStats().SNR, true);
+        getEltFloat("log", "time")->setValue(tt, false);
+        getEltFloat("log", "snr")->setValue(_image->getStats().SNR, true);
         getProperty("log")->push();
 
     }

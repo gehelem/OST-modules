@@ -26,9 +26,12 @@ class MODULE_INIT Meteo : public IndiModule
 
     private:
         void updateProperty(INDI::Property property) override;
+        void newProperty(INDI::Property property) override;
 
         void initIndi(void);
         void declareNewGraph(const QString  &pName);
+        void updateSearchList(void);
+        void addMeasure(QString s);
 
         QString mState = "idle";
         QMap<QString, QString> mAvailableMeasures;

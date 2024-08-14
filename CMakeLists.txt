@@ -79,23 +79,6 @@ target_link_libraries(ostfocus PRIVATE
 )
 target_compile_definitions(ostfocus PRIVATE FOCUS_MODULE)
 
-
-# Indipanel module
-add_library(ostindipanel SHARED
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/indipanel/indipanel.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/indipanel/indipanel.cpp
-)
-target_link_libraries(ostindipanel PRIVATE
-    ${OST_LIBRARY_INDI}
-    Qt${QT_VERSION_MAJOR}::Core
-    Qt${QT_VERSION_MAJOR}::Concurrent
-    Qt${QT_VERSION_MAJOR}::Widgets
-    Threads::Threads
-    z
-)
-target_compile_definitions(ostindipanel PRIVATE INDIPANEL_MODULE)
-
-
 # guider module
 add_library(ostguider SHARED
     ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/guider/guider.h
@@ -210,27 +193,27 @@ target_link_libraries(ostmeteo PRIVATE
 )
 target_compile_definitions(ostmeteo PRIVATE METEO_MODULE)
 
-# Blind periodic error correction module
-add_library(ostblindpec SHARED
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/blindpec/blindpec.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/blindpec/blindpec.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/blindpec/blindpec.qrc
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/blindpec/CV_SubPix.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/blindpec/CV_SubPix.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/blindpec/tacquisitionvideo.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/blindpec/tacquisitionvideo.cpp
-)
-target_link_libraries(ostblindpec PRIVATE
-    ${OST_LIBRARY_INDI}
-    Qt${QT_VERSION_MAJOR}::Core
-    Qt${QT_VERSION_MAJOR}::Concurrent
-    Qt${QT_VERSION_MAJOR}::Widgets
-    Qt${QT_VERSION_MAJOR}::Multimedia
-    ${OpenCV_LIBS}
-    Threads::Threads
-    z
-)
-target_compile_definitions(ostblindpec PRIVATE GUIDER_MODULE)
+## Blind periodic error correction module
+#add_library(ostblindpec SHARED
+#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/blindpec/blindpec.h
+#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/blindpec/blindpec.cpp
+#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/blindpec/blindpec.qrc
+#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/blindpec/CV_SubPix.h
+#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/blindpec/CV_SubPix.cpp
+#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/blindpec/tacquisitionvideo.h
+#    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/blindpec/tacquisitionvideo.cpp
+#)
+#target_link_libraries(ostblindpec PRIVATE
+#    ${OST_LIBRARY_INDI}
+#    Qt${QT_VERSION_MAJOR}::Core
+#    Qt${QT_VERSION_MAJOR}::Concurrent
+#    Qt${QT_VERSION_MAJOR}::Widgets
+#    Qt${QT_VERSION_MAJOR}::Multimedia
+#    ${OpenCV_LIBS}
+#    Threads::Threads
+#    z
+#)
+#target_compile_definitions(ostblindpec PRIVATE BLINDPEC_MODULE)
 
 
 install(TARGETS
@@ -238,12 +221,11 @@ install(TARGETS
     ostinspector
     ostnavigator
     ostguider
-    ostindipanel
     ostfocus
     ostsequencer
     ostmeteo
     ostpolar
-    ostblindpec
+#    ostblindpec
     RUNTIME DESTINATION "/usr/bin"
     LIBRARY DESTINATION "/usr/lib"
 )

@@ -36,11 +36,11 @@ Focus::Focus(QString name, QString label, QString profile, QVariantMap available
     pMachine->connectToState("FindStarsFinal", QScxmlStateMachine::onEntry(this, &Focus::SMFindStars));
 
 
-    _startpos =          getValueInt("parameters", "startpos")->value();
-    _steps =             getValueInt("parameters", "steps")->value();
-    _iterations =        getValueInt("parameters", "iterations")->value();
-    _loopIterations =    getValueInt("parameters", "loopIterations")->value();
-    _backlash =          getValueInt("parameters", "backlash")->value();
+    _startpos =          getEltInt("parameters", "startpos")->value();
+    _steps =             getEltInt("parameters", "steps")->value();
+    _iterations =        getEltInt("parameters", "iterations")->value();
+    _loopIterations =    getEltInt("parameters", "loopIterations")->value();
+    _backlash =          getEltInt("parameters", "backlash")->value();
 
     defineMeAsFocuser();
     giveMeADevice("camera", "Camera", INDI::BaseDevice::CCD_INTERFACE);
@@ -70,7 +70,7 @@ void Focus::OnMyExternalEvent(const QString &eventType, const QString  &eventMod
                 {
                     if (keyelt == "autofocus")
                     {
-                        if (setOstElementValue(keyprop, keyelt, false, false))
+                        if (getEltBool(keyprop, keyelt)->setValue(false))
                         {
                             getProperty(keyprop)->setState(OST::Busy);
                             startCoarse();
@@ -78,17 +78,21 @@ void Focus::OnMyExternalEvent(const QString &eventType, const QString  &eventMod
                     }
                     if (keyelt == "abortfocus")
                     {
-                        if (setOstElementValue(keyprop, keyelt, false, false))
+                        if (getEltBool(keyprop, keyelt)->setValue(false))
                         {
                             getProperty(keyprop)->setState(OST::Ok);
-                            getValuePrg("progress", "global")->setValue(0, true);
-                            getValuePrg("progress", "global")->setDynLabel("Aborted", true);
+                            getEltPrg("progress", "global")->setPrgValue(0, true);
+                            getEltPrg("progress", "global")->setDynLabel("Aborted", true);
+                            getProperty("parms")->enable();
+                            getProperty("devices")->enable();
+                            getProperty("parameters")->enable();
+
                             pMachine->submitEvent("abort");
                         }
                     }
                     if (keyelt == "loop")
                     {
-                        if (setOstElementValue(keyprop, keyelt, false, false))
+                        if (getEltBool(keyprop, keyelt)->setValue(false))
                         {
                             getProperty(keyprop)->setState(OST::Ok);
                         }
@@ -116,7 +120,7 @@ void Focus::updateProperty(INDI::Property p)
     )
     {
         INDI::PropertyNumber n = p;
-        setOstElementValue("values", "focpos", n[0].value, true);
+        getEltInt("values", "focpos")->setValue(n[0].value, true);
 
         if (n.getState() == IPS_OK)
         {
@@ -164,7 +168,7 @@ void Focus::newBLOB(INDI::PropertyBlob b)
         OST::ImgData dta = _image->ImgStats();
         dta.mUrlJpeg = getModuleName() + QString(b.getDeviceName()) + ".jpeg";
         dta.mUrlFits = getModuleName() + QString(b.getDeviceName()) + ".FITS";
-        getValueImg("image", "image")->setValue(dta, true);
+        getEltImg("image", "image")->setValue(dta, true);
 
         if (pMachine->isRunning())
         {
@@ -182,8 +186,11 @@ void Focus::SMAbort()
 
 void Focus::startCoarse()
 {
-    getStore()["values"]->clearGrid();
-    connectIndi();
+    getProperty("values")->clearGrid();
+    getProperty("parms")->disable();
+    getProperty("devices")->disable();
+    getProperty("parameters")->disable();
+    if (!isServerConnected()) connectIndi();
     connectDevice(getString("devices", "camera"));
     connectDevice(getString("devices", "focuser"));
     connectDevice(getString("devices", "filter"));
@@ -209,24 +216,39 @@ void Focus::startCoarse()
     _zoneBestposfit.clear();
 
     mZoning =  getInt("parameters", "zoning");
+    getProperty("zones")->clearGrid();
+
 
     for (int i = 0; i < mZoning * mZoning; i++)
     {
         _zoneBestposfit.append(0);
     }
 
-    _startpos =          getValueInt("parameters", "startpos")->value();
-    _steps =             getValueInt("parameters", "steps")->value();
-    _iterations =        getValueInt("parameters", "iterations")->value();
-    _loopIterations =    getValueInt("parameters", "loopIterations")->value();
-    _backlash =          getValueInt("parameters", "backlash")->value();
+    _steps =             getEltInt("parameters", "steps")->value();
+    _iterations =        getEltInt("parameters", "iterations")->value();
+    if (getBool("parameters", "aroundinitial"))
+    {
+        double p = 0;
+        if (!getModNumber(getString("devices", "focuser"), "ABS_FOCUS_POSITION", "FOCUS_ABSOLUTE_POSITION", p))
+        {
+            pMachine->submitEvent("abort");
+            return;
+        }
+        _startpos = p -  _steps * _iterations / 2;
+    }
+    else
+    {
+        _startpos =          getEltInt("parameters", "startpos")->value();
+    }
+    _loopIterations =    getEltInt("parameters", "loopIterations")->value();
+    _backlash =          getEltInt("parameters", "backlash")->value();
 
     //pMachine = QScxmlStateMachine::fromFile(":focus.scxml");
 
     pMachine->init();
     pMachine->start();
-    getValuePrg("progress", "global")->setValue(0, true);
-    getValuePrg("progress", "global")->setDynLabel("0/" + QString::number(_iterations), true);
+    getEltPrg("progress", "global")->setPrgValue(0, true);
+    getEltPrg("progress", "global")->setDynLabel("0/" + QString::number(_iterations), true);
 }
 
 void Focus::SMRequestFrameReset()
@@ -291,10 +313,11 @@ void Focus::SMFindStars()
 void Focus::OnSucessSEP()
 {
     disconnect(&_solver, &Solver::successSEP, this, &Focus::OnSucessSEP);
-    OST::ImgData dta = getValueImg("image", "image")->value();
-    dta.HFRavg = _solver.HFRavg;
+    OST::ImgData dta = getEltImg("image", "image")->value();
+    double ech = getSampling();
+    dta.HFRavg = _solver.HFRavg * ech;
     dta.starsCount = _solver.stars.size();
-    getValueImg("image", "image")->setValue(dta, true);
+    getEltImg("image", "image")->setValue(dta, true);
     pMachine->submitEvent("FindStarsDone");
 }
 
@@ -337,16 +360,15 @@ void Focus::SMCompute()
         _bestpos = _startpos + _iteration * _steps;
     }
 
-    setOstElementValue("values", "loopHFRavg", _loopHFRavg, false);
-    setOstElementValue("values", "bestpos",   _bestpos, false);
-    setOstElementValue("values", "bestposfit", _bestposfit, false);
-    setOstElementValue("values", "focpos",    _startpos + _iteration * _steps, false);
-    setOstElementValue("values", "iteration", _iteration, true);
+    getEltFloat("values", "loopHFRavg")->setValue(_loopHFRavg);
+    getEltInt("values", "bestpos")->setValue(_bestpos);
+    getEltFloat("values", "bestposfit")->setValue(_bestposfit);
+    getEltInt("values", "focpos")->setValue(_startpos + _iteration * _steps);
+    getEltInt("values", "iteration")->setValue(_iteration, true);
 
     getStore()["values"]->push();
-
-    getValuePrg("progress", "global")->setValue(100 * _iteration / _iterations, true);
-    getValuePrg("progress", "global")->setDynLabel(QString::number(_iteration + 1) + "/" + QString::number(_iterations), true);
+    getEltPrg("progress", "global")->setPrgValue(100 * _iteration / _iterations, true);
+    getEltPrg("progress", "global")->setDynLabel(QString::number(_iteration + 1) + "/" + QString::number(_iterations), true);
 
     if (_iteration + 1 < _iterations )
     {
@@ -398,7 +420,7 @@ void Focus::SMRequestGotoBest()
 void Focus::SMRequestExposureBest()
 {
     //sendMessage("SMRequestExposureBest");
-    if (!sendModNewNumber(getString("devices", "camera"), "CCD_EXPOSURE", "CCD_EXPOSURE_VALUE", getValueFloat("parms",
+    if (!sendModNewNumber(getString("devices", "camera"), "CCD_EXPOSURE", "CCD_EXPOSURE_VALUE", getEltFloat("parms",
                           "exposure")->value()))
     {
         pMachine->submitEvent("abort");
@@ -410,24 +432,26 @@ void Focus::SMRequestExposureBest()
         pMachine->submitEvent("abort");
         return;
     }
-    setOstElementValue("results", "pos", mFinalPos, true);
+    getEltFloat("results", "pos")->setValue(mFinalPos, true);
     pMachine->submitEvent("RequestExposureBestDone");
 }
 
 void Focus::SMComputeResult()
 {
     //sendMessage("SMComputeResult");
-    setOstElementValue("values", "imgHFR", _solver.HFRavg, true);
-    setOstElementValue("results", "hfr", _solver.HFRavg, true);
-    OST::ImgData dta = getValueImg("image", "image")->value();
-    dta.HFRavg = _solver.HFRavg;
+    double ech = getSampling();
+    getEltFloat("values", "imgHFR")->setValue(_solver.HFRavg * ech, true);
+    getEltFloat("results", "hfr")->setValue(_solver.HFRavg * ech, true);
+
+    OST::ImgData dta = getEltImg("image", "image")->value();
+    dta.HFRavg = _solver.HFRavg * ech;
     dta.starsCount = _solver.stars.size();
-    getValueImg("image", "image")->setValue(dta, true);
+    getEltImg("image", "image")->setValue(dta, true);
 
     // what should i do here ?
     pMachine->submitEvent("ComputeResultDone");
-    getValuePrg("progress", "global")->setValue(100, true);
-    getValuePrg("progress", "global")->setDynLabel("Finished", true);
+    getEltPrg("progress", "global")->setPrgValue(100, true);
+    getEltPrg("progress", "global")->setDynLabel("Finished", true);
 
     getProperty("zones")->clearGrid();
 
@@ -435,33 +459,36 @@ void Focus::SMComputeResult()
     {
         if ((mZoning != 2) && (mZoning != 3))
         {
-            getValueString("zones", "zone")->setValue(QString::number(i + 1), false);
+            getEltString("zones", "zone")->setValue(QString::number(i + 1), false);
         }
         if (mZoning == 2)
         {
-            if (i == 0) getValueString("zones", "zone")->setValue("Upper left", false);
-            if (i == 1) getValueString("zones", "zone")->setValue("Upper right", false);
-            if (i == 2) getValueString("zones", "zone")->setValue("Lower left", false);
-            if (i == 3) getValueString("zones", "zone")->setValue("Lower right", false);
+            if (i == 0) getEltString("zones", "zone")->setValue("Upper left", false);
+            if (i == 1) getEltString("zones", "zone")->setValue("Upper right", false);
+            if (i == 2) getEltString("zones", "zone")->setValue("Lower left", false);
+            if (i == 3) getEltString("zones", "zone")->setValue("Lower right", false);
         }
         if (mZoning == 3)
         {
-            if (i == 0) getValueString("zones", "zone")->setValue("Upper left", false);
-            if (i == 1) getValueString("zones", "zone")->setValue("Upper middle", false);
-            if (i == 2) getValueString("zones", "zone")->setValue("Upper right", false);
-            if (i == 3) getValueString("zones", "zone")->setValue("Midle left", false);
-            if (i == 4) getValueString("zones", "zone")->setValue("Center", false);
-            if (i == 5) getValueString("zones", "zone")->setValue("Middle right", false);
-            if (i == 6) getValueString("zones", "zone")->setValue("Lower left", false);
-            if (i == 7) getValueString("zones", "zone")->setValue("Lower middle", false);
-            if (i == 8) getValueString("zones", "zone")->setValue("Lower right", false);
+            if (i == 0) getEltString("zones", "zone")->setValue("Upper left", false);
+            if (i == 1) getEltString("zones", "zone")->setValue("Upper middle", false);
+            if (i == 2) getEltString("zones", "zone")->setValue("Upper right", false);
+            if (i == 3) getEltString("zones", "zone")->setValue("Midle left", false);
+            if (i == 4) getEltString("zones", "zone")->setValue("Center", false);
+            if (i == 5) getEltString("zones", "zone")->setValue("Middle right", false);
+            if (i == 6) getEltString("zones", "zone")->setValue("Lower left", false);
+            if (i == 7) getEltString("zones", "zone")->setValue("Lower middle", false);
+            if (i == 8) getEltString("zones", "zone")->setValue("Lower right", false);
         }
 
 
-        getValueFloat("zones", "bestpos")->setValue(_zoneBestposfit[i], false);
+        getEltFloat("zones", "bestpos")->setValue(_zoneBestposfit[i], false);
         getProperty("zones")->push();
     }
 
+    getProperty("parms")->enable();
+    getProperty("devices")->enable();
+    getProperty("parameters")->enable();
 
 
 }
@@ -483,7 +510,8 @@ void Focus::SMInitLoopFrame()
         _zonePosvector.append(std::vector<double>());
         _zoneHfdvector.append(std::vector<double>());
     }
-    setOstElementValue("values", "loopHFRavg", _loopHFRavg, true);
+    getEltFloat("values", "loopHFRavg")->setValue(_loopHFRavg, true);
+
     pMachine->submitEvent("InitLoopFrameDone");
 
 }
@@ -491,19 +519,21 @@ void Focus::SMInitLoopFrame()
 void Focus::SMComputeLoopFrame()
 {
     //sendMessage("SMComputeLoopFrame");
+    double ech = getSampling();
     _loopIteration++;
-    _loopHFRavg = ((_loopIteration - 1) * _loopHFRavg + _solver.HFRavg) / _loopIteration;
+    _loopHFRavg = ((_loopIteration - 1) * _loopHFRavg + _solver.HFRavg * ech) / _loopIteration;
     for (int i = 0; i < mZoning * mZoning; i++)
     {
         if (_solver.HFRavgZone[i] != 99)
         {
-            _zoneloopHFRavg[i] = (_zoneLoopIteration[i] * _zoneloopHFRavg[i] + _solver.HFRavgZone[i]) / (_zoneLoopIteration[i] + 1);
+            _zoneloopHFRavg[i] = (_zoneLoopIteration[i] * _zoneloopHFRavg[i] + _solver.HFRavgZone[i] * ech) /
+                                 (_zoneLoopIteration[i] + 1);
             _zoneLoopIteration[i]++;
 
         }
     }
-    setOstElementValue("values", "loopHFRavg", _loopHFRavg, false);
-    setOstElementValue("values", "imgHFR", _solver.HFRavg, true);
+    getEltFloat("values", "loopHFRavg")->setValue(_loopHFRavg, true);
+    getEltFloat("values", "imgHFR")->setValue(_solver.HFRavg, true);
 
     //qDebug() << "Loop    " << _loopIteration << "/" << _loopIterations << " = " <<  _solver.HFRavg;
 
@@ -526,8 +556,10 @@ void Focus::SMAlert()
 
 void Focus::SMFocusDone()
 {
+    double ech = getSampling();
     sendMessage("Focus done");
-    setOstElementValue("results", "hfr", _solver.HFRavg, false);
+    getEltFloat("results", "hfr")->setValue(_solver.HFRavg * ech, true);
+
     getProperty("actions")->setState(OST::Ok);
     pMachine->stop();
 }

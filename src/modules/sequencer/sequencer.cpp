@@ -30,6 +30,7 @@ Sequencer::~Sequencer()
 void Sequencer::OnMyExternalEvent(const QString &eventType, const QString  &eventModule, const QString  &eventKey,
                                   const QVariantMap &eventData)
 {
+    qDebug() << "OnMyExternalEvent";
     //BOOST_LOG_TRIVIAL(debug) << "OnMyExternalEvent - recv : " << getName().toStdString() << "-" << eventType.toStdString() << "-" << eventKey.toStdString();
     if (getModuleName() == eventModule)
     {
@@ -37,7 +38,6 @@ void Sequencer::OnMyExternalEvent(const QString &eventType, const QString  &even
         {
             foreach(const QString &keyelt, eventData[keyprop].toMap()["elements"].toMap().keys())
             {
-
                 if (keyprop == "actions")
                 {
                     if (keyelt == "startsequence")
@@ -57,33 +57,31 @@ void Sequencer::OnMyExternalEvent(const QString &eventType, const QString  &even
                         refreshFilterLov();
                     }
                 }
-
             }
             if (eventType == "Fldelete")
             {
                 double line = eventData[keyprop].toMap()["line"].toDouble();
                 getProperty(keyprop)->deleteLine(line);
-
             }
             if (eventType == "Flcreate")
             {
-                getProperty(keyprop)->newLine(eventData[keyprop].toMap()["elements"].toMap());
+                QVariantMap m = eventData[keyprop].toMap()["elements"].toMap();
+                m["status"] = "Added";
+                getProperty(keyprop)->newLine(m);
             }
             if (eventType == "Flupdate")
             {
                 double line = eventData[keyprop].toMap()["line"].toDouble();
-                getProperty(keyprop)->updateLine(line, eventData[keyprop].toMap()["elements"].toMap());
-
+                QVariantMap m = eventData[keyprop].toMap()["elements"].toMap();
+                m["status"] = "Updated";
+                getProperty(keyprop)->updateLine(line, m);
             }
-
-
         }
     }
 }
 
 void Sequencer::newBLOB(INDI::PropertyBlob pblob)
 {
-
     if (
         (QString(pblob.getDeviceName()) == getString("devices", "camera"))
         && isSequenceRunning
@@ -93,10 +91,13 @@ void Sequencer::newBLOB(INDI::PropertyBlob pblob)
         _image = new fileio();
         _image->loadBlob(pblob, 64);
         stats = _image->getStats();
-        _solver.ResetSolver(stats, _image->getImageBuffer());
-        connect(&_solver, &Solver::successSEP, this, &Sequencer::OnSucessSEP);
-        _solver.FindStars(_solver.stellarSolverProfiles[0]);
-
+        //qDebug() << "1";
+        //_solver.ResetSolver(stats, _image->getImageBuffer());
+        //qDebug() << "2";
+        //connect(&_solver, &Solver::successSEP, this, &Sequencer::OnSucessSEP);
+        //qDebug() << "3";
+        //_solver.FindStars(_solver.stellarSolverProfiles[0]);
+        //qDebug() << "4";
         QImage rawImage = _image->getRawQImage();
         QImage im = rawImage.convertToFormat(QImage::Format_RGB32);
         im.setColorTable(rawImage.colorTable());
@@ -104,17 +105,17 @@ void Sequencer::newBLOB(INDI::PropertyBlob pblob)
 
         QString tt = QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss_zzz");
         _image->saveAsFITSSimple(getWebroot() + "/" + getModuleName() + "-" + currentFilter + "-" + tt + ".FITS");
-
         OST::ImgData dta = _image->ImgStats();
         dta.mUrlJpeg = getModuleName() + ".jpeg";
         dta.mUrlFits = getModuleName() + "-" + currentFilter + "-" + tt + ".FITS";
-        getValueImg("image", "image")->setValue(dta, true);
+        getEltImg("image", "image")->setValue(dta, true);
 
         currentCount--;
         //sendMessage("RVC frame " + QString::number(currentLine) + "/" + QString::number(currentCount));
         if(currentCount == 0)
         {
-            getValueString("sequence", "status")->gridUpdate("Finished", currentLine, true);
+            getEltString("sequence", "status")->setValue("Finished");
+            getProperty("sequence")->updateLine(currentLine);
             StartLine();
         }
         else
@@ -126,6 +127,7 @@ void Sequencer::newBLOB(INDI::PropertyBlob pblob)
 }
 void Sequencer::newProperty(INDI::Property property)
 {
+
     if (
         (property.getDeviceName()  == getString("devices", "filter"))
         &&  (QString(property.getName())   == "FILTER_NAME")
@@ -195,46 +197,44 @@ void Sequencer::updateProperty(INDI::Property property)
 
 void Sequencer::newExp(INDI::PropertyNumber exp)
 {
-    double etot = getValueFloat("sequence", "exposure")->getGrid()[currentLine];
+    double etot = getFloat("sequence", "exposure");
     double ex = exp.findWidgetByName("CCD_EXPOSURE_VALUE")->value;
-    getValuePrg("progress", "exposure")->setValue(100 * (etot - ex) / etot, true);
-
+    getEltPrg("progress", "exposure")->setPrgValue(100 * (etot - ex) / etot, true);
 }
 void Sequencer::Shoot()
 {
-    double exp = getValueFloat("sequence", "exposure")->getGrid()[currentLine];
-    double gain = getValueInt("sequence", "gain")->getGrid()[currentLine];
-    double offset = getValueInt("sequence", "offset")->getGrid()[currentLine];
-    sendModNewNumber(getString("devices", "camera"), "CCD_EXPOSURE", "CCD_EXPOSURE_VALUE",
-                     //getOstElementGrid("sequence", "exposure")[0].toDouble());
-                     exp);
+    double exp = getFloat("sequence", "exposure");
+    double gain = getInt("sequence", "gain");
+    double offset = getInt("sequence", "offset");
     requestCapture(getString("devices", "camera"), exp, gain, offset);
 
-    double i = getValueInt("sequence", "count")->getGrid()[currentLine];
-    getValueString("sequence", "status")->gridUpdate("Running "  + QString::number(
-                i - currentCount) + "/" + QString::number(i), currentLine, true);
+    double i = getInt("sequence", "count");
+    getEltString("sequence", "status")->setValue("Running "  + QString::number(
+                i - currentCount) + "/" + QString::number(i), true);
+    getProperty("sequence")->updateLine(currentLine);
 
 
-    getValuePrg("progress", "current")->setValue(100 * (i - currentCount + 1) / i, false);
-    getValuePrg("progress", "current")->setDynLabel(QString::number(i - currentCount + 1) + "/" + QString::number(i), false);
+    getEltPrg("progress", "current")->setPrgValue(100 * (i - currentCount + 1) / i, false);
+    getEltPrg("progress", "current")->setDynLabel(QString::number(i - currentCount + 1) + "/" + QString::number(i), false);
 
-    int tot = getValueFloat("sequence", "exposure")->getGrid().size();
-    getValuePrg("progress", "global")->setValue(100 * (currentLine + 1) / (tot), false);
-    getValuePrg("progress", "global")->setDynLabel(QString::number(currentLine + 1) + "/" + QString::number(tot), true);
-
+    int tot = getProperty("sequence")->getGrid().size();
+    getEltPrg("progress", "global")->setPrgValue(100 * (currentLine + 1) / (tot), false);
+    getEltPrg("progress", "global")->setDynLabel(QString::number(currentLine + 1) + "/" + QString::number(tot), true);
 }
 
 void Sequencer::OnSucessSEP()
 {
+    disconnect(&_solver, &Solver::successSEP, this, &Sequencer::OnSucessSEP);
     OST::ImgData dta = _image->ImgStats();
     dta.HFRavg = _solver.HFRavg;
     dta.starsCount = _solver.stars.size();
-    getValueImg("image", "image")->setValue(dta, true);
+    getEltImg("image", "image")->setValue(dta, true);
 }
 
 
 void Sequencer::StartSequence()
 {
+
     currentLine = -1;
     isSequenceRunning = true;
 
@@ -245,13 +245,15 @@ void Sequencer::StartSequence()
         frameReset(getString("devices", "camera"));
         if (getString("devices", "camera") == "CCD Simulator")
         {
-            sendModNewNumber(getString("devices", "camera"), "SIMULATOR_SETTINGS", "SIM_TIME_FACTOR", 0.01 );
+            sendModNewNumber(getString("devices", "camera"), "SIMULATOR_SETTINGS", "SIM_TIME_FACTOR", 1 );
         }
         getProperty("actions")->setState(OST::Busy);
 
-        for (int i = 0; i < getOstElementGrid("sequence", "status").count(); i++)
+        for (int i = 0; i < getProperty("sequence")->getGrid().count(); i++)
         {
-            getValueString("sequence", "status")->gridUpdate("Queued", i, true);
+            getProperty("sequence")->fetchLine(i);
+            getEltString("sequence", "status")->setValue("Queued");
+            getProperty("sequence")->updateLine(i);
         }
 
         StartLine();
@@ -266,23 +268,21 @@ void Sequencer::StartLine()
 {
 
     currentLine++;
-    if (currentLine >= getOstElementGrid("sequence", "count").count())
+    if (currentLine >= getProperty("sequence")->getGrid().count())
     {
         sendMessage("Sequence completed");
         getProperty("actions")->setState(OST::Ok);
-
         isSequenceRunning = false;
-
     }
     else
     {
-
-        currentCount = getValueInt("sequence", "count")->getGrid()[currentLine];
-        currentExposure = getValueFloat("sequence", "exposure")->getGrid()[currentLine];
-        getValueString("sequence", "status")->gridUpdate("Running" + QString::number(currentCount), currentLine, true);
-
-        int i = getValueInt("sequence", "filter")->getGrid()[currentLine];
-        currentFilter = getValueInt("sequence", "filter")->getLov()[i];
+        getProperty("sequence")->fetchLine(currentLine);
+        currentCount = getInt("sequence", "count");
+        currentExposure = getFloat("sequence", "exposure");
+        getEltString("sequence", "status")->setValue("Running " + QString::number(currentCount), true);
+        getProperty("sequence")->updateLine(currentLine);
+        int i = getInt("sequence", "filter");
+        currentFilter = getEltInt("sequence", "filter")->getLov()[i];
         sendModNewNumber(getString("devices", "filter"), "FILTER_SLOT", "FILTER_SLOT_VALUE", i);
     }
 }
@@ -302,11 +302,11 @@ void Sequencer::refreshFilterLov()
         return;
     }
 
-    getValueInt("sequence", "filter")->lovClear();
+    getEltInt("sequence", "filter")->lovClear();
     for (unsigned int i = 0; i < txt.count(); i++ )
     {
         txt[i].getText();
-        getValueInt("sequence", "filter")->lovAdd(i + 1, txt[i].getText());
+        getEltInt("sequence", "filter")->lovAdd(i + 1, txt[i].getText());
     }
 
 }

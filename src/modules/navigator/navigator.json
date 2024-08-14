@@ -25,7 +25,9 @@
         "permission": 0,
         "grid":0,
         "arrayLimit":255,
-        "hasArray":true,
+        "hasGrid":true,
+        "showGrid":true,
+        "showElts":false,
         "rule":0,
         "label": "Results",
         "elements": {
