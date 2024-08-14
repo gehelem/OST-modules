@@ -23,12 +23,12 @@ Polar::Polar(QString name, QString label, QString profile, QVariantMap available
     giveMeADevice("mount", "Mount", INDI::BaseDevice::TELESCOPE_INTERFACE);
     defineMeAsImager();
 
-    OST::ValueBool* b = new OST::ValueBool("Start", "0", "");
-    getProperty("actions")->addValue("start", b);
-    b = new OST::ValueBool("Abort", "2", "");
-    getProperty("actions")->addValue("abort", b);
-    b = new OST::ValueBool("Test", "4", "");
-    getProperty("actions")->addValue("test", b);
+    auto* b = new OST::ElementBool("Start", "0", "");
+    getProperty("actions")->addElt("start", b);
+    b = new OST::ElementBool("Abort", "2", "");
+    getProperty("actions")->addElt("abort", b);
+    b = new OST::ElementBool("Test", "4", "");
+    getProperty("actions")->addElt("test", b);
 
 
     buildStateMachine();
@@ -126,7 +126,7 @@ void Polar::newBLOB(INDI::PropertyBlob  bp)
         im.save(getWebroot()  + "/" + getModuleName() + ".jpeg", "JPG", 100);
         OST::ImgData dta = image->ImgStats();
         dta.mUrlJpeg = getModuleName() + ".jpeg";
-        getValueImg("image", "image")->setValue(dta, true);
+        getEltImg("image", "image")->setValue(dta, true);
         emit ExposureDone();
     }
 
@@ -249,23 +249,23 @@ void Polar::SMInit()
     _de2 = 0;
     _t2 = 0;
 
-    getValueFloat("values", "ra0")->setValue(_ra0, false);
-    getValueFloat("values", "de0")->setValue(_de0, false);
-    getValueFloat("values", "t0")->setValue(_t0, false);
-    getValueFloat("values", "ra1")->setValue(_ra1, false);
-    getValueFloat("values", "de1")->setValue(_de1, false);
-    getValueFloat("values", "t1")->setValue(_t1, false);
-    getValueFloat("values", "ra2")->setValue(_ra2, false);
-    getValueFloat("values", "de2")->setValue(_de2, false);
-    getValueFloat("values", "t2")->setValue(_t2, true);
+    getEltFloat("values", "ra0")->setValue(_ra0, false);
+    getEltFloat("values", "de0")->setValue(_de0, false);
+    getEltFloat("values", "t0")->setValue(_t0, false);
+    getEltFloat("values", "ra1")->setValue(_ra1, false);
+    getEltFloat("values", "de1")->setValue(_de1, false);
+    getEltFloat("values", "t1")->setValue(_t1, false);
+    getEltFloat("values", "ra2")->setValue(_ra2, false);
+    getEltFloat("values", "de2")->setValue(_de2, false);
+    getEltFloat("values", "t2")->setValue(_t2, true);
 
     _erraz = 0;
     _erralt = 0;
     _errtot = 0;
 
-    getValueFloat("errors", "erraz")->setValue(_erraz, false);
-    getValueFloat("errors", "erralt")->setValue(_erralt, false);
-    getValueFloat("errors", "errtot")->setValue(_errtot, true);
+    getEltFloat("errors", "erraz")->setValue(_erraz, false);
+    getEltFloat("errors", "erralt")->setValue(_erralt, false);
+    getEltFloat("errors", "errtot")->setValue(_errtot, true);
 
     emit InitDone();
 }
@@ -282,11 +282,11 @@ void Polar::SMRequestFrameReset()
 void Polar::SMRequestExposure()
 {
     sendMessage("SMRequestExposure");
-    getValueLight("states", "idle")->setValue(OST::Idle, false);
-    getValueLight("states", "moving")->setValue(OST::Idle, false);
-    getValueLight("states", "shooting")->setValue(OST::Busy, false);
-    getValueLight("states", "solving")->setValue(OST::Idle, false);
-    getValueLight("states", "compute")->setValue(OST::Idle, true);
+    getEltLight("states", "idle")->setValue(OST::Idle, false);
+    getEltLight("states", "moving")->setValue(OST::Idle, false);
+    getEltLight("states", "shooting")->setValue(OST::Busy, false);
+    getEltLight("states", "solving")->setValue(OST::Idle, false);
+    getEltLight("states", "compute")->setValue(OST::Idle, true);
 
     double t = QDateTime::currentDateTime().currentMSecsSinceEpoch();
     //double t = ln_get_julian_from_sys();
@@ -314,11 +314,11 @@ void Polar::SMRequestExposure()
 void Polar::SMRequestMove()
 {
     sendMessage("SMRequestMove");
-    getValueLight("states", "idle")->setValue(OST::Idle, false);
-    getValueLight("states", "moving")->setValue(OST::Busy, false);
-    getValueLight("states", "shooting")->setValue(OST::Idle, false);
-    getValueLight("states", "solving")->setValue(OST::Idle, false);
-    getValueLight("states", "compute")->setValue(OST::Idle, true);
+    getEltLight("states", "idle")->setValue(OST::Idle, false);
+    getEltLight("states", "moving")->setValue(OST::Busy, false);
+    getEltLight("states", "shooting")->setValue(OST::Idle, false);
+    getEltLight("states", "solving")->setValue(OST::Idle, false);
+    getEltLight("states", "compute")->setValue(OST::Idle, true);
 
     sendMessage("SMRequestMove");
 
@@ -357,11 +357,11 @@ void Polar::SMRequestMove()
 void Polar::SMCompute()
 {
     sendMessage("SMCompute");
-    getValueLight("states", "idle")->setValue(OST::Idle, false);
-    getValueLight("states", "moving")->setValue(OST::Idle, false);
-    getValueLight("states", "shooting")->setValue(OST::Idle, false);
-    getValueLight("states", "solving")->setValue(OST::Idle, false);
-    getValueLight("states", "compute")->setValue(OST::Busy, true);
+    getEltLight("states", "idle")->setValue(OST::Idle, false);
+    getEltLight("states", "moving")->setValue(OST::Idle, false);
+    getEltLight("states", "shooting")->setValue(OST::Idle, false);
+    getEltLight("states", "solving")->setValue(OST::Idle, false);
+    getEltLight("states", "compute")->setValue(OST::Busy, true);
 
     INDI::IEquatorialCoordinates coord2000, coordNow;
     coordNow.rightascension = _solver.stellarSolver.getSolution().ra * 24 / 360;
@@ -375,7 +375,7 @@ void Polar::SMCompute()
     dta.solverRA = _solver.stellarSolver.getSolution().ra;
     dta.solverDE = _solver.stellarSolver.getSolution().dec;
     dta.isSolved = true;
-    getValueImg("image", "image")->setValue(dta, true);
+    getEltImg("image", "image")->setValue(dta, true);
 
     if (_itt == 0)
     {
@@ -409,15 +409,15 @@ void Polar::SMCompute()
         sendMessage("de2=" + QString::number(_de2));
     }
 
-    getValueFloat("values", "ra0")->setValue(_ra0, false);
-    getValueFloat("values", "de0")->setValue(_de0, false);
-    getValueFloat("values", "t0")->setValue(_t0, false);
-    getValueFloat("values", "ra1")->setValue(_ra1, false);
-    getValueFloat("values", "de1")->setValue(_de1, false);
-    getValueFloat("values", "t1")->setValue(_t1, false);
-    getValueFloat("values", "ra2")->setValue(_ra2, false);
-    getValueFloat("values", "de2")->setValue(_de2, false);
-    getValueFloat("values", "t2")->setValue(_t2, true);
+    getEltFloat("values", "ra0")->setValue(_ra0, false);
+    getEltFloat("values", "de0")->setValue(_de0, false);
+    getEltFloat("values", "t0")->setValue(_t0, false);
+    getEltFloat("values", "ra1")->setValue(_ra1, false);
+    getEltFloat("values", "de1")->setValue(_de1, false);
+    getEltFloat("values", "t1")->setValue(_t1, false);
+    getEltFloat("values", "ra2")->setValue(_ra2, false);
+    getEltFloat("values", "de2")->setValue(_de2, false);
+    getEltFloat("values", "t2")->setValue(_t2, true);
 
     _itt++;
     if (_itt < 3) emit ComputeDone();
@@ -486,15 +486,15 @@ void Polar::SMComputeFinal()
     qDebug() << _erraz;
     qDebug() << _erralt;
     qDebug() << _errtot;
-    getValueFloat("errors", "erraz")->setValue(_erraz, false);
-    getValueFloat("errors", "erralt")->setValue(_erralt, false);
-    getValueFloat("errors", "errtot")->setValue(_errtot, true);
+    getEltFloat("errors", "erraz")->setValue(_erraz, false);
+    getEltFloat("errors", "erralt")->setValue(_erralt, false);
+    getEltFloat("errors", "errtot")->setValue(_errtot, true);
 
-    getValueLight("states", "idle")->setValue(OST::Idle, false);
-    getValueLight("states", "moving")->setValue(OST::Idle, false);
-    getValueLight("states", "shooting")->setValue(OST::Idle, false);
-    getValueLight("states", "solving")->setValue(OST::Idle, false);
-    getValueLight("states", "compute")->setValue(OST::Busy, true);
+    getEltLight("states", "idle")->setValue(OST::Idle, false);
+    getEltLight("states", "moving")->setValue(OST::Idle, false);
+    getEltLight("states", "shooting")->setValue(OST::Idle, false);
+    getEltLight("states", "solving")->setValue(OST::Idle, false);
+    getEltLight("states", "compute")->setValue(OST::Busy, true);
 
     emit ComputeFinalDone();
     return;
@@ -503,11 +503,11 @@ void Polar::SMComputeFinal()
 void Polar::SMFindStars()
 {
 
-    getValueLight("states", "idle")->setValue(OST::Idle, false);
-    getValueLight("states", "moving")->setValue(OST::Idle, false);
-    getValueLight("states", "shooting")->setValue(OST::Idle, false);
-    getValueLight("states", "solving")->setValue(OST::Busy, false);
-    getValueLight("states", "compute")->setValue(OST::Idle, true);
+    getEltLight("states", "idle")->setValue(OST::Idle, false);
+    getEltLight("states", "moving")->setValue(OST::Idle, false);
+    getEltLight("states", "shooting")->setValue(OST::Idle, false);
+    getEltLight("states", "solving")->setValue(OST::Busy, false);
+    getEltLight("states", "compute")->setValue(OST::Idle, true);
 
     sendMessage("SMFindStars");
 
@@ -554,7 +554,7 @@ void Polar::OnSucessSolve()
     dta.solverRA = _solver.stellarSolver.getSolution().ra;
     dta.solverDE = _solver.stellarSolver.getSolution().dec;
     dta.isSolved = true;
-    getValueImg("image", "image")->setValue(dta, true);
+    getEltImg("image", "image")->setValue(dta, true);
 
     disconnect(&_solver, &Solver::successSolve, this, &Polar::OnSucessSolve);
     disconnect(&_solver, &Solver::solverLog, this, &Polar::OnSolverLog);
@@ -568,10 +568,10 @@ void Polar::SMAbort()
 {
     emit AbortDone();
     _machine.stop();
-    getValueLight("states", "idle")->setValue(OST::Idle, false);
-    getValueLight("states", "moving")->setValue(OST::Idle, false);
-    getValueLight("states", "shooting")->setValue(OST::Idle, false);
-    getValueLight("states", "solving")->setValue(OST::Idle, false);
-    getValueLight("states", "compute")->setValue(OST::Idle, true);
+    getEltLight("states", "idle")->setValue(OST::Idle, false);
+    getEltLight("states", "moving")->setValue(OST::Idle, false);
+    getEltLight("states", "shooting")->setValue(OST::Idle, false);
+    getEltLight("states", "solving")->setValue(OST::Idle, false);
+    getEltLight("states", "compute")->setValue(OST::Idle, true);
 
 }
