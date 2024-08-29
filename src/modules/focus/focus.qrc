@@ -2,5 +2,6 @@
     <qresource prefix="/">
         <file>focus.json</file>
         <file>focus.scxml</file>
+        <file>focus.fr.md</file>
     </qresource>
 </RCC>
