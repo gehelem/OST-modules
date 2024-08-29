@@ -35,6 +35,17 @@ Inspector::Inspector(QString name, QString label, QString profile, QVariantMap a
 
     OST::ElementImg* im = new OST::ElementImg("Image map", "2", "");
     getProperty("image")->addElt("imagemap", im);
+    im = new OST::ElementImg("Corners", "3", "");
+    getProperty("image")->addElt("corners", im);
+
+    auto* i = new OST::ElementInt("Corner size (pixels)", "50", "");
+    i->setAutoUpdate(true);
+    i->setDirectEdit(true);
+    i->setMinMax(0, 2000);
+    i->setValue(200);
+    i->setSlider(OST::SliderAndValue);
+
+    getProperty("parms")->addElt("cornersize", i);
 
 }
 
@@ -259,11 +270,11 @@ void Inspector::OnSucessSEP()
                          3 * im.height() / 4 + mul*(lowerLeftHFR - _solver.HFRavg*ech));
     p.drawPolygon(hexPoints);
     p.setFont(QFont("Courrier", im.width() / 50, QFont::Normal));
-    p.drawText(  QRect(0, 0, im.width(), im.height()), Qt::AlignCenter, QString::number(_solver.HFRavg*ech, 'f', 3));
-    p.drawText(1 * im.width() / 4, 1 * im.height() / 4, QString::number(upperLeftHFR, 'f', 3));
-    p.drawText(3 * im.width() / 4, 1 * im.height() / 4, QString::number(upperRightHFR, 'f', 3));
-    p.drawText(1 * im.width() / 4, 3 * im.height() / 4, QString::number(lowerLeftHFR, 'f', 3));
-    p.drawText(3 * im.width() / 4, 3 * im.height() / 4, QString::number(lowerRightHFR, 'f', 3));
+    p.drawText(  QRect(0, 0, im.width(), im.height()), Qt::AlignCenter, QString::number(_solver.HFRavg*ech, 'f', 3) + "''");
+    p.drawText(1 * im.width() / 4, 1 * im.height() / 4, QString::number(upperLeftHFR, 'f', 3) + "''");
+    p.drawText(3 * im.width() / 4, 1 * im.height() / 4, QString::number(upperRightHFR, 'f', 3) + "''");
+    p.drawText(1 * im.width() / 4, 3 * im.height() / 4, QString::number(lowerLeftHFR, 'f', 3) + "''");
+    p.drawText(3 * im.width() / 4, 3 * im.height() / 4, QString::number(lowerRightHFR, 'f', 3) + "''");
 
     p.end();
 
@@ -272,6 +283,43 @@ void Inspector::OnSucessSEP()
     OST::ImgData dta2 = _image->ImgStats();
     dta2.mUrlJpeg = getModuleName() + "map.jpeg";
     getEltImg("image", "imagemap")->setValue(dta2, true);
+
+    int s = getInt("parms", "cornersize");
+    int h = rawImage.height();
+    int w = rawImage.width();
+
+    QImage corners = QImage(3 * s, 3 * s, QImage::Format_RGB32);
+    corners.setColorTable(rawImage.colorTable());
+    corners.fill(Qt::green);
+    QPainter painter(&corners);
+
+    painter.drawImage(QRect(0 * s, 0 * s, s, s), rawImage, QRect(0, 0, s, s)); //upper left
+    painter.drawImage(QRect(1 * s, 0 * s, s, s), rawImage, QRect(w / 2 - s / 2, 0, s, s)); //upper middle
+    painter.drawImage(QRect(2 * s, 0 * s, s, s), rawImage, QRect(w - s, 0, s, s)); //upper right
+
+    painter.drawImage(QRect(0 * s, 1 * s, s, s), rawImage, QRect(0, h / 2 - s / 2, s, s)); //middle left
+    painter.drawImage(QRect(1 * s, 1 * s, s, s), rawImage, QRect(w / 2 - s / 2, h / 2 - s / 2, s, s)); //middle middle
+    painter.drawImage(QRect(2 * s, 1 * s, s, s), rawImage, QRect(w - s, h / 2 - s / 2, s, s)); //middle right
+
+    painter.drawImage(QRect(0 * s, 2 * s, s, s), rawImage, QRect(0, h - s, s, s)); //lower left
+    painter.drawImage(QRect(1 * s, 2 * s, s, s), rawImage, QRect(w / 2 - s / 2, h - s, s, s)); //lower middle
+    painter.drawImage(QRect(2 * s, 2 * s, s, s), rawImage, QRect(w - s, h - s, s, s)); //lower right
+
+    painter.setPen(QPen(Qt::red));
+    painter.drawRect(QRect(s, 0, s, 3 * s - 1));
+    painter.drawRect(QRect(0, s, 3 * s - 1, s));
+    painter.drawRect(QRect(0, 0, 3 * s - 1, 3 * s - 1));
+
+    painter.end();
+
+    corners.save(getWebroot() + "/" + getModuleName() + "corners.jpeg", "JPG", 100);
+    OST::ImgData dta3;
+    dta3.height = 3 * s;
+    dta3.width = 3 * s;
+    dta3.mUrlJpeg = getModuleName() + "corners.jpeg";
+    getEltImg("image", "corners")->setValue(dta3, true);
+
+    emit FindStarsDone();
 
     if (mState == "single")
     {
@@ -282,5 +330,5 @@ void Inspector::OnSucessSEP()
         Shoot();
     }
 
-    emit FindStarsDone();
+
 }

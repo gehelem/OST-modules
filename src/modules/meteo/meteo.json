@@ -6,34 +6,52 @@
         "group": "",
         "permission": 2,
         "rule":0,
-        "propertyLabel": "Indi widgets to watch",
+        "label": "Indi widgets to watch",
         "arrayLimit":255,
-        "hasArray":true,
+        "hasGrid":true,
+        "showGrid":true,
+        "showElts":true,
         "hasprofile":true,
         "elements": {
             "dpv": {
                 "type":"string",
-                "elementLabel": "Device - Property - Value",
+                "label": "Device - Property - Element",
                 "value":"",
                 "listOfValues":{
                 }
             }
         }
     },
-    "limit": {
+    "search": {
         "devcat": "Control",
-        "order": "Control200",
+        "order": "Control000",
         "group": "",
         "permission": 2,
-        "value": 200,
         "rule":0,
-        "propertyLabel": "Number of values ​​to keep",
+        "label": "Indi widgets to search",
+        "arrayLimit":255,
+        "hasGrid":true,
+        "showGrid":true,
+        "showElts":true,
+        "hasprofile":false,
+        "posticon1":"autorenew",
+        "posticon2":"check_circle_outline",
         "elements": {
-            "save": {
-                "elementLabel": "Set",
-                "value":false
+            "dpvsearchid": {
+                "directedit":true,
+                "autoupdate":true,
+                "type":"string",
+                "label": "Device - Property - Element (id)"
+            },
+            "dpvsearchlab": {
+                "directedit":true,
+                "autoupdate":true,
+                "type":"string",
+                "label": "Device - Property - Element (label)"
             }
+
         }
     }
+
 }
 }
