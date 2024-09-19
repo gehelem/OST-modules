@@ -2,7 +2,7 @@
 "properties":{
     "values": {
         "hasGrid":true,
-        "showGrid":true,
+        "showGrid":false,
         "showElts":false,
         "devcat": "Control",
         "order":"Control100",
