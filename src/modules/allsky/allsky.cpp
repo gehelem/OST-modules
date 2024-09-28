@@ -33,6 +33,14 @@ Allsky::Allsky(QString name, QString label, QString profile, QVariantMap availab
     getProperty("actions")->deleteElt("startsequence");
     getProperty("actions")->deleteElt("abortsequence");
 
+    OST::ElementInt* i = new OST::ElementInt("Delay (s)", "0", "");
+    i->setAutoUpdate(true);
+    i->setDirectEdit(true);
+    i->setValue(5);
+    i->setSlider(OST::SliderAndValue);
+    i->setMinMax(0, 60);
+    i->setStep(5);
+    getProperty("parms")->addElt("delay", i);
 
     _process = new QProcess(this);
     connect(_process, &QProcess::readyReadStandardOutput, this, &Allsky::processOutput);
