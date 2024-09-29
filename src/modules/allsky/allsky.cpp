@@ -33,6 +33,15 @@ Allsky::Allsky(QString name, QString label, QString profile, QVariantMap availab
     getProperty("actions")->deleteElt("startsequence");
     getProperty("actions")->deleteElt("abortsequence");
 
+    OST::ElementInt* i = new OST::ElementInt("Delay (s)", "0", "");
+    i->setAutoUpdate(false);
+    i->setDirectEdit(true);
+    i->setValue(5);
+    i->setSlider(OST::SliderAndValue);
+    i->setMinMax(1, 120);
+    i->setStep(1);
+    getProperty("parms")->addElt("delay", i);
+    getEltFloat("parms", "exposure")->setAutoUpdate(false);
 
     _process = new QProcess(this);
     connect(_process, &QProcess::readyReadStandardOutput, this, &Allsky::processOutput);
@@ -80,11 +89,38 @@ void Allsky::OnMyExternalEvent(const QString &eventType, const QString  &eventMo
                     {
                         if (getEltBool(keyprop, keyelt)->setValue(false))
                         {
-                            _isLooping = false;
+                            mTimer.stop();
                             getEltBool(keyprop, "loop")->setValue(false);
                             getProperty("actions")->setState(OST::Ok);
 
                         }
+                    }
+                }
+                if (keyprop == "parms")
+                {
+                    if (keyelt == "exposure")
+                    {
+                        double e = eventData["parms"].toMap()["elements"].toMap()["exposure"].toMap()["value"].toFloat();
+                        int  d = getInt("parms", "delay");
+                        if ( e > d )
+                        {
+                            sendWarning("Delay must be greater than exposure, increasing delay");
+                            int step = getEltInt("parms", "delay")->step();
+                            int dStepped = step * (int)(e / step) + step;
+                            getEltInt("parms", "delay")->setValue(dStepped, true);
+                        }
+                        getEltFloat("parms", "exposure")->setValue(e, true);
+                    }
+                    if (keyelt == "delay")
+                    {
+                        int d = eventData["parms"].toMap()["elements"].toMap()["delay"].toMap()["value"].toInt();
+                        double  e = getFloat("parms", "exposure");
+                        if ( e > d )
+                        {
+                            sendWarning("Delay must be greater than exposure, decreasing exposure value - 5%");
+                            getEltFloat("parms", "exposure")->setValue(d * 0.95, true);
+                        }
+                        getEltInt("parms", "delay")->setValue(d, true);
                     }
                 }
             }
@@ -93,7 +129,6 @@ void Allsky::OnMyExternalEvent(const QString &eventType, const QString  &eventMo
 }
 void Allsky::startLoop()
 {
-    _isLooping = true;
     _index = 0;
     mKheog = QImage();
 
@@ -112,11 +147,20 @@ void Allsky::startLoop()
     connectDevice(getString("devices", "camera"));
     setBLOBMode(B_ALSO, getString("devices", "camera").toStdString().c_str(), nullptr);
     enableDirectBlobAccess(getString("devices", "camera").toStdString().c_str(), nullptr);
+
     if (!requestCapture(getString("devices", "camera"), getFloat("parms", "exposure"), getInt("parms", "gain"), getInt("parms",
                         "offset")))
     {
         getProperty("actions")->setState(OST::Error);
     }
+    else
+    {
+        mTimer.setInterval(getInt("parms", "delay") * 1000);
+        connect(&mTimer, &QTimer::timeout, this, &Allsky::OnTimer);
+        mTimer.start();
+        getProperty("actions")->setState(OST::Busy);
+    }
+
 }
 void Allsky::startBatch()
 {
@@ -154,12 +198,12 @@ void Allsky::processFinished(int exitCode, QProcess::ExitStatus exitStatus)
 void Allsky::processOutput()
 {
     QString output = _process->readAllStandardOutput();
-    qDebug() << "PROCESS LOG   " << output;
+    //qDebug() << "PROCESS LOG   " << output;
 }
 void Allsky::processError()
 {
     QString output = _process->readAllStandardError();
-    sendMessage("Process log : " + output);
+    qDebug() << "Process log : " + output;
 }
 void Allsky::newBLOB(INDI::PropertyBlob pblob)
 {
@@ -217,16 +261,6 @@ void Allsky::newBLOB(INDI::PropertyBlob pblob)
         QString _n = QStringLiteral("%1").arg(_index, 10, 10, QLatin1Char('0'));
         im.save(getWebroot() + "/" + getModuleName() + "/batch/" + _n + ".jpeg", "JPG", 100);
 
-        getProperty("actions")->setState(OST::Busy);
-        if (_isLooping)
-        {
-            if (!sendModNewNumber(getString("devices", "camera"), "CCD_EXPOSURE", "CCD_EXPOSURE_VALUE", getFloat("parms",
-                                  "exposure")))
-            {
-                getProperty("actions")->setState(OST::Error);
-                _isLooping = false;
-            }
-        }
         double tt = QDateTime::currentDateTime().toMSecsSinceEpoch();
         getEltFloat("log", "time")->setValue(tt, false);
         getEltFloat("log", "snr")->setValue(_image->getStats().SNR, true);
@@ -242,4 +276,19 @@ void Allsky::updateProperty(INDI::Property property)
     {
         newBLOB(property);
     }
+}
+
+void Allsky::OnTimer()
+{
+    if (!requestCapture(getString("devices", "camera"), getFloat("parms", "exposure"), getInt("parms", "gain"), getInt("parms",
+                        "offset")))
+    {
+        getProperty("actions")->setState(OST::Error);
+    }
+    else
+    {
+        mTimer.setInterval(getInt("parms", "delay") * 1000);
+        getProperty("actions")->setState(OST::Busy);
+    }
+
 }
