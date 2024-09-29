@@ -89,6 +89,7 @@ void Allsky::OnMyExternalEvent(const QString &eventType, const QString  &eventMo
                         if (getEltBool(keyprop, keyelt)->setValue(false))
                         {
                             _isLooping = false;
+                            mTimer.stop();
                             getEltBool(keyprop, "loop")->setValue(false);
                             getProperty("actions")->setState(OST::Ok);
 
@@ -120,11 +121,20 @@ void Allsky::startLoop()
     connectDevice(getString("devices", "camera"));
     setBLOBMode(B_ALSO, getString("devices", "camera").toStdString().c_str(), nullptr);
     enableDirectBlobAccess(getString("devices", "camera").toStdString().c_str(), nullptr);
+
     if (!requestCapture(getString("devices", "camera"), getFloat("parms", "exposure"), getInt("parms", "gain"), getInt("parms",
                         "offset")))
     {
         getProperty("actions")->setState(OST::Error);
     }
+    else
+    {
+        mTimer.setInterval(getInt("parms", "delay") * 1000);
+        connect(&mTimer, &QTimer::timeout, this, &Allsky::OnTimer);
+        mTimer.start();
+        getProperty("actions")->setState(OST::Busy);
+    }
+
 }
 void Allsky::startBatch()
 {
@@ -225,16 +235,6 @@ void Allsky::newBLOB(INDI::PropertyBlob pblob)
         QString _n = QStringLiteral("%1").arg(_index, 10, 10, QLatin1Char('0'));
         im.save(getWebroot() + "/" + getModuleName() + "/batch/" + _n + ".jpeg", "JPG", 100);
 
-        getProperty("actions")->setState(OST::Busy);
-        if (_isLooping)
-        {
-            if (!sendModNewNumber(getString("devices", "camera"), "CCD_EXPOSURE", "CCD_EXPOSURE_VALUE", getFloat("parms",
-                                  "exposure")))
-            {
-                getProperty("actions")->setState(OST::Error);
-                _isLooping = false;
-            }
-        }
         double tt = QDateTime::currentDateTime().toMSecsSinceEpoch();
         getEltFloat("log", "time")->setValue(tt, false);
         getEltFloat("log", "snr")->setValue(_image->getStats().SNR, true);
@@ -250,4 +250,21 @@ void Allsky::updateProperty(INDI::Property property)
     {
         newBLOB(property);
     }
+}
+
+void Allsky::OnTimer()
+{
+    if (!requestCapture(getString("devices", "camera"), getFloat("parms", "exposure"), getInt("parms", "gain"), getInt("parms",
+                        "offset")))
+    {
+        getProperty("actions")->setState(OST::Error);
+        _isLooping = false;
+    }
+    else
+    {
+        mTimer.setInterval(getInt("parms", "delay") * 1000);
+        getProperty("actions")->setState(OST::Busy);
+        _isLooping = true;
+    }
+
 }
