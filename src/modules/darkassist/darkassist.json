@@ -33,6 +33,23 @@
             }
         }
     },
+    "gains":{
+        "devcat": "Control",
+        "group": "",
+        "hasGrid":true,
+        "showGrid":true,
+        "showElts":false,
+        "permission": 2,
+        "order":52,
+        "label":"Selected gains",
+        "elements": {
+            "values": {
+                "type": "int",
+                "label": "Gain",
+                "value": 0
+            }
+        }
+    },
     "sequence": {
         "hasGrid":true,
         "showGrid":true,
@@ -45,34 +62,25 @@
         "hasprofile":true,
         "label": "Sequence",
         "elements": {
-            "frametype": {
-                "type":"string",
-                "label": "Frame type",
-                "value":"L",
-                "gridvalues":[],
-                "listOfValues":[
-                    ["L","Light"],
-                    ["B","Bias"],
-                    ["D","Dark"],
-                    ["F","Flat"]
-                ]
-            },
-            "filter": {
-                "type":"int",
-                "label": "Filter",
+            "temperature": {
+                "type":"float",
+                "order":"0",
+                "label": "Température",
                 "gridvalues":[],
                 "listOfValues":[
                 ]
             },
             "exposure": {
                 "type":"float",
-                "label": "Exposure",
+                "order":"1",
+                "label": "Exposure (s)",
                 "value":10,
                 "gridvalues":[],
                 "format": "99"
             },
             "count": {
                 "type":"int",
+                "order":"2",
                 "label": "Count",
                 "value":5,
                 "gridvalues":[],
@@ -80,6 +88,7 @@
             },
             "gain": {
                 "type":"int",
+                "order":"3",
                 "label": "Gain",
                 "value":5,
                 "gridvalues":[],
@@ -87,17 +96,19 @@
             },
             "offset": {
                 "type":"int",
+                "order":"4",
                 "label": "Offset",
                 "value":5,
                 "gridvalues":[],
                 "format": "99"
             },
-            "status": {
-                "type":"string",
-                "label": "Status",
-                "value":"idle",
-                "gridvalues":[]
-
+            "progress": {
+                "type": "prg",
+                "prgtype": "spinner",
+                "label": "Progress",
+                "dynlabel": "",
+                "value": 0,
+                "order":"6"
             }
         }
     }

@@ -1,34 +1,31 @@
-#include "sequencer.h"
-#include <QPainter>
+#include "darkassist.h"
 
-Sequencer *initialize(QString name, QString label, QString profile, QVariantMap availableModuleLibs)
+Darkassist *initialize(QString name, QString label, QString profile, QVariantMap availableModuleLibs)
 {
-    Sequencer *basemodule = new Sequencer(name, label, profile, availableModuleLibs);
+    Darkassist *basemodule = new Darkassist(name, label, profile, availableModuleLibs);
     return basemodule;
 }
 
-Sequencer::Sequencer(QString name, QString label, QString profile, QVariantMap availableModuleLibs)
+Darkassist::Darkassist(QString name, QString label, QString profile, QVariantMap availableModuleLibs)
     : IndiModule(name, label, profile, availableModuleLibs)
 
 {
     setClassName(QString(metaObject()->className()).toLower());
-    loadOstPropertiesFromFile(":sequencer.json");
-    setModuleDescription("Sequencer module");
+    loadOstPropertiesFromFile(":darkassist.json");
+    setModuleDescription("Dark assistant module");
     setModuleVersion("0.1");
 
     giveMeADevice("camera", "Camera", INDI::BaseDevice::CCD_INTERFACE);
-    giveMeADevice("filter", "Filter wheel", INDI::BaseDevice::FILTER_INTERFACE);
     defineMeAsSequencer();
-    refreshFilterLov();
 
 }
 
-Sequencer::~Sequencer()
+Darkassist::~Darkassist()
 {
 
 }
-void Sequencer::OnMyExternalEvent(const QString &eventType, const QString  &eventModule, const QString  &eventKey,
-                                  const QVariantMap &eventData)
+void Darkassist::OnMyExternalEvent(const QString &eventType, const QString  &eventModule, const QString  &eventKey,
+                                   const QVariantMap &eventData)
 {
     qDebug() << "OnMyExternalEvent";
     //BOOST_LOG_TRIVIAL(debug) << "OnMyExternalEvent - recv : " << getName().toStdString() << "-" << eventType.toStdString() << "-" << eventKey.toStdString();
@@ -48,13 +45,6 @@ void Sequencer::OnMyExternalEvent(const QString &eventType, const QString  &even
                     {
                         emit Abort();
                         isSequenceRunning = false;
-                    }
-                }
-                if (keyprop == "devices")
-                {
-                    if (keyelt == "filter")
-                    {
-                        refreshFilterLov();
                     }
                 }
             }
@@ -80,7 +70,7 @@ void Sequencer::OnMyExternalEvent(const QString &eventType, const QString  &even
     }
 }
 
-void Sequencer::newBLOB(INDI::PropertyBlob pblob)
+void Darkassist::newBLOB(INDI::PropertyBlob pblob)
 {
     if (
         (QString(pblob.getDeviceName()) == getString("devices", "camera"))
@@ -125,29 +115,22 @@ void Sequencer::newBLOB(INDI::PropertyBlob pblob)
 
     }
 }
-void Sequencer::newProperty(INDI::Property property)
+void Darkassist::newProperty(INDI::Property property)
 {
 
-    if (
-        (property.getDeviceName()  == getString("devices", "filter"))
-        &&  (QString(property.getName())   == "FILTER_NAME")
-    )
-    {
-        refreshFilterLov();
-    }
-    if (
-        (property.getDeviceName()  == getString("devices", "filter"))
-        &&  (QString(property.getName())   == "FILTER_SLOT")
-        &&  (property.getState() == IPS_OK)
-        && isSequenceRunning
-    )
-    {
-        Shoot();
-    }
+    //if (
+    //    (property.getDeviceName()  == getString("devices", "filter"))
+    //    &&  (QString(property.getName())   == "FILTER_SLOT")
+    //    &&  (property.getState() == IPS_OK)
+    //    && isSequenceRunning
+    //)
+    //{
+    //    Shoot();
+    //}
 
 }
 
-void Sequencer::updateProperty(INDI::Property property)
+void Darkassist::updateProperty(INDI::Property property)
 {
 
     if (strcmp(property.getName(), "CCD1") == 0)
@@ -175,16 +158,6 @@ void Sequencer::updateProperty(INDI::Property property)
     }
 
     if (
-        (property.getDeviceName()  == getString("devices", "filter"))
-        &&  (QString(property.getName())   == "FILTER_SLOT")
-        &&  (property.getState() == IPS_OK)
-        && isSequenceRunning
-    )
-    {
-        //sendMessage("Filter OK");
-        Shoot();
-    }
-    if (
         (property.getDeviceName()  == getString("devices", "camera"))
         &&  (QString(property.getName())   == "CCD_EXPOSURE")
         //&&  (property.getState() == IPS_OK)
@@ -195,13 +168,13 @@ void Sequencer::updateProperty(INDI::Property property)
     }
 }
 
-void Sequencer::newExp(INDI::PropertyNumber exp)
+void Darkassist::newExp(INDI::PropertyNumber exp)
 {
     double etot = getFloat("sequence", "exposure");
     double ex = exp.findWidgetByName("CCD_EXPOSURE_VALUE")->value;
     getEltPrg("progress", "exposure")->setPrgValue(100 * (etot - ex) / etot, true);
 }
-void Sequencer::Shoot()
+void Darkassist::Shoot()
 {
     double exp = getFloat("sequence", "exposure");
     double gain = getInt("sequence", "gain");
@@ -222,17 +195,7 @@ void Sequencer::Shoot()
     getEltPrg("progress", "global")->setDynLabel(QString::number(currentLine + 1) + "/" + QString::number(tot), true);
 }
 
-void Sequencer::OnSucessSEP()
-{
-    disconnect(&_solver, &Solver::successSEP, this, &Sequencer::OnSucessSEP);
-    OST::ImgData dta = _image->ImgStats();
-    dta.HFRavg = _solver.HFRavg;
-    dta.starsCount = _solver.stars.size();
-    getEltImg("image", "image")->setValue(dta, true);
-}
-
-
-void Sequencer::StartSequence()
+void Darkassist::StartSequence()
 {
 
     currentLine = -1;
@@ -264,7 +227,7 @@ void Sequencer::StartSequence()
     }
 
 }
-void Sequencer::StartLine()
+void Darkassist::StartLine()
 {
 
     currentLine++;
@@ -285,28 +248,4 @@ void Sequencer::StartLine()
         currentFilter = getEltInt("sequence", "filter")->getLov()[i];
         sendModNewNumber(getString("devices", "filter"), "FILTER_SLOT", "FILTER_SLOT_VALUE", i);
     }
-}
-void Sequencer::refreshFilterLov()
-{
-    INDI::BaseDevice dp = getDevice(getString("devices", "filter").toStdString().c_str());
-
-    if (!dp.isValid())
-    {
-        sendError("Unable to find " + getString("devices", "filter") + " device.");
-        return;
-    }
-    INDI::PropertyText txt = dp.getText("FILTER_NAME");
-    if (!txt.isValid())
-    {
-        sendError("Unable to find " + getString("devices", "filter")  + "/" + "FILTER_NAME" + " property.");
-        return;
-    }
-
-    getEltInt("sequence", "filter")->lovClear();
-    for (unsigned int i = 0; i < txt.count(); i++ )
-    {
-        txt[i].getText();
-        getEltInt("sequence", "filter")->lovAdd(i + 1, txt[i].getText());
-    }
-
 }

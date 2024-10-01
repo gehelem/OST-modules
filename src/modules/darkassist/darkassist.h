@@ -1,22 +1,21 @@
-#ifndef SEQUENCER_MODULE_h_
-#define SEQUENCER_MODULE_h_
+#ifndef DARKASSIST_MODULE_h_
+#define DARKASSIST_MODULE_h_
 #include <indimodule.h>
 #include <fileio.h>
-#include <solver.h>
 
-#if defined(SEQUENCER_MODULE)
+#if defined(DARKASSIST_MODULE)
 #  define MODULE_INIT Q_DECL_EXPORT
 #else
 #  define MODULE_INIT Q_DECL_IMPORT
 #endif
 
-class MODULE_INIT Sequencer: public IndiModule
+class MODULE_INIT Darkassist: public IndiModule
 {
         Q_OBJECT
 
     public:
-        Sequencer(QString name, QString label, QString profile, QVariantMap availableModuleLibs);
-        ~Sequencer();
+        Darkassist(QString name, QString label, QString profile, QVariantMap availableModuleLibs);
+        ~Darkassist();
 
     signals:
 
@@ -44,7 +43,6 @@ class MODULE_INIT Sequencer: public IndiModule
     public slots:
         void OnMyExternalEvent(const QString &eventType, const QString  &eventModule, const QString  &eventKey,
                                const QVariantMap &eventData) override;
-        void OnSucessSEP();
 
     private:
         void newBLOB(INDI::PropertyBlob pblob);
@@ -61,12 +59,10 @@ class MODULE_INIT Sequencer: public IndiModule
         void StartSequence();
         void StartLine();
 
-        void refreshFilterLov();
 
         bool    _newblob;
 
         QPointer<fileio> _image;
-        Solver _solver;
         FITSImage::Statistic stats;
 
         int    _iterations = 3;
@@ -90,7 +86,7 @@ class MODULE_INIT Sequencer: public IndiModule
 
 };
 
-extern "C" MODULE_INIT Sequencer *initialize(QString name, QString label, QString profile,
+extern "C" MODULE_INIT Darkassist *initialize(QString name, QString label, QString profile,
         QVariantMap availableModuleLibs);
 
 #endif
