@@ -16,7 +16,13 @@ Darkassist::Darkassist(QString name, QString label, QString profile, QVariantMap
     setModuleVersion("0.1");
 
     giveMeADevice("camera", "Camera", INDI::BaseDevice::CCD_INTERFACE);
-    defineMeAsSequencer();
+    //defineMeAsSequencer();
+
+    OST::ElementBool* b = new OST::ElementBool("Start", "0", "");
+    getProperty("actions")->addElt("startsequence", b);
+    b = new OST::ElementBool("Abort", "2", "");
+    getProperty("actions")->addElt("abortsequence", b);
+
 
 }
 
