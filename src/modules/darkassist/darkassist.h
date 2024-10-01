@@ -76,8 +76,7 @@ class MODULE_INIT Darkassist: public IndiModule
         double currentExposure = 0;
         int currentGain = 0;
         int currentOffset = 0;
-        QString currentFilter = "";
-        QString currentFrameType = "";
+        double currentTemperature = 0;
         QString currentStatus = "";
 
         QVariantMap mActiveSeq;

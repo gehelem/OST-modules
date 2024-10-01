@@ -33,8 +33,6 @@ Darkassist::~Darkassist()
 void Darkassist::OnMyExternalEvent(const QString &eventType, const QString  &eventModule, const QString  &eventKey,
                                    const QVariantMap &eventData)
 {
-    qDebug() << "OnMyExternalEvent";
-    //BOOST_LOG_TRIVIAL(debug) << "OnMyExternalEvent - recv : " << getName().toStdString() << "-" << eventType.toStdString() << "-" << eventKey.toStdString();
     if (getModuleName() == eventModule)
     {
         foreach(const QString &keyprop, eventData.keys())
@@ -51,6 +49,20 @@ void Darkassist::OnMyExternalEvent(const QString &eventType, const QString  &eve
                     {
                         emit Abort();
                         isSequenceRunning = false;
+                    }
+                }
+                if (keyprop == "generate")
+                {
+                    if (keyelt == "create")
+                    {
+                    }
+                    if (keyelt == "append")
+                    {
+                        emit Abort();
+                    }
+                    if (keyelt == "reset")
+                    {
+                        getProperty("sequence")->clearGrid();
                     }
                 }
             }
@@ -100,10 +112,10 @@ void Darkassist::newBLOB(INDI::PropertyBlob pblob)
         im.save( getWebroot() + "/" + getModuleName() + ".jpeg", "JPG", 100);
 
         QString tt = QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss_zzz");
-        _image->saveAsFITSSimple(getWebroot() + "/" + getModuleName() + "-" + currentFilter + "-" + tt + ".FITS");
+        //_image->saveAsFITSSimple(getWebroot() + "/" + getModuleName() + "-" + currentFilter + "-" + tt + ".FITS");
         OST::ImgData dta = _image->ImgStats();
         dta.mUrlJpeg = getModuleName() + ".jpeg";
-        dta.mUrlFits = getModuleName() + "-" + currentFilter + "-" + tt + ".FITS";
+        //dta.mUrlFits = getModuleName() + "-" + currentFilter + "-" + tt + ".FITS";
         getEltImg("image", "image")->setValue(dta, true);
 
         currentCount--;
@@ -124,18 +136,7 @@ void Darkassist::newBLOB(INDI::PropertyBlob pblob)
 void Darkassist::newProperty(INDI::Property property)
 {
 
-    //if (
-    //    (property.getDeviceName()  == getString("devices", "filter"))
-    //    &&  (QString(property.getName())   == "FILTER_SLOT")
-    //    &&  (property.getState() == IPS_OK)
-    //    && isSequenceRunning
-    //)
-    //{
-    //    Shoot();
-    //}
-
 }
-
 void Darkassist::updateProperty(INDI::Property property)
 {
 
@@ -172,6 +173,14 @@ void Darkassist::updateProperty(INDI::Property property)
     {
         newExp(property);
     }
+    if (
+        (property.getDeviceName()  == getString("devices", "camera"))
+        &&  (QString(property.getName())   == "CCD_TEMPERATURE")
+    )
+    {
+        getEltFloat("state", "temperature")->setValue(66);
+    }
+
 }
 
 void Darkassist::newExp(INDI::PropertyNumber exp)
@@ -221,7 +230,10 @@ void Darkassist::StartSequence()
         for (int i = 0; i < getProperty("sequence")->getGrid().count(); i++)
         {
             getProperty("sequence")->fetchLine(i);
-            getEltString("sequence", "status")->setValue("Queued");
+            OST::PrgData p;
+            p.value = 0;
+            p.dynlabel = "Queued";
+            getEltPrg("sequence", "status")->setValue(p);
             getProperty("sequence")->updateLine(i);
         }
 
@@ -248,10 +260,12 @@ void Darkassist::StartLine()
         getProperty("sequence")->fetchLine(currentLine);
         currentCount = getInt("sequence", "count");
         currentExposure = getFloat("sequence", "exposure");
-        getEltString("sequence", "status")->setValue("Running " + QString::number(currentCount), true);
+        currentTemperature = getFloat("sequence", "temperature");
+        OST::PrgData p;
+        p.value = 0;
+        p.dynlabel = "Running " + QString::number(currentCount);
+        getEltPrg("sequence", "status")->setValue(p);
         getProperty("sequence")->updateLine(currentLine);
-        int i = getInt("sequence", "filter");
-        currentFilter = getEltInt("sequence", "filter")->getLov()[i];
-        sendModNewNumber(getString("devices", "filter"), "FILTER_SLOT", "FILTER_SLOT_VALUE", i);
+        sendModNewNumber(getString("devices", "camera"), "CCD_TEMPERATURE", "CCD_TEMPERATURE_VALUE", currentTemperature);
     }
 }
