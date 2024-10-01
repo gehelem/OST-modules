@@ -216,6 +216,22 @@ target_link_libraries(ostblindpec PRIVATE
 )
 target_compile_definitions(ostblindpec PRIVATE BLINDPEC_MODULE)
 
+# darkassist module
+add_library(ostdarkassist SHARED
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/darkassist/darkassist.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/darkassist/darkassist.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/darkassist/darkassist.qrc
+)
+target_link_libraries(ostdarkassist PRIVATE
+    ${OST_LIBRARY_INDI}
+    Qt${QT_VERSION_MAJOR}::Core
+    Qt${QT_VERSION_MAJOR}::Concurrent
+    Qt${QT_VERSION_MAJOR}::Widgets
+    Threads::Threads
+    z
+)
+target_compile_definitions(ostdarkassist PRIVATE DARKASSIST_MODULE)
+
 
 install(TARGETS
     ostallsky
@@ -227,6 +243,7 @@ install(TARGETS
     ostmeteo
     ostpolar
     ostblindpec
+    ostdarkassist
     RUNTIME DESTINATION "/usr/bin"
     LIBRARY DESTINATION "/usr/lib"
 )
