@@ -39,6 +39,8 @@ class MODULE_INIT Allsky : public IndiModule
         QProcess *_process;
         QImage mKheog;
         QTimer mTimer;
+        bool mIsLooping = false;
+        QString mFolder;
 
 };
 

@@ -90,6 +90,7 @@ void Allsky::OnMyExternalEvent(const QString &eventType, const QString  &eventMo
                         if (getEltBool(keyprop, keyelt)->setValue(false))
                         {
                             mTimer.stop();
+                            mIsLooping = false;
                             getEltBool(keyprop, "loop")->setValue(false);
                             getProperty("actions")->setState(OST::Ok);
 
@@ -129,12 +130,19 @@ void Allsky::OnMyExternalEvent(const QString &eventType, const QString  &eventMo
 }
 void Allsky::startLoop()
 {
+    if (mIsLooping)
+    {
+        sendWarning("Already looping");
+        return;
+    }
+
     _index = 0;
     mKheog = QImage();
+    mFolder = QDateTime::currentDateTime().toString("yyyyMMdd-hh-mm-ss");
 
     getProperty("log")->clearGrid();
 
-    QDir dir0(getWebroot() + "/" + getModuleName() + "/batch/", {"*"});
+    QDir dir0(getWebroot() + "/" + getModuleName() + "/" + mFolder + "/", {"*"});
     for(const QString &filename : dir0.entryList())
     {
         dir0.remove(filename);
@@ -142,7 +150,8 @@ void Allsky::startLoop()
 
     QDir dir;
     dir.mkdir(getWebroot() + "/" + getModuleName());
-    dir.mkdir(getWebroot() + "/" + getModuleName() + "/batch/");
+    dir.mkdir(getWebroot() + "/" + getModuleName() + "/" + mFolder);
+    dir.mkdir(getWebroot() + "/" + getModuleName() + "/" + mFolder + "/images");
     connectIndi();
     connectDevice(getString("devices", "camera"));
     setBLOBMode(B_ALSO, getString("devices", "camera").toStdString().c_str(), nullptr);
@@ -152,6 +161,7 @@ void Allsky::startLoop()
                         "offset")))
     {
         getProperty("actions")->setState(OST::Error);
+        mIsLooping = false;
     }
     else
     {
@@ -159,6 +169,7 @@ void Allsky::startLoop()
         connect(&mTimer, &QTimer::timeout, this, &Allsky::OnTimer);
         mTimer.start();
         getProperty("actions")->setState(OST::Busy);
+        mIsLooping = true;
     }
 
 }
@@ -175,12 +186,12 @@ void Allsky::startBatch()
         QStringList arguments;
         arguments << "-framerate" << "30";
         arguments << "-pattern_type" << "glob";
-        arguments << "-i" << getWebroot() + "/" + getModuleName() + "/batch/*.jpeg";
+        arguments << "-i" << getWebroot() + "/" + getModuleName() + "/" + mFolder +  "/images/*.jpeg";
         arguments << "-c:v" << "libx264";
         arguments << "-pix_fmt" << "yuv420p";
         arguments << "-framerate" << "30";
         arguments << "-y";
-        arguments << getWebroot() + "/" + getModuleName() + "/batch/" + getModuleName() + ".mp4";
+        arguments << getWebroot() + "/" + getModuleName() + "/" + mFolder + "/timelapse-" + getModuleName() + ".mp4";
         qDebug() << "PROCESS ARGS " << arguments;
         _process->start(program, arguments);
 
@@ -191,9 +202,9 @@ void Allsky::processFinished(int exitCode, QProcess::ExitStatus exitStatus)
 {
     Q_UNUSED(exitStatus);
     OST::VideoData v;
-    v.url = getModuleName() + "/batch/" + getModuleName() + ".mp4";
+    v.url = getModuleName() + "/" + mFolder + "/timelapse-" + getModuleName() + ".mp4";
     getEltVideo("timelapse", "video1")->setValue(v, true);
-    sendMessage("PROCESS FINISHED (" + QString::number(exitCode) + ")");
+    sendMessage("Timelapse ready (" + QString::number(exitCode) + ")");
 }
 void Allsky::processOutput()
 {
@@ -238,9 +249,9 @@ void Allsky::newBLOB(INDI::PropertyBlob pblob)
         painter.drawImage(mKheog.width(), 0, image2);
         mKheog = result;
 
-        mKheog.save(getWebroot() + "/" + getModuleName() + "-KHEOGRAM" + ".jpeg", "JPG", 100);
+        mKheog.save(getWebroot() + "/" + getModuleName() + "/" + mFolder + "/kheogram" + ".jpeg", "JPG", 100);
         OST::ImgData kh;
-        kh.mUrlJpeg = getModuleName() + "-KHEOGRAM" + ".jpeg";
+        kh.mUrlJpeg = getModuleName() + "/" + mFolder + "/kheogram" + ".jpeg";
         getEltImg("kheogram", "image1")->setValue(kh, true);
 
         r.setRect(0, 0, im.width(), im.height() / 10);
@@ -259,7 +270,7 @@ void Allsky::newBLOB(INDI::PropertyBlob pblob)
         getEltImg("image", "image")->setValue(dta, true);
 
         QString _n = QStringLiteral("%1").arg(_index, 10, 10, QLatin1Char('0'));
-        im.save(getWebroot() + "/" + getModuleName() + "/batch/" + _n + ".jpeg", "JPG", 100);
+        im.save(getWebroot() + "/" + getModuleName() + "/" + mFolder + + "/images/" + _n + ".jpeg", "JPG", 100);
 
         double tt = QDateTime::currentDateTime().toMSecsSinceEpoch();
         getEltFloat("log", "time")->setValue(tt, false);
