@@ -58,7 +58,6 @@ void Darkassist::OnMyExternalEvent(const QString &eventType, const QString  &eve
                     }
                     if (keyelt == "append")
                     {
-                        emit Abort();
                     }
                     if (keyelt == "reset")
                     {
@@ -153,17 +152,6 @@ void Darkassist::updateProperty(INDI::Property property)
         emit cameraAlert();
     }
 
-
-    if (
-        (property.getDeviceName()  == getString("devices", "camera"))
-        &&  (QString(property.getName())   == "CCD_FRAME_RESET")
-        &&  (property.getState()  == IPS_OK)
-    )
-    {
-        //sendMessage("FrameResetDone");
-        emit FrameResetDone();
-    }
-
     if (
         (property.getDeviceName()  == getString("devices", "camera"))
         &&  (QString(property.getName())   == "CCD_EXPOSURE")
@@ -172,13 +160,6 @@ void Darkassist::updateProperty(INDI::Property property)
     )
     {
         newExp(property);
-    }
-    if (
-        (property.getDeviceName()  == getString("devices", "camera"))
-        &&  (QString(property.getName())   == "CCD_TEMPERATURE")
-    )
-    {
-        getEltFloat("state", "temperature")->setValue(66);
     }
 
 }
