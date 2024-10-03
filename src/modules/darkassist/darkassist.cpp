@@ -55,9 +55,12 @@ void Darkassist::OnMyExternalEvent(const QString &eventType, const QString  &eve
                 {
                     if (keyelt == "create")
                     {
+                        getProperty("sequence")->clearGrid();
+                        AppendSequence();
                     }
                     if (keyelt == "append")
                     {
+                        AppendSequence();
                     }
                     if (keyelt == "reset")
                     {
@@ -73,14 +76,12 @@ void Darkassist::OnMyExternalEvent(const QString &eventType, const QString  &eve
             if (eventType == "Flcreate")
             {
                 QVariantMap m = eventData[keyprop].toMap()["elements"].toMap();
-                m["status"] = "Added";
                 getProperty(keyprop)->newLine(m);
             }
             if (eventType == "Flupdate")
             {
                 double line = eventData[keyprop].toMap()["line"].toDouble();
                 QVariantMap m = eventData[keyprop].toMap()["elements"].toMap();
-                m["status"] = "Updated";
                 getProperty(keyprop)->updateLine(line, m);
             }
         }
@@ -138,6 +139,14 @@ void Darkassist::newProperty(INDI::Property property)
 }
 void Darkassist::updateProperty(INDI::Property property)
 {
+    if (
+        (property.getDeviceName()  == getString("devices", "camera"))
+        &&  (QString(property.getName())   == "CCD_TEMPERATURE")
+    )
+    {
+        INDI::PropertyNumber n = property;
+        getEltFloat("state", "temperature")->setValue(n.findWidgetByName("CCD_TEMPERATURE_VALUE")->value, true);
+    }
 
     if (strcmp(property.getName(), "CCD1") == 0)
     {
@@ -191,6 +200,7 @@ void Darkassist::Shoot()
     getEltPrg("progress", "global")->setDynLabel(QString::number(currentLine + 1) + "/" + QString::number(tot), true);
 }
 
+void Darkassist::AppendSequence() {}
 void Darkassist::StartSequence()
 {
 

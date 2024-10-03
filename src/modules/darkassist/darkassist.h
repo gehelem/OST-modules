@@ -56,6 +56,7 @@ class MODULE_INIT Darkassist: public IndiModule
         void SMLoadblob();
         void SMAbort();
 
+        void AppendSequence();
         void StartSequence();
         void StartLine();
 
