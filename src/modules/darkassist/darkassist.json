@@ -1,0 +1,227 @@
+{
+"properties":{
+    "progress":{
+        "devcat": "Control",
+        "group": "",
+        "permission": 0,
+        "order":2,
+        "label":"Progress",
+        "elements": {
+            "global": {
+                "type": "prg",
+                "prgtype": "spinner",
+                "label": "Sequence",
+                "dynlabel": "",
+                "value": 0,
+                "order":0
+            },
+            "current": {
+                "type": "prg",
+                "prgtype": "spinner",
+                "label": "Current line",
+                "dynlabel": "",
+                "value": 0,
+                "order":1
+            },
+            "exposure": {
+                "type": "prg",
+                "prgtype": "spinner",
+                "label": "Current exposure",
+                "dynlabel": "",
+                "value": 0,
+                "order":2
+            }
+        }
+    },
+    "generate":{
+        "devcat": "Control",
+        "group": "Generate",
+        "permission": 2,
+        "order":"51",
+        "label":"",
+        "elements": {
+            "create": {
+                "type": "bool",
+                "label": "Create new sequence"
+            },
+            "append": {
+                "type": "bool",
+                "label": "Append existing sequence"
+            },
+            "reset": {
+                "type": "bool",
+                "label": "Reset existing sequence"
+            }
+        }
+    },
+    "gains":{
+        "devcat": "Control",
+        "group": "Generate",
+        "hasGrid":true,
+        "showGrid":true,
+        "showElts":false,
+        "permission": 2,
+        "order":"52",
+        "label":"Selected gains",
+        "hasprofile":true,
+        "elements": {
+            "values": {
+                "type": "int",
+                "label": "Gain",
+                "value": 0
+            }
+        }
+    },
+    "offsets":{
+        "devcat": "Control",
+        "group": "Generate",
+        "hasGrid":true,
+        "showGrid":true,
+        "showElts":false,
+        "permission": 2,
+        "order":"52",
+        "label":"Selected offsets",
+        "hasprofile":true,
+        "elements": {
+            "values": {
+                "type": "int",
+                "label": "Offset",
+                "value": 0
+            }
+        }
+    },
+    "temperatures":{
+        "devcat": "Control",
+        "group": "Generate",
+        "hasGrid":true,
+        "showGrid":true,
+        "showElts":false,
+        "permission": 2,
+        "order":"52",
+        "label":"Selected temperatures",
+        "hasprofile":true,
+        "elements": {
+            "values": {
+                "type": "float",
+                "label": "Temperature",
+                "value": 0
+            }
+        }
+    },
+    "exposures":{
+        "devcat": "Control",
+        "group": "Generate",
+        "hasGrid":true,
+        "showGrid":true,
+        "showElts":false,
+        "permission": 2,
+        "order":"52",
+        "label":"Selected exposures",
+        "hasprofile":true,
+        "elements": {
+            "values": {
+                "type": "float",
+                "label": "Exposure",
+                "value": 0
+            }
+        }
+    },
+    "count":{
+        "devcat": "Control",
+        "group": "Generate",
+        "permission": 2,
+        "order":"53",
+        "label":"Count",
+        "hasprofile":true,
+        "elements": {
+            "value": {
+                "type": "int",
+                "label": "Count",
+                "directedit": true,
+                "autoupdate":true,
+                "value": 1
+            }
+        }
+    },
+    "sequence": {
+        "hasGrid":true,
+        "showGrid":true,
+        "showElts":false,
+        "devcat": "Control",
+        "group": "",
+        "permission": 2,
+        "order":1,
+        "grid":0,
+        "hasprofile":true,
+        "label": "Sequence",
+        "elements": {
+            "temperature": {
+                "type":"float",
+                "order":"0",
+                "label": "Temperature"
+            },
+            "exposure": {
+                "type":"float",
+                "order":"1",
+                "label": "Exposure (s)",
+                "value":10,
+                "format": "99"
+            },
+            "count": {
+                "type":"int",
+                "min":1,
+                "order":"2",
+                "label": "Count",
+                "value":1,
+                "format": "99"
+            },
+            "gain": {
+                "type":"int",
+                "order":"3",
+                "min":0,
+                "max":1000,
+                "label": "Gain",
+                "value":0,
+                "format": "99"
+            },
+            "offset": {
+                "type":"int",
+                "order":"4",
+                "min":0,
+                "max":1000,
+                "label": "Offset",
+                "value":0,
+                "format": "99"
+            },
+            "progress": {
+                "type": "prg",
+                "prgtype": "spinner",
+                "label": "Progress",
+                "dynlabel": "",
+                "value": 0,
+                "order":"6"
+            }
+        }
+    },
+    "state":{
+        "devcat": "Control",
+        "group": "",
+        "permission": 0,
+        "order":2,
+        "label":"State",
+        "hasprofile":true,
+        "elements": {
+            "temperature": {
+                "type": "float",
+                "label": "Temperature",
+                "value": 1
+            },
+            "exposure": {
+                "type": "float",
+                "label": "Current exposure",
+                "value": 1
+            }
+        }
+    }
+}
+}
