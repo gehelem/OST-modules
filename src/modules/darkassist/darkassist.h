@@ -86,6 +86,7 @@ class MODULE_INIT Darkassist: public IndiModule
 
         QVariantMap mActiveSeq;
         bool isSequenceRunning = false;
+        bool isCooling = false;
         QString mFolder;
         QString mSubFolder;
 
