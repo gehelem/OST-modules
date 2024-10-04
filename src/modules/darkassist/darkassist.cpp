@@ -16,12 +16,15 @@ Darkassist::Darkassist(QString name, QString label, QString profile, QVariantMap
     setModuleVersion("0.1");
 
     giveMeADevice("camera", "Camera", INDI::BaseDevice::CCD_INTERFACE);
-    //defineMeAsSequencer();
+    defineMeAsSequencer();
+    deleteOstProperty("parms");
+    deleteOstProperty("optic");
 
-    OST::ElementBool* b = new OST::ElementBool("Start", "0", "");
-    getProperty("actions")->addElt("startsequence", b);
-    b = new OST::ElementBool("Abort", "2", "");
-    getProperty("actions")->addElt("abortsequence", b);
+
+    //OST::ElementBool* b = new OST::ElementBool("Start", "0", "");
+    //getProperty("actions")->addElt("startsequence", b);
+    //b = new OST::ElementBool("Abort", "2", "");
+    //getProperty("actions")->addElt("abortsequence", b);
 
 
 }
@@ -112,7 +115,7 @@ void Darkassist::newBLOB(INDI::PropertyBlob pblob)
         im.save( getWebroot() + "/" + getModuleName() + ".jpeg", "JPG", 100);
 
         QString tt = QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss_zzz");
-        //_image->saveAsFITSSimple(getWebroot() + "/" + getModuleName() + "-" + currentFilter + "-" + tt + ".FITS");
+        _image->saveAsFITSSimple(getWebroot() + "/" + getModuleName()  + tt + ".FITS");
         OST::ImgData dta = _image->ImgStats();
         dta.mUrlJpeg = getModuleName() + ".jpeg";
         //dta.mUrlFits = getModuleName() + "-" + currentFilter + "-" + tt + ".FITS";
@@ -122,7 +125,9 @@ void Darkassist::newBLOB(INDI::PropertyBlob pblob)
         //sendMessage("RVC frame " + QString::number(currentLine) + "/" + QString::number(currentCount));
         if(currentCount == 0)
         {
-            getEltString("sequence", "status")->setValue("Finished");
+            getEltPrg("sequence", "progress")->setDynLabel("Finished", true);
+            getEltPrg("progress", "current")->setDynLabel("Finished", true);
+
             getProperty("sequence")->updateLine(currentLine);
             StartLine();
         }
@@ -145,7 +150,20 @@ void Darkassist::updateProperty(INDI::Property property)
     )
     {
         INDI::PropertyNumber n = property;
-        getEltFloat("state", "temperature")->setValue(n.findWidgetByName("CCD_TEMPERATURE_VALUE")->value, true);
+        float t = n.findWidgetByName("CCD_TEMPERATURE_VALUE")->value;
+        getEltFloat("state", "temperature")->setValue(t, true);
+
+        OST::PrgData p;
+        p.value = 0;
+        p.dynlabel = "Set temp. " + QString::number(t);
+        getEltPrg("sequence", "progress")->setValue(p);
+        getProperty("sequence")->updateLine(currentLine);
+
+        if ((property.getState() == IPS_OK) && (isSequenceRunning))
+        {
+            Shoot();
+        }
+
     }
 
     if (strcmp(property.getName(), "CCD1") == 0)
@@ -164,7 +182,7 @@ void Darkassist::updateProperty(INDI::Property property)
     if (
         (property.getDeviceName()  == getString("devices", "camera"))
         &&  (QString(property.getName())   == "CCD_EXPOSURE")
-        //&&  (property.getState() == IPS_OK)
+        &&  (property.getState() == IPS_OK)
         && isSequenceRunning
     )
     {
@@ -187,8 +205,8 @@ void Darkassist::Shoot()
     requestCapture(getString("devices", "camera"), exp, gain, offset);
 
     double i = getInt("sequence", "count");
-    getEltString("sequence", "status")->setValue("Running "  + QString::number(
-                i - currentCount) + "/" + QString::number(i), true);
+    getEltPrg("sequence", "progress")->setDynLabel("Shooting", false);
+    getEltPrg("sequence", "progress")->setPrgValue(100 * (i - currentCount + 1 ) / i, true);
     getProperty("sequence")->updateLine(currentLine);
 
 
@@ -224,7 +242,7 @@ void Darkassist::StartSequence()
             OST::PrgData p;
             p.value = 0;
             p.dynlabel = "Queued";
-            getEltPrg("sequence", "status")->setValue(p);
+            getEltPrg("sequence", "progress")->setValue(p);
             getProperty("sequence")->updateLine(i);
         }
 
@@ -254,8 +272,8 @@ void Darkassist::StartLine()
         currentTemperature = getFloat("sequence", "temperature");
         OST::PrgData p;
         p.value = 0;
-        p.dynlabel = "Running " + QString::number(currentCount);
-        getEltPrg("sequence", "status")->setValue(p);
+        p.dynlabel = "Set temp.";
+        getEltPrg("sequence", "progress")->setValue(p);
         getProperty("sequence")->updateLine(currentLine);
         sendModNewNumber(getString("devices", "camera"), "CCD_TEMPERATURE", "CCD_TEMPERATURE_VALUE", currentTemperature);
     }
