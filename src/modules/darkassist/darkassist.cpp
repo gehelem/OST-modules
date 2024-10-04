@@ -52,6 +52,7 @@ void Darkassist::OnMyExternalEvent(const QString &eventType, const QString  &eve
                     {
                         emit Abort();
                         isSequenceRunning = false;
+                        isCooling = false;
                     }
                 }
                 if (keyprop == "generate")
@@ -147,15 +148,19 @@ void Darkassist::updateProperty(INDI::Property property)
         float t = n.findWidgetByName("CCD_TEMPERATURE_VALUE")->value;
         getEltFloat("state", "temperature")->setValue(t, true);
 
-        OST::PrgData p;
-        p.value = 0;
-        p.dynlabel = "Set temp. " + QString::number(t);
-        getEltPrg("sequence", "progress")->setValue(p);
-        getProperty("sequence")->updateLine(currentLine);
+        if (isCooling)
+        {
+            OST::PrgData p;
+            p.value = 0;
+            p.dynlabel = "Set temp. " + QString::number(t);
+            getEltPrg("sequence", "progress")->setValue(p);
+            getProperty("sequence")->updateLine(currentLine);
+        }
 
-        if ((property.getState() == IPS_OK) && (isSequenceRunning))
+        if ((property.getState() == IPS_OK) && isSequenceRunning && isCooling)
         {
             Shoot();
+            isCooling = false;
         }
 
     }
@@ -252,6 +257,7 @@ void Darkassist::StartSequence()
 
     currentLine = -1;
     isSequenceRunning = true;
+    isCooling = false;
     mFolder = QDateTime::currentDateTime().toString("yyyyMMdd-hh-mm-ss");
     QDir dir;
     dir.mkdir(getWebroot() + "/" + getModuleName());
@@ -322,6 +328,7 @@ void Darkassist::StartLine()
         getEltPrg("sequence", "progress")->setValue(p);
         getProperty("sequence")->updateLine(currentLine);
         sendModNewNumber(getString("devices", "camera"), "CCD_TEMPERATURE", "CCD_TEMPERATURE_VALUE", currentTemperature);
+        isCooling = true;
         QDir dir;
         dir.mkdir(getWebroot() + "/" + getModuleName() + "/" + mFolder + "/" + mSubFolder);
 
