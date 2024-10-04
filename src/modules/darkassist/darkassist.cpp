@@ -102,20 +102,14 @@ void Darkassist::newBLOB(INDI::PropertyBlob pblob)
         _image = new fileio();
         _image->loadBlob(pblob, 64);
         stats = _image->getStats();
-        //qDebug() << "1";
-        //_solver.ResetSolver(stats, _image->getImageBuffer());
-        //qDebug() << "2";
-        //connect(&_solver, &Solver::successSEP, this, &Sequencer::OnSucessSEP);
-        //qDebug() << "3";
-        //_solver.FindStars(_solver.stellarSolverProfiles[0]);
-        //qDebug() << "4";
         QImage rawImage = _image->getRawQImage();
         QImage im = rawImage.convertToFormat(QImage::Format_RGB32);
         im.setColorTable(rawImage.colorTable());
         im.save( getWebroot() + "/" + getModuleName() + ".jpeg", "JPG", 100);
 
         QString tt = QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss_zzz");
-        _image->saveAsFITSSimple(getWebroot() + "/" + getModuleName()  + tt + ".FITS");
+        _image->saveAsFITSSimple(getWebroot() + "/" + getModuleName()  + "/" + mFolder + "/" + mSubFolder + "/" +
+                                 mSubFolder + "_" + tt + ".FITS");
         OST::ImgData dta = _image->ImgStats();
         dta.mUrlJpeg = getModuleName() + ".jpeg";
         //dta.mUrlFits = getModuleName() + "-" + currentFilter + "-" + tt + ".FITS";
@@ -221,6 +215,8 @@ void Darkassist::Shoot()
 void Darkassist::AppendSequence()
 {
     int count = getInt("count", "value");
+    getEltPrg("sequence", "progress")->setPrgValue(0, false);
+    getEltPrg("sequence", "progress")->setDynLabel("Added", false);
 
     for (int t = 0; t < getProperty("temperatures")->getGrid().size(); t++)
     {
@@ -256,6 +252,10 @@ void Darkassist::StartSequence()
 
     currentLine = -1;
     isSequenceRunning = true;
+    mFolder = QDateTime::currentDateTime().toString("yyyyMMdd-hh-mm-ss");
+    QDir dir;
+    dir.mkdir(getWebroot() + "/" + getModuleName());
+    dir.mkdir(getWebroot() + "/" + getModuleName() + "/" + mFolder);
 
     connectIndi();
     if (connectDevice(getString("devices", "camera")))
@@ -301,12 +301,29 @@ void Darkassist::StartLine()
         getProperty("sequence")->fetchLine(currentLine);
         currentCount = getInt("sequence", "count");
         currentExposure = getFloat("sequence", "exposure");
+        currentExposureAlpha = QString::number(currentExposure);
+        currentExposureAlpha.replace(".", "_");
+        currentExposureAlpha.replace(",", "_");
         currentTemperature = getFloat("sequence", "temperature");
+        currentTemperatureAlpha = QString::number(currentTemperature);
+        currentTemperatureAlpha.replace("-", "_minus_");
+        currentTemperatureAlpha.replace("+", "_plus_");
+        currentTemperatureAlpha.replace(".", "_");
+        currentTemperatureAlpha.replace(",", "_");
+        currentGain = getInt("sequence", "gain");
+        currentGainAlpha = QString::number(currentGain);
+        currentOffset = getInt("sequence", "offset");
+        currentOffsetAlpha = QString::number(currentOffset);
+        mSubFolder = "TEMP_" + currentTemperatureAlpha + "_EXP_" + currentExposureAlpha + "_GAIN_" + currentGainAlpha  + "_OFFSET_"
+                     + currentOffsetAlpha;
         OST::PrgData p;
         p.value = 0;
         p.dynlabel = "Set temp.";
         getEltPrg("sequence", "progress")->setValue(p);
         getProperty("sequence")->updateLine(currentLine);
         sendModNewNumber(getString("devices", "camera"), "CCD_TEMPERATURE", "CCD_TEMPERATURE_VALUE", currentTemperature);
+        QDir dir;
+        dir.mkdir(getWebroot() + "/" + getModuleName() + "/" + mFolder + "/" + mSubFolder);
+
     }
 }

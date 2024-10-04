@@ -75,13 +75,20 @@ class MODULE_INIT Darkassist: public IndiModule
         int currentLine = 0;
         int currentCount = 0;
         double currentExposure = 0;
+        QString currentExposureAlpha = "";
         int currentGain = 0;
+        QString currentGainAlpha = "";
         int currentOffset = 0;
+        QString currentOffsetAlpha = "";
         double currentTemperature = 0;
+        QString currentTemperatureAlpha = "";
         QString currentStatus = "";
 
         QVariantMap mActiveSeq;
         bool isSequenceRunning = false;
+        QString mFolder;
+        QString mSubFolder;
+
 
 
 };
