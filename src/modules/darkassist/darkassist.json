@@ -131,13 +131,14 @@
         "group": "Generate",
         "permission": 2,
         "order":"53",
-        "label":"",
+        "label":"Count",
         "hasprofile":true,
         "elements": {
-            "values": {
+            "value": {
                 "type": "int",
                 "label": "Count",
                 "directedit": true,
+                "autoupdate":true,
                 "value": 1
             }
         }

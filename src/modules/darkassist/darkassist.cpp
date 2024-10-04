@@ -182,7 +182,7 @@ void Darkassist::updateProperty(INDI::Property property)
     if (
         (property.getDeviceName()  == getString("devices", "camera"))
         &&  (QString(property.getName())   == "CCD_EXPOSURE")
-        &&  (property.getState() == IPS_OK)
+        //&&  (property.getState() == IPS_OK)
         && isSequenceRunning
     )
     {
@@ -218,7 +218,39 @@ void Darkassist::Shoot()
     getEltPrg("progress", "global")->setDynLabel(QString::number(currentLine + 1) + "/" + QString::number(tot), true);
 }
 
-void Darkassist::AppendSequence() {}
+void Darkassist::AppendSequence()
+{
+    int count = getInt("count", "value");
+
+    for (int t = 0; t < getProperty("temperatures")->getGrid().size(); t++)
+    {
+        getProperty("temperatures")->fetchLine(t);
+        float temperature = getFloat("temperatures", "values");
+        for (int e = 0; e < getProperty("exposures")->getGrid().size(); e++)
+        {
+            getProperty("exposures")->fetchLine(e);
+            float exposure = getFloat("exposures", "values");
+            for (int g = 0; g < getProperty("gains")->getGrid().size(); g++)
+            {
+                getProperty("gains")->fetchLine(g);
+                int gain = getInt("gains", "values");
+                for (int o = 0; o < getProperty("offsets")->getGrid().size(); o++)
+                {
+                    getProperty("offsets")->fetchLine(o);
+                    int offset = getInt("offsets", "values");
+
+                    getEltInt("sequence", "count")->setValue(count);
+                    getEltInt("sequence", "gain")->setValue(gain);
+                    getEltInt("sequence", "offset")->setValue(offset);
+                    getEltFloat("sequence", "temperature")->setValue(temperature);
+                    getEltFloat("sequence", "exposure")->setValue(exposure);
+                    getProperty("sequence")->push();
+                }
+            }
+        }
+    }
+
+}
 void Darkassist::StartSequence()
 {
 
@@ -232,7 +264,7 @@ void Darkassist::StartSequence()
         frameReset(getString("devices", "camera"));
         if (getString("devices", "camera") == "CCD Simulator")
         {
-            sendModNewNumber(getString("devices", "camera"), "SIMULATOR_SETTINGS", "SIM_TIME_FACTOR", 1 );
+            sendModNewNumber(getString("devices", "camera"), "SIMULATOR_SETTINGS", "SIM_TIME_FACTOR", 0.01 );
         }
         getProperty("actions")->setState(OST::Busy);
 
