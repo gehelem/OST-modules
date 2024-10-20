@@ -33,11 +33,6 @@ Inspector::Inspector(QString name, QString label, QString profile, QVariantMap a
     getProperty("actions")->deleteElt("startsequence");
     getProperty("actions")->deleteElt("abortsequence");
 
-    OST::ElementImg* im = new OST::ElementImg("Image map", "2", "");
-    getProperty("image")->addElt("imagemap", im);
-    im = new OST::ElementImg("Corners", "3", "");
-    getProperty("image")->addElt("corners", im);
-
     auto* i = new OST::ElementInt("Corner size (pixels)", "50", "");
     i->setAutoUpdate(true);
     i->setDirectEdit(true);
@@ -196,12 +191,6 @@ void Inspector::OnSucessSEP()
     immap.setColorTable(rawImage.colorTable());
 
     double ech = getSampling();
-    im.save(getWebroot()  + "/" + getModuleName() + ".jpeg", "JPG", 100);
-    OST::ImgData dta = _image->ImgStats();
-    dta.mUrlJpeg = getModuleName() + ".jpeg";
-    dta.HFRavg = ech * _solver.HFRavg;
-    dta.starsCount = _solver.stars.size();
-    getEltImg("image", "image")->setValue(dta, true);
 
     //QRect r;
     //r.setRect(0,0,im.width(),im.height());
@@ -280,9 +269,6 @@ void Inspector::OnSucessSEP()
 
 
     immap.save(getWebroot() + "/" + getModuleName() + "map.jpeg", "JPG", 100);
-    OST::ImgData dta2 = _image->ImgStats();
-    dta2.mUrlJpeg = getModuleName() + "map.jpeg";
-    getEltImg("image", "imagemap")->setValue(dta2, true);
 
     int s = getInt("parms", "cornersize");
     int h = rawImage.height();
@@ -313,11 +299,18 @@ void Inspector::OnSucessSEP()
     painter.end();
 
     corners.save(getWebroot() + "/" + getModuleName() + "corners.jpeg", "JPG", 100);
-    OST::ImgData dta3;
-    dta3.height = 3 * s;
-    dta3.width = 3 * s;
-    dta3.mUrlJpeg = getModuleName() + "corners.jpeg";
-    getEltImg("image", "corners")->setValue(dta3, true);
+
+    im.save(getWebroot()  + "/" + getModuleName() + ".jpeg", "JPG", 100);
+    OST::ImgData dta = _image->ImgStats();
+    dta.mUrlJpeg = getModuleName() + ".jpeg";
+    dta.HFRavg = ech * _solver.HFRavg;
+    dta.starsCount = _solver.stars.size();
+    dta.mAlternates.clear();
+    dta.mAlternates.push_front(getModuleName() + "corners.jpeg");
+    dta.mAlternates.push_front(getModuleName() + "map.jpeg");
+    getEltImg("image", "image")->setValue(dta, true);
+
+
 
     emit FindStarsDone();
 
