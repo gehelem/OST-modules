@@ -267,6 +267,8 @@ void Allsky::newBLOB(INDI::PropertyBlob pblob)
         im.save(getWebroot() + "/" + getModuleName() + QString(pblob.getDeviceName()) + ".jpeg", "JPG", 100);
         OST::ImgData dta = _image->ImgStats();
         dta.mUrlJpeg = getModuleName() + QString(pblob.getDeviceName()) + ".jpeg";
+        dta.mAlternates.clear();
+        dta.mAlternates.push_front(getModuleName() + "/" + mFolder + "/kheogram" + ".jpeg");
         getEltImg("image", "image")->setValue(dta, true);
 
         QString _n = QStringLiteral("%1").arg(_index, 10, 10, QLatin1Char('0'));
