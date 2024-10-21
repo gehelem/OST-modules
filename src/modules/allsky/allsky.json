@@ -36,6 +36,7 @@
         "hasGrid":true,
         "showGrid":false,
         "showElts":true,
+        "gridLimit":50,
         "graphType":"DY",
         "graphParams":{
             "D":"time",
