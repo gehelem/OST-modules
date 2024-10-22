@@ -9,6 +9,7 @@
         "elements": {
             "video1": {
                 "type": "video",
+                "order":"1",
                 "label": "Timelapse"
             }
         }
@@ -24,6 +25,7 @@
             "image1": {
                 "type": "img",
                 "label": "Kheogram",
+                "order":"1",
                 "urljpeg":"./dummy.jpg"
             }
         }
@@ -46,10 +48,12 @@
                 "time": {
                     "label": "Time",
                     "type": "float",
+                    "order":"1",
                     "value":0
                 },
                 "snr": {
                     "label": "SNR",
+                    "order":"2",
                     "type": "float",
                     "value":0
                 }

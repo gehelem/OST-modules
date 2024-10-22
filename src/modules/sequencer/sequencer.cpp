@@ -30,7 +30,6 @@ Sequencer::~Sequencer()
 void Sequencer::OnMyExternalEvent(const QString &eventType, const QString  &eventModule, const QString  &eventKey,
                                   const QVariantMap &eventData)
 {
-    qDebug() << "OnMyExternalEvent";
     //BOOST_LOG_TRIVIAL(debug) << "OnMyExternalEvent - recv : " << getName().toStdString() << "-" << eventType.toStdString() << "-" << eventKey.toStdString();
     if (getModuleName() == eventModule)
     {

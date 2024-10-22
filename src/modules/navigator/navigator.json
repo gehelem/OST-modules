@@ -14,6 +14,7 @@
                 "type": "string",
                 "posticon": "forward",
                 "label": "",
+                "order": "1",
                 "value":"M13"
             }
         }
@@ -138,12 +139,14 @@
             "go": {
                 "type":"bool",
                 "label": "GO",
+                "order": "1",
                 "value":false
             },
             "catlg":{
                 "autoupdate":true,
                 "type":"string",
                 "label": "Catalog",
+                "order": "2",
                 "value":"messier",
                 "listOfValues":[
                     ["messier","Messier"],

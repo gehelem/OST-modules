@@ -18,12 +18,14 @@
             "loopHFRavg": {
                 "type":"float",
                 "label": "Average HFR ('')",
+                "order":"10",
                 "value":0,
                 "format": "99.99"
             },
             "focpos": {
                 "type":"int",
                 "label": "Focuser position",
+                "order":"00",
                 "value":0,
                 "step":1,
                 "format": "9999999"
@@ -31,6 +33,7 @@
             "bestpos": {
                 "type":"int",
                 "label": "Best position",
+                "order":"20",
                 "value":0,
                 "step":1,
                 "format": "9999999"
@@ -38,18 +41,21 @@
             "bestposfit": {
                 "type":"float",
                 "label": "Pol. fit position",
+                "order":"30",
                 "value":0,
                 "format": "9999999.99"
             },
             "imgHFR": {
                 "type":"float",
                 "label": "Last imgage HFR ('')",
+                "order":"40",
                 "value":0,
                 "format": "99.99"
             },
             "iteration": {
                 "type":"int",
                 "label": "Iteration",
+                "order":"50",
                 "value":0,
                 "step":1,
                 "format": "9999"
@@ -67,11 +73,13 @@
                 "type":"float",
                 "label": "Average HFR result ('')",
                 "value":0,
+                "order":"10",
                 "format": "99.99"
             },
             "pos": {
                 "type":"float",
                 "label": "Focuser final position",
+                "order":"00",
                 "value":0,
                 "step":1,
                 "format": "9999999"
@@ -84,6 +92,7 @@
         "group": "",
         "permission": 2,
         "hasprofile":true,
+        "order":"222Parms000",
         "label": "Focus parameters",
         "elements": {
             "startpos": {
@@ -92,6 +101,7 @@
                 "directedit":true,
                 "type":"int",
                 "label": "Start position",
+                "order":"00",
                 "value":32000,
                 "format": "999999"
             },
@@ -119,6 +129,7 @@
                 "directedit":true,
                 "type":"int",
                 "label": "Average over",
+                "order":"00",
                 "value":3,
                 "format": "99"
             },
