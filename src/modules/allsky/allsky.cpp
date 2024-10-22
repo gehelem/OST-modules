@@ -279,6 +279,12 @@ void Allsky::newBLOB(INDI::PropertyBlob pblob)
         getEltFloat("log", "snr")->setValue(_image->getStats().SNR, true);
         getProperty("log")->push();
 
+        if (getBool("autoparms", "enabled"))
+        {
+            if (getString("autoparms", "measure") == "mean") computeExposureOrGain(_image->getStats().mean[0]);
+            if (getString("autoparms", "measure") == "median") computeExposureOrGain(_image->getStats().median[0]);
+        }
+
     }
 
 
@@ -303,5 +309,37 @@ void Allsky::OnTimer()
         mTimer.setInterval(getInt("parms", "delay") * 1000);
         getProperty("actions")->setState(OST::Busy);
     }
+
+}
+void Allsky::computeExposureOrGain(double fromValue)
+{
+    QString elt = "";
+    if (getString("autoparms", "expgain") == "exp") elt = "exposure";
+    if (getString("autoparms", "expgain") == "gain") elt = "gain";
+    double target = getFloat("autoparms", "target");
+    double threshold = getFloat("autoparms", "threshold") / 100; // not used ATM, we'll see that later
+    double coef = target / fromValue;
+    double val = 0;
+    if (elt == "exposure") val = getFloat("parms", elt);
+    if (elt == "gain") val = getInt("parms", elt);
+
+    int    delay = getInt("parms", "delay");
+    double newval = val * coef;
+    if (elt == "exposure" && newval > delay)
+    {
+        newval = 0.95 * delay;
+    }
+    if (newval < getFloat("autoparms", "min"))
+    {
+        newval = getFloat("autoparms", "min");
+    }
+    if (newval > getFloat("autoparms", "max"))
+    {
+        newval = getFloat("autoparms", "max");
+    }
+    if (elt == "exposure") getEltFloat("parms", elt)->setValue(newval, true);
+    if (elt == "gain") getEltInt("parms", elt)->setValue(newval, true);
+
+
 
 }

@@ -31,6 +31,7 @@ class MODULE_INIT Allsky : public IndiModule
         void startBatch();
         void processOutput();
         void processError();
+        void computeExposureOrGain(double fromValue);
 
         QPointer<fileio> _image;
         Solver _solver;
