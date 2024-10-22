@@ -189,13 +189,13 @@ void Meteo::declareNewGraph(const QString  &pName)
         return;
     }
     QString lab = mAvailableMeasures[pName];
-    OST::PropertyMulti* pm = new OST::PropertyMulti(pName, lab, OST::ReadOnly, "Measures", "", 0, false, true);
+    OST::PropertyMulti* pm = new OST::PropertyMulti(pName, lab, OST::ReadOnly, "Measures", lab, 0, false, true);
     pm->setShowGrid(false);
     pm->setGridLimit(getInt("parms", "histo"));
     pm->setShowElts(false);
-    auto* t = new OST::ElementFloat("Time", "", "");
+    auto* t = new OST::ElementFloat("Time", "00", "");
     pm->addElt("time", t);
-    t = new OST::ElementFloat(pName, "", "");
+    t = new OST::ElementFloat(pName, "10", "");
     pm->addElt(pName, t);
 
     OST::GraphDefs def;

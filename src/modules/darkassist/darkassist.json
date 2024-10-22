@@ -42,14 +42,17 @@
         "elements": {
             "create": {
                 "type": "bool",
+                "order":"1",
                 "label": "Create new sequence"
             },
             "append": {
                 "type": "bool",
+                "order":"2",
                 "label": "Append existing sequence"
             },
             "reset": {
                 "type": "bool",
+                "order":"3",
                 "label": "Reset existing sequence"
             }
         }
@@ -68,6 +71,7 @@
             "values": {
                 "type": "int",
                 "label": "Gain",
+                "order":"1",
                 "value": 0
             }
         }
@@ -79,13 +83,14 @@
         "showGrid":true,
         "showElts":false,
         "permission": 2,
-        "order":"52",
+        "order":"53",
         "label":"Selected offsets",
         "hasprofile":true,
         "elements": {
             "values": {
                 "type": "int",
                 "label": "Offset",
+                "order":"1",
                 "value": 0
             }
         }
@@ -97,13 +102,14 @@
         "showGrid":true,
         "showElts":false,
         "permission": 2,
-        "order":"52",
+        "order":"54",
         "label":"Selected temperatures",
         "hasprofile":true,
         "elements": {
             "values": {
                 "type": "float",
                 "label": "Temperature",
+                "order":"1",
                 "value": 0
             }
         }
@@ -115,13 +121,14 @@
         "showGrid":true,
         "showElts":false,
         "permission": 2,
-        "order":"52",
+        "order":"55",
         "label":"Selected exposures",
         "hasprofile":true,
         "elements": {
             "values": {
                 "type": "float",
                 "label": "Exposure",
+                "order":"1",
                 "value": 0
             }
         }
@@ -130,13 +137,14 @@
         "devcat": "Control",
         "group": "Generate",
         "permission": 2,
-        "order":"53",
+        "order":"56",
         "label":"Count",
         "hasprofile":true,
         "elements": {
             "value": {
                 "type": "int",
                 "label": "Count",
+                "order":"1",
                 "directedit": true,
                 "autoupdate":true,
                 "value": 1
@@ -214,11 +222,13 @@
             "temperature": {
                 "type": "float",
                 "label": "Temperature",
+                "order":"1",
                 "value": 1
             },
             "exposure": {
                 "type": "float",
                 "label": "Current exposure",
+                "order":"2",
                 "value": 1
             }
         }

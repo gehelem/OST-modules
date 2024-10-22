@@ -16,6 +16,7 @@
             "dpv": {
                 "type":"string",
                 "label": "Device - Property - Element",
+                "order": "1",
                 "value":"",
                 "listOfValues":{
                 }
@@ -41,12 +42,14 @@
                 "directedit":true,
                 "autoupdate":true,
                 "type":"string",
+                "order": "1",
                 "label": "Device - Property - Element (id)"
             },
             "dpvsearchlab": {
                 "directedit":true,
                 "autoupdate":true,
                 "type":"string",
+                "order": "2",
                 "label": "Device - Property - Element (label)"
             }
 

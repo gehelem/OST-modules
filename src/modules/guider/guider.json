@@ -10,41 +10,49 @@
             "pulseN": {
                 "type":"int",
                 "label": "Pulse N",
+                "order":"01",
                 "format": "99.99"
             },
             "pulseS": {
                 "type":"int",
                 "label": "Pulse S",
+                "order":"02",
                 "format": "99.99"
             },
             "pulseE": {
                 "type":"int",
                 "label": "Pulse E",
+                "order":"03",
                 "format": "99.99"
             },
             "pulseW": {
                 "type":"int",
                 "label": "Pulse W",
+                "order":"04",
                 "format": "99.99"
             },
             "calPulseN": {
                 "type":"int",
                 "label": "Calibration Pulse N",
+                "order":"91",
                 "format": "99.99"
             },
             "calPulseS": {
                 "type":"int",
                 "label": "Calibration Pulse S",
+                "order":"92",
                 "format": "99.99"
             },
             "calPulseE": {
                 "type":"int",
                 "label": "Calibration Pulse E",
+                "order":"93",
                 "format": "99.99"
             },
             "calPulseW": {
                 "type":"int",
                 "label": "Calibration Pulse W",
+                "order":"94",
                 "format": "99.99"
             }
 
@@ -68,11 +76,13 @@
             "RA": {
                 "type":"float",
                 "label": "RA",
+                "order":"01",
                 "format": "99.99"
             },
             "DEC": {
                 "type":"float",
                 "label": "DEC",
+                "order":"02",
                 "format": "99.99"
             }
         }
@@ -98,26 +108,31 @@
             "time": {
                 "type":"float",
                 "label": "time",
+                "order":"01",
                 "value":0
             },
             "RA": {
                 "type":"float",
                 "label": "Drift (RA)",
+                "order":"02",
                 "format": "99.99"
             },
             "DE": {
                 "type":"float",
                 "label": "Drift (DE)",
+                "order":"03",
                 "format": "99.99"
             },
             "pRA": {
                 "type":"float",
                 "label": "Pulse (RA)",
+                "order":"04",
                 "format": "99.99"
             },
             "pDE": {
                 "type":"float",
                 "label": "Pulse (DE)",
+                "order":"05",
                 "format": "99.99"
             }
         }
@@ -139,11 +154,13 @@
                 "time": {
                     "type":"float",
                     "label": "Time",
+                    "order":"01",
                     "value":0
                 },
                 "snr": {
                     "type":"float",
                     "label": "SNR",
+                    "order":"02",
                     "value":0
                 }
         },
@@ -164,6 +181,7 @@
                 "autoupdate":true,
                 "directedit":true,
                 "label": "Calibration pulse (ms)",
+                "order":"01",
                 "value":1000,
                 "format": "99"
             },
@@ -172,6 +190,7 @@
                 "autoupdate":true,
                 "directedit":true,
                 "label": "Iterations / axis",
+                "order":"02",
                 "value":2,
                 "format": "99"
             }
@@ -192,6 +211,7 @@
                 "autoupdate":true,
                 "directedit":true,
                 "label": "Max pulse (ms)",
+                "order":"02",
                 "value":2000,
                 "format": "99"
             },
@@ -200,6 +220,7 @@
                 "autoupdate":true,
                 "directedit":true,
                 "label": "Min pulse (ms)",
+                "order":"01",
                 "value":20,
                 "format": "99"
             },
@@ -208,6 +229,7 @@
                 "autoupdate":true,
                 "directedit":true,
                 "label": "RA Agressivity",
+                "order":"03",
                 "value":0.8,
                 "format": "99.99"
             },
@@ -216,6 +238,7 @@
                 "autoupdate":true,
                 "directedit":true,
                 "label": "DEC Agressivity",
+                "order":"04",
                 "value":0.8,
                 "format": "99"
             }
@@ -233,12 +256,14 @@
             "revRA": {
                 "type":"bool",
                 "label": "RA",
+                "order":"01",
                 "autoupdate":true,
                 "value":false
             },
             "revDE": {
                 "type":"bool",
                 "label": "DEC",
+                "order":"02",
                 "autoupdate":true,
                 "value":false
             }
@@ -257,24 +282,28 @@
                     "autoupdate":true,
                     "type":"bool",
                     "label": "RA+",
+                    "order":"01",
                     "value":false
                 },
                 "disRA-": {
                     "autoupdate":true,
                     "type":"bool",
                     "label": "RA-",
+                    "order":"02",
                     "value":false
                 },
                 "disDE+": {
                     "type":"bool",
                     "autoupdate":true,
                     "label": "DE+",
+                    "order":"03",
                     "value":false
                 },
                 "disDE-": {
                     "type":"bool",
                     "autoupdate":true,
                     "label": "DE-",
+                    "order":"04",
                     "value":false
                 }
             }
