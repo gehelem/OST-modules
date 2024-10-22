@@ -15,6 +15,80 @@
         }
 
     },
+    "autoparms": {
+        "devcat": "Parameters",
+        "group": "",
+        "order":"222Parms115",
+        "permission": 2,
+        "hasprofile":true,
+        "label": "Dynamic exposure/gain",
+        "elements": {
+            "enabled": {
+                "type": "bool",
+                "label": "Enable",
+                "autoupdate":true,
+                "directedit":true,
+                "value":false,
+                "order":"0"
+            },
+            "expgain": {
+                "type": "string",
+                "label": "Change exposure or gain",
+                "autoupdate":true,
+                "directedit":true,
+                "value":"exp",
+                "listOfValues":[
+                    ["exp","Exposure"],
+                    ["gain","Gain"]
+                ],
+                "order":"1"
+            },
+            "min": {
+                "type": "float",
+                "label": "Minimum value",
+                "autoupdate":true,
+                "directedit":true,
+                "value":0,
+                "order":"2"
+            },
+            "max": {
+                "type": "float",
+                "label": "Maximum value",
+                "autoupdate":true,
+                "directedit":true,
+                "value":0,
+                "order":"3"
+            },
+            "measure": {
+                "type": "string",
+                "label": "Measure parm",
+                "autoupdate":true,
+                "directedit":true,
+                "value":"exp",
+                "listOfValues":[
+                    ["mean","Mean"],
+                    ["median","Median"]
+                ],
+                "order":"4"
+            },
+            "target": {
+                "type": "float",
+                "label": "Target value",
+                "autoupdate":true,
+                "directedit":true,
+                "value":0,
+                "order":"5"
+            },
+            "threshold": {
+                "type": "float",
+                "label": "Threshold (%)",
+                "autoupdate":true,
+                "directedit":true,
+                "value":0,
+                "order":"6"
+            }
+        }
+    },
     "kheogram": {
         "devcat": "Results",
         "group": "",
