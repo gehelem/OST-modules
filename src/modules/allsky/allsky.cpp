@@ -378,6 +378,9 @@ void Allsky::checkArchives(void)
         OST::ImgData i = getEltImg("archives", "kheogram")->value();
         i.mUrlJpeg = getModuleName() + "/archives" + dd + "/kheogram.jpeg";
         getEltImg("archives", "kheogram")->setValue(i);
+        OST::VideoData v = getEltVideo("archives", "timelapse")->value();
+        v.url = getModuleName() + "/archives" + dd + "/timelapse-" + getModuleName() + ".mp4";
+        getEltVideo("archives", "timelapse")->setValue(v);
         getEltString("archives", "date")->setValue(dd.replace("/", ""));
         getProperty("archives")->push();
     }

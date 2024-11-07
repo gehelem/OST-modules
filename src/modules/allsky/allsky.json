@@ -149,12 +149,17 @@
             "date": {
                 "label": "Date",
                 "type": "string",
-                "order":"1"
+                "order":"10"
             },
             "kheogram": {
                 "type": "img",
                 "label": "Kheogram",
-                "order":"1"
+                "order":"30"
+            },
+            "timelapse": {
+                "label": "Timelapse",
+                "type": "video",
+                "order":"20"
             }
         }
 
