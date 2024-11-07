@@ -349,26 +349,27 @@ void Allsky::computeExposureOrGain(double fromValue)
 }
 void Allsky::checkArchives(void)
 {
-    qDebug() << "*************** checkFolders " << getWebroot() + "/" + getModuleName();
     getProperty("archives")->clearGrid();
     QStringList folders;
 
     //check existing folders
-    QDirIterator itFolders(getWebroot() + "/" + getModuleName(), QDirIterator::Subdirectories);
+    QDirIterator itFolders(getWebroot() + "/" + getModuleName() + "/archives", QDirIterator::Subdirectories);
     while (itFolders.hasNext())
     {
         QString d = itFolders.next();
-        d.replace(getWebroot(), "");
-        if (d.endsWith("/."))
+        d.replace(getWebroot() + "/" + getModuleName() + "/archives", "");
+        if (d.endsWith("/.") && !d.contains("images") && d != "/.")
         {
             QString dd = d;
             dd.replace("/.", "");
             if (!folders.contains(dd))
             {
                 folders.append(dd);
-                getEltString("archives", "date")->setValue(dd, false);
+                getEltString("archives", "date")->setValue(dd);
+                OST::ImgData i = getEltImg("archives", "kheogram")->value();
+                i.mUrlJpeg = getModuleName() + "/archives" + dd + "/kheogram.jpeg";
+                getEltImg("archives", "kheogram")->setValue(i);
                 getProperty("archives")->push();
-                qDebug() << "***************" << dd;
             }
         }
     }
