@@ -196,7 +196,7 @@ void Allsky::startBatch()
         arguments << "-pix_fmt" << "yuv420p";
         arguments << "-framerate" << "30";
         arguments << "-y";
-        arguments << getWebroot() + "/" + getModuleName() + "/" + mFolder + "/timelapse-" + getModuleName() + ".mp4";
+        arguments << getWebroot() + "/" + getModuleName() + "/" + mFolder + "/timelapse.mp4";
         qDebug() << "PROCESS ARGS " << arguments;
         _process->start(program, arguments);
 
@@ -207,7 +207,7 @@ void Allsky::processFinished(int exitCode, QProcess::ExitStatus exitStatus)
 {
     Q_UNUSED(exitStatus);
     OST::VideoData v;
-    v.url = getModuleName() + "/" + mFolder + "/timelapse-" + getModuleName() + ".mp4";
+    v.url = getModuleName() + "/" + mFolder + "/timelapse.mp4";
     getEltVideo("timelapse", "video1")->setValue(v, true);
     sendMessage("Timelapse ready (" + QString::number(exitCode) + ")");
     if (!mIsLooping) moveCurrentToArchives();
@@ -379,7 +379,7 @@ void Allsky::checkArchives(void)
         i.mUrlJpeg = getModuleName() + "/archives" + dd + "/kheogram.jpeg";
         getEltImg("archives", "kheogram")->setValue(i);
         OST::VideoData v = getEltVideo("archives", "timelapse")->value();
-        v.url = getModuleName() + "/archives" + dd + "/timelapse-" + getModuleName() + ".mp4";
+        v.url = getModuleName() + "/archives" + dd + "/timelapse.mp4";
         getEltVideo("archives", "timelapse")->setValue(v);
         getEltString("archives", "date")->setValue(dd.replace("/", ""));
         getProperty("archives")->push();
