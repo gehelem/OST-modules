@@ -95,6 +95,7 @@ void Allsky::OnMyExternalEvent(const QString &eventType, const QString  &eventMo
                         {
                             mTimer.stop();
                             mIsLooping = false;
+                            startBatch();
                             getEltBool(keyprop, "loop")->setValue(false);
                             getProperty("actions")->setState(OST::Ok);
 
@@ -209,6 +210,7 @@ void Allsky::processFinished(int exitCode, QProcess::ExitStatus exitStatus)
     v.url = getModuleName() + "/" + mFolder + "/timelapse-" + getModuleName() + ".mp4";
     getEltVideo("timelapse", "video1")->setValue(v, true);
     sendMessage("Timelapse ready (" + QString::number(exitCode) + ")");
+    if (!mIsLooping) moveCurrentToArchives();
 }
 void Allsky::processOutput()
 {
@@ -365,13 +367,26 @@ void Allsky::checkArchives(void)
             if (!folders.contains(dd))
             {
                 folders.append(dd);
-                getEltString("archives", "date")->setValue(dd);
-                OST::ImgData i = getEltImg("archives", "kheogram")->value();
-                i.mUrlJpeg = getModuleName() + "/archives" + dd + "/kheogram.jpeg";
-                getEltImg("archives", "kheogram")->setValue(i);
-                getProperty("archives")->push();
             }
         }
     }
 
+    folders.sort();
+    for (const auto &f : folders)
+    {
+        QString dd = f;
+        OST::ImgData i = getEltImg("archives", "kheogram")->value();
+        i.mUrlJpeg = getModuleName() + "/archives" + dd + "/kheogram.jpeg";
+        getEltImg("archives", "kheogram")->setValue(i);
+        getEltString("archives", "date")->setValue(dd.replace("/", ""));
+        getProperty("archives")->push();
+    }
+}
+void Allsky::moveCurrentToArchives(void)
+{
+    QDir dir;
+    dir.mkdir(getWebroot() + "/" + getModuleName() + "/archives");
+    dir.rename(getWebroot() + "/" + getModuleName() + "/" + mFolder,
+               getWebroot() + "/" + getModuleName() + "/archives/" + mFolder);
+    checkArchives();
 }
