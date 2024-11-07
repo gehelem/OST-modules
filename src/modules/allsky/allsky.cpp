@@ -64,6 +64,10 @@ void Allsky::OnMyExternalEvent(const QString &eventType, const QString  &eventMo
     //sendMessage("OnMyExternalEvent - recv : " + getModuleName() + "-" + eventType + "-" + eventKey);
     if (getModuleName() == eventModule)
     {
+        if (eventType == "afterinit")
+        {
+            checkArchives();
+        }
         foreach(const QString &keyprop, eventData.keys())
         {
             foreach(const QString &keyelt, eventData[keyprop].toMap()["elements"].toMap().keys())
@@ -341,5 +345,29 @@ void Allsky::computeExposureOrGain(double fromValue)
     if (elt == "gain") getEltInt("parms", elt)->setValue(newval, true);
 
 
+
+}
+void Allsky::checkArchives(void)
+{
+    qDebug() << "*************** checkFolders " << getWebroot() + "/" + getModuleName();
+    QStringList folders;
+
+    //check existing folders
+    QDirIterator itFolders(getWebroot() + "/" + getModuleName(), QDirIterator::Subdirectories);
+    while (itFolders.hasNext())
+    {
+        QString d = itFolders.next();
+        d.replace(getWebroot(), "");
+        if (d.endsWith("/."))
+        {
+            QString dd = d;
+            dd.replace("/.", "");
+            if (!folders.contains(dd))
+            {
+                folders.append(dd);
+                qDebug() << "***************" << dd;
+            }
+        }
+    }
 
 }
