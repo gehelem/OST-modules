@@ -144,7 +144,7 @@
         "label": "Archives",
         "hasGrid":true,
         "showGrid":true,
-        "showElts":false,
+        "showElts":true,
         "elements": {
             "date": {
                 "label": "Date",
