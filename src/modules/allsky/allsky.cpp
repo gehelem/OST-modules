@@ -64,6 +64,10 @@ void Allsky::OnMyExternalEvent(const QString &eventType, const QString  &eventMo
     //sendMessage("OnMyExternalEvent - recv : " + getModuleName() + "-" + eventType + "-" + eventKey);
     if (getModuleName() == eventModule)
     {
+        if (eventType == "afterinit")
+        {
+            checkArchives();
+        }
         foreach(const QString &keyprop, eventData.keys())
         {
             foreach(const QString &keyelt, eventData[keyprop].toMap()["elements"].toMap().keys())
@@ -91,6 +95,7 @@ void Allsky::OnMyExternalEvent(const QString &eventType, const QString  &eventMo
                         {
                             mTimer.stop();
                             mIsLooping = false;
+                            startBatch();
                             getEltBool(keyprop, "loop")->setValue(false);
                             getProperty("actions")->setState(OST::Ok);
 
@@ -191,7 +196,7 @@ void Allsky::startBatch()
         arguments << "-pix_fmt" << "yuv420p";
         arguments << "-framerate" << "30";
         arguments << "-y";
-        arguments << getWebroot() + "/" + getModuleName() + "/" + mFolder + "/timelapse-" + getModuleName() + ".mp4";
+        arguments << getWebroot() + "/" + getModuleName() + "/" + mFolder + "/timelapse.mp4";
         qDebug() << "PROCESS ARGS " << arguments;
         _process->start(program, arguments);
 
@@ -202,9 +207,10 @@ void Allsky::processFinished(int exitCode, QProcess::ExitStatus exitStatus)
 {
     Q_UNUSED(exitStatus);
     OST::VideoData v;
-    v.url = getModuleName() + "/" + mFolder + "/timelapse-" + getModuleName() + ".mp4";
+    v.url = getModuleName() + "/" + mFolder + "/timelapse.mp4";
     getEltVideo("timelapse", "video1")->setValue(v, true);
     sendMessage("Timelapse ready (" + QString::number(exitCode) + ")");
+    if (!mIsLooping) moveCurrentToArchives();
 }
 void Allsky::processOutput()
 {
@@ -342,4 +348,48 @@ void Allsky::computeExposureOrGain(double fromValue)
 
 
 
+}
+void Allsky::checkArchives(void)
+{
+    getProperty("archives")->clearGrid();
+    QStringList folders;
+
+    //check existing folders
+    QDirIterator itFolders(getWebroot() + "/" + getModuleName() + "/archives", QDirIterator::Subdirectories);
+    while (itFolders.hasNext())
+    {
+        QString d = itFolders.next();
+        d.replace(getWebroot() + "/" + getModuleName() + "/archives", "");
+        if (d.endsWith("/.") && !d.contains("images") && d != "/.")
+        {
+            QString dd = d;
+            dd.replace("/.", "");
+            if (!folders.contains(dd))
+            {
+                folders.append(dd);
+            }
+        }
+    }
+
+    folders.sort();
+    for (const auto &f : folders)
+    {
+        QString dd = f;
+        OST::ImgData i = getEltImg("archives", "kheogram")->value();
+        i.mUrlJpeg = getModuleName() + "/archives" + dd + "/kheogram.jpeg";
+        getEltImg("archives", "kheogram")->setValue(i);
+        OST::VideoData v = getEltVideo("archives", "timelapse")->value();
+        v.url = getModuleName() + "/archives" + dd + "/timelapse.mp4";
+        getEltVideo("archives", "timelapse")->setValue(v);
+        getEltString("archives", "date")->setValue(dd.replace("/", ""));
+        getProperty("archives")->push();
+    }
+}
+void Allsky::moveCurrentToArchives(void)
+{
+    QDir dir;
+    dir.mkdir(getWebroot() + "/" + getModuleName() + "/archives");
+    dir.rename(getWebroot() + "/" + getModuleName() + "/" + mFolder,
+               getWebroot() + "/" + getModuleName() + "/archives/" + mFolder);
+    checkArchives();
 }

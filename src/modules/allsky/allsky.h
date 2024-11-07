@@ -32,6 +32,8 @@ class MODULE_INIT Allsky : public IndiModule
         void processOutput();
         void processError();
         void computeExposureOrGain(double fromValue);
+        void checkArchives(void);
+        void moveCurrentToArchives(void);
 
         QPointer<fileio> _image;
         Solver _solver;
