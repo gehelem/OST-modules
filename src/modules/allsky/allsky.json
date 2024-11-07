@@ -3,7 +3,7 @@
     "timelapse": {
         "devcat": "Results",
         "group": "",
-        "order":"Results200",
+        "order":"AAAResults200",
         "permission": 0,
         "label": "Timelapse",
         "elements": {
@@ -92,7 +92,7 @@
     "kheogram": {
         "devcat": "Results",
         "group": "",
-        "order":"Results999",
+        "order":"AAAResults999",
         "permission": 0,
         "label": "Kheogram",
         "elements": {
@@ -108,7 +108,7 @@
     "log": {
         "devcat": "Results",
         "rule":0,
-        "order":"Results100",
+        "order":"AAAResults100",
         "hasGrid":true,
         "showGrid":false,
         "showElts":true,
@@ -135,6 +135,29 @@
         "group": "",
         "permission": 0,
         "label": "Log"
+    },
+    "archives": {
+        "devcat": "Archives",
+        "group": "",
+        "order":"BBBArchives",
+        "permission": 0,
+        "label": "Archives",
+        "hasGrid":true,
+        "showGrid":true,
+        "showElts":false,
+        "elements": {
+            "date": {
+                "label": "Date",
+                "type": "string",
+                "order":"1"
+            },
+            "kheogram": {
+                "type": "img",
+                "label": "Kheogram",
+                "order":"1"
+            }
+        }
+
     }
 }
 }

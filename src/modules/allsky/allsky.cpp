@@ -350,6 +350,7 @@ void Allsky::computeExposureOrGain(double fromValue)
 void Allsky::checkArchives(void)
 {
     qDebug() << "*************** checkFolders " << getWebroot() + "/" + getModuleName();
+    getProperty("archives")->clearGrid();
     QStringList folders;
 
     //check existing folders
@@ -365,6 +366,8 @@ void Allsky::checkArchives(void)
             if (!folders.contains(dd))
             {
                 folders.append(dd);
+                getEltString("archives", "date")->setValue(dd, false);
+                getProperty("archives")->push();
                 qDebug() << "***************" << dd;
             }
         }
