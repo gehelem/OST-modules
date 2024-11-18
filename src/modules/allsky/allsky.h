@@ -24,11 +24,13 @@ class MODULE_INIT Allsky : public IndiModule
         void processFinished(int exitCode, QProcess::ExitStatus exitStatus);
     private slots:
         void OnTimer(void);
+        void OnScheduleTimer(void);
     private:
         void newBLOB(INDI::PropertyBlob pblob);
         void updateProperty(INDI::Property property) override;
         void startLoop();
-        void startBatch();
+        void stopLoop();
+        void startTimelapseBatch();
         void processOutput();
         void processError();
         void computeExposureOrGain(double fromValue);
@@ -44,6 +46,8 @@ class MODULE_INIT Allsky : public IndiModule
         QTimer mTimer;
         bool mIsLooping = false;
         QString mFolder;
+        QTimer mScheduleTimer;
+
 
 };
 

@@ -20,6 +20,7 @@ Allsky::Allsky(QString name, QString label, QString profile, QVariantMap availab
     setModuleVersion("0.1");
 
     giveMeADevice("camera", "Camera", INDI::BaseDevice::CCD_INTERFACE);
+    giveMeADevice("gps", "GPS", INDI::BaseDevice::GPS_INTERFACE);
     defineMeAsSequencer();
 
 
@@ -48,6 +49,11 @@ Allsky::Allsky(QString name, QString label, QString profile, QVariantMap availab
     connect(_process, &QProcess::readyReadStandardError, this, &Allsky::processError);
     connect(_process, static_cast<void(QProcess::*)(int, QProcess::ExitStatus)>(&QProcess::finished), this,
             &Allsky::processFinished);
+
+    mScheduleTimer.setInterval(10000); // every 10s check
+    connect(&mScheduleTimer, &QTimer::timeout, this, &Allsky::OnScheduleTimer);
+    mScheduleTimer.start();
+
 
 }
 
@@ -78,7 +84,7 @@ void Allsky::OnMyExternalEvent(const QString &eventType, const QString  &eventMo
                     {
                         if (getEltBool(keyprop, keyelt)->setValue(false))
                         {
-                            startBatch();
+                            startTimelapseBatch();
                         }
                     }
                     if (keyelt == "loop")
@@ -93,20 +99,23 @@ void Allsky::OnMyExternalEvent(const QString &eventType, const QString  &eventMo
                     {
                         if (getEltBool(keyprop, keyelt)->setValue(false))
                         {
-                            mTimer.stop();
-                            mIsLooping = false;
-                            startBatch();
-                            getEltBool(keyprop, "loop")->setValue(false);
-                            getProperty("actions")->setState(OST::Ok);
-
+                            stopLoop();
                         }
+                    }
+                }
+                if (keyprop == "daily")
+                {
+                    if (keyelt == "enable")
+                    {
+                        //bool b = eventData[keyprop].toMap()["elements"].toMap()[keyelt].toBool();
+                        //should i disable here other prog ?
                     }
                 }
                 if (keyprop == "parms")
                 {
                     if (keyelt == "exposure")
                     {
-                        double e = eventData["parms"].toMap()["elements"].toMap()["exposure"].toMap()["value"].toFloat();
+                        double e = eventData["parms"].toMap()["elements"].toMap()["exposure"].toFloat();
                         int  d = getInt("parms", "delay");
                         if ( e > d )
                         {
@@ -119,7 +128,7 @@ void Allsky::OnMyExternalEvent(const QString &eventType, const QString  &eventMo
                     }
                     if (keyelt == "delay")
                     {
-                        int d = eventData["parms"].toMap()["elements"].toMap()["delay"].toMap()["value"].toInt();
+                        int d = eventData["parms"].toMap()["elements"].toMap()["delay"].toInt();
                         double  e = getFloat("parms", "exposure");
                         if ( e > d )
                         {
@@ -178,7 +187,20 @@ void Allsky::startLoop()
     }
 
 }
-void Allsky::startBatch()
+void Allsky::stopLoop()
+{
+    if (!mIsLooping)
+    {
+        sendWarning("Not looping");
+        return;
+    }
+    mTimer.stop();
+    mIsLooping = false;
+    startTimelapseBatch();
+    getEltBool("actions", "loop")->setValue(false);
+    getProperty("actions")->setState(OST::Ok);
+}
+void Allsky::startTimelapseBatch()
 {
     qDebug() << "PROCESS Start Batch";
     if (_process->state() != 0)
@@ -255,7 +277,7 @@ void Allsky::newBLOB(INDI::PropertyBlob pblob)
         painter.drawImage(mKheog.width(), 0, image2);
         mKheog = result;
 
-        mKheog.save(getWebroot() + "/" + getModuleName() + "/" + mFolder + "/kheogram" + ".jpeg", "JPG", 100);
+        mKheog.save(getWebroot() +  "/" + getModuleName() + "/" + mFolder + "/kheogram" + ".jpeg", "JPG", 100);
         OST::ImgData kh;
         kh.mUrlJpeg = getModuleName() + "/" + mFolder + "/kheogram" + ".jpeg";
         getEltImg("kheogram", "image1")->setValue(kh, true);
@@ -316,6 +338,47 @@ void Allsky::OnTimer()
         getProperty("actions")->setState(OST::Busy);
     }
 
+}
+void Allsky::OnScheduleTimer()
+{
+    if (getBool("daily", "enable"))
+    {
+        QTime now = QDateTime::currentDateTime().time();
+        QTime start = getTime("daily", "begin");
+        QTime stop = getTime("daily", "end");
+        if (start == stop)
+        {
+            sendError("Can't do anything when start time equals stop time, daily schedule disabled.");
+            getEltBool("daily", "enable")->setValue(false, true);
+            return;
+        }
+        if (start < stop) // daytime requested
+        {
+            if ((now > start ) && (now < stop) && (!mIsLooping))
+            {
+                sendMessage("Start daily schedule");
+                startLoop();
+            }
+            if (((now < start ) || (now > stop)) && (mIsLooping))
+            {
+                sendMessage("Stop daily schedule");
+                stopLoop();
+            }
+        }
+        if (start > stop) // nighttime requested
+        {
+            if (((now > start ) || (now < stop)) && (!mIsLooping))
+            {
+                sendMessage("Start nightly schedule");
+                startLoop();
+            }
+            if (((now < start ) && (now > stop)) && (mIsLooping))
+            {
+                sendMessage("Stop nightly schedule");
+                stopLoop();
+            }
+        }
+    }
 }
 void Allsky::computeExposureOrGain(double fromValue)
 {
