@@ -140,7 +140,7 @@
     "archives": {
         "devcat": "Archives",
         "group": "",
-        "order":"BBBArchives",
+        "order":"CCCArchives",
         "permission": 0,
         "label": "Archives",
         "hasGrid":true,
@@ -164,7 +164,71 @@
                 "order":"20"
             }
         }
-
+    },
+    "daily": {
+        "devcat": "Schedule",
+        "group": "",
+        "order":"BBBSchedule1",
+        "permission": 2,
+        "hasprofile":true,
+        "label": "Daily schedule",
+        "elements": {
+            "enable": {
+                "label": "Enable",
+                "type": "bool",
+                "order":"10",
+                "value":false
+            },
+            "begin": {
+                "label": "Start at",
+                "type": "time",
+                "autoupdate":true,
+                "directedit":true,
+                "order":"20"
+            },
+            "end": {
+                "type": "time",
+                "autoupdate":true,
+                "directedit":true,
+                "label": "End at",
+                "order":"30"
+            }
+        }
+    },
+    "sunrise": {
+        "devcat": "Schedule",
+        "group": "",
+        "order":"BBBSchedule2",
+        "permission": 2,
+        "hasprofile":true,
+        "label": "Sunrise schedule",
+        "elements": {
+            "enable": {
+                "label": "Enable",
+                "type": "bool",
+                "order":"10",
+                "value":false
+            }
+        }
+    },
+    "coming": {
+        "devcat": "Schedule",
+        "group": "",
+        "order":"BBBSchedule3",
+        "permission": 0,
+        "label": "Events to come",
+        "elements": {
+            "sunrise": {
+                "label": "Next sunrise",
+                "type": "time",
+                "order":"20"
+            },
+            "sunset": {
+                "type": "time",
+                "label": "Next sunset",
+                "order":"30"
+            }
+        }
     }
 }
 }
