@@ -20,6 +20,7 @@
         "group": "",
         "order":"222Parms115",
         "permission": 2,
+        "rule":2,
         "hasprofile":true,
         "label": "Dynamic exposure/gain",
         "elements": {
@@ -176,6 +177,7 @@
             "enable": {
                 "label": "Enable",
                 "type": "bool",
+                "autoupdate":true,
                 "order":"10",
                 "value":false
             },
