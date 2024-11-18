@@ -20,6 +20,7 @@ Allsky::Allsky(QString name, QString label, QString profile, QVariantMap availab
     setModuleVersion("0.1");
 
     giveMeADevice("camera", "Camera", INDI::BaseDevice::CCD_INTERFACE);
+    giveMeADevice("gps", "GPS", INDI::BaseDevice::GPS_INTERFACE);
     defineMeAsSequencer();
 
 
