@@ -4,6 +4,7 @@
 #include <fileio.h>
 #include <solver.h>
 
+
 #if defined(ALLSKY_MODULE)
 #  define MODULE_INIT Q_DECL_EXPORT
 #else
@@ -36,6 +37,7 @@ class MODULE_INIT Allsky : public IndiModule
         void computeExposureOrGain(double fromValue);
         void checkArchives(void);
         void moveCurrentToArchives(void);
+        void calculateSunset(void);
 
         QPointer<fileio> _image;
         Solver _solver;

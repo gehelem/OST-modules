@@ -1,5 +1,9 @@
 #include "allsky.h"
 #include <QPainter>
+#include <libnova/solar.h>
+#include <libnova/julian_day.h>
+#include <libnova/rise_set.h>
+#include <libnova/transform.h>
 
 Allsky *initialize(QString name, QString label, QString profile, QVariantMap availableModuleLibs)
 {
@@ -54,6 +58,7 @@ Allsky::Allsky(QString name, QString label, QString profile, QVariantMap availab
     connect(&mScheduleTimer, &QTimer::timeout, this, &Allsky::OnScheduleTimer);
     mScheduleTimer.start();
 
+    calculateSunset();
 
 }
 
@@ -76,6 +81,31 @@ void Allsky::OnMyExternalEvent(const QString &eventType, const QString  &eventMo
         }
         foreach(const QString &keyprop, eventData.keys())
         {
+            if (eventType == "Flcreate" && keyprop == "geo")
+            {
+                getStore()[keyprop]->newLine(eventData[keyprop].toMap()["elements"].toMap());
+            }
+            if (eventType == "Fldelete" && keyprop == "geo")
+            {
+                double line = eventData[keyprop].toMap()["line"].toDouble();
+                getStore()[keyprop]->deleteLine(line);
+            }
+            if (eventType == "Flupdate"  && keyprop == "geo")
+            {
+                double line = eventData[keyprop].toMap()["line"].toDouble();
+                getStore()[keyprop]->updateLine(line, eventData[keyprop].toMap()["elements"].toMap());
+            }
+            if (eventType == "Flselect" && keyprop == "geo")
+            {
+                double line = eventData[keyprop].toMap()["line"].toDouble();
+                QString id = getString("geo", "id", line);
+                float lat = getFloat("geo", "lat", line);
+                float lng = getFloat("geo", "long", line);
+                getEltString("geo", "id")->setValue(id);
+                getEltFloat("geo", "lat")->setValue(lat);
+                getEltFloat("geo", "long")->setValue(lng);
+            }
+
             foreach(const QString &keyelt, eventData[keyprop].toMap()["elements"].toMap().keys())
             {
                 if (keyprop == "actions")
@@ -140,6 +170,7 @@ void Allsky::OnMyExternalEvent(const QString &eventType, const QString  &eventMo
                 }
             }
         }
+
     }
 }
 void Allsky::startLoop()
@@ -341,9 +372,33 @@ void Allsky::OnTimer()
 }
 void Allsky::OnScheduleTimer()
 {
+    calculateSunset();
+    QTime now = QDateTime::currentDateTime().time();
+    if (getBool("sunrise", "enable"))
+    {
+        QTime start = getTime("coming", "sunset"); // coucher
+        QTime stop = getTime("coming", "sunrise"); // lever
+        if (start < stop) // daytime requested
+        {
+            sendError("sunrise > sunset ???");
+        }
+        if (start > stop) // nighttime requested
+        {
+            if (((now > start ) || (now < stop)) && (!mIsLooping))
+            {
+                sendMessage("Start sunset schedule");
+                startLoop();
+            }
+            if (((now < start ) && (now > stop)) && (mIsLooping))
+            {
+                sendMessage("Stop sunset schedule");
+                stopLoop();
+            }
+        }
+    }
+
     if (getBool("daily", "enable"))
     {
-        QTime now = QDateTime::currentDateTime().time();
         QTime start = getTime("daily", "begin");
         QTime stop = getTime("daily", "end");
         if (start == stop)
@@ -455,4 +510,31 @@ void Allsky::moveCurrentToArchives(void)
     dir.rename(getWebroot() + "/" + getModuleName() + "/" + mFolder,
                getWebroot() + "/" + getModuleName() + "/archives/" + mFolder);
     checkArchives();
+}
+void Allsky::calculateSunset(void)
+{
+    double JD = ln_get_julian_from_sys();
+
+    ln_rst_time rst;
+    ln_zonedate rise, set, transit;
+    ln_lnlat_posn observer;
+    observer.lat = getFloat("geo", "lat");
+    observer.lng = getFloat("geo", "long");
+    if (ln_get_solar_rst(JD, &observer, &rst) != 0)
+    {
+        sendError("Sun is circumpolar");
+        return;
+    }
+    else
+    {
+        ln_get_local_date(rst.rise, &rise);
+        ln_get_local_date(rst.transit, &transit);
+        ln_get_local_date(rst.set, &set);
+        QTime t;
+        t.setHMS(rise.hours, rise.minutes, rise.seconds);
+        getEltTime("coming", "sunrise")->setValue(t, false);
+        t.setHMS(set.hours, set.minutes, set.seconds);
+        getEltTime("coming", "sunset")->setValue(t, true);
+    }
+
 }
