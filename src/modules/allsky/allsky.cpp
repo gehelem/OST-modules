@@ -84,19 +84,16 @@ void Allsky::OnMyExternalEvent(const QString &eventType, const QString  &eventMo
             if (eventType == "Flcreate" && keyprop == "geo")
             {
                 getStore()[keyprop]->newLine(eventData[keyprop].toMap()["elements"].toMap());
-                calculateSunset();
             }
             if (eventType == "Fldelete" && keyprop == "geo")
             {
                 double line = eventData[keyprop].toMap()["line"].toDouble();
                 getStore()[keyprop]->deleteLine(line);
-                calculateSunset();
             }
             if (eventType == "Flupdate"  && keyprop == "geo")
             {
                 double line = eventData[keyprop].toMap()["line"].toDouble();
                 getStore()[keyprop]->updateLine(line, eventData[keyprop].toMap()["elements"].toMap());
-                calculateSunset();
             }
             if (eventType == "Flselect" && keyprop == "geo")
             {
@@ -107,7 +104,6 @@ void Allsky::OnMyExternalEvent(const QString &eventType, const QString  &eventMo
                 getEltString("geo", "id")->setValue(id);
                 getEltFloat("geo", "lat")->setValue(lat);
                 getEltFloat("geo", "long")->setValue(lng);
-                calculateSunset();
             }
 
             foreach(const QString &keyelt, eventData[keyprop].toMap()["elements"].toMap().keys())
@@ -376,9 +372,33 @@ void Allsky::OnTimer()
 }
 void Allsky::OnScheduleTimer()
 {
+    calculateSunset();
+    QTime now = QDateTime::currentDateTime().time();
+    if (getBool("sunrise", "enable"))
+    {
+        QTime start = getTime("coming", "sunset"); // coucher
+        QTime stop = getTime("coming", "sunrise"); // lever
+        if (start < stop) // daytime requested
+        {
+            sendError("sunrise > sunset ???");
+        }
+        if (start > stop) // nighttime requested
+        {
+            if (((now > start ) || (now < stop)) && (!mIsLooping))
+            {
+                sendMessage("Start sunset schedule");
+                startLoop();
+            }
+            if (((now < start ) && (now > stop)) && (mIsLooping))
+            {
+                sendMessage("Stop sunset schedule");
+                stopLoop();
+            }
+        }
+    }
+
     if (getBool("daily", "enable"))
     {
-        QTime now = QDateTime::currentDateTime().time();
         QTime start = getTime("daily", "begin");
         QTime stop = getTime("daily", "end");
         if (start == stop)
@@ -493,16 +513,13 @@ void Allsky::moveCurrentToArchives(void)
 }
 void Allsky::calculateSunset(void)
 {
-    qDebug() << "calculateSunset";
     double JD = ln_get_julian_from_sys();
 
-    qDebug() << "JD " <<  QDate().fromJulianDay(JD);
     ln_rst_time rst;
     ln_zonedate rise, set, transit;
     ln_lnlat_posn observer;
     observer.lat = getFloat("geo", "lat");
     observer.lng = getFloat("geo", "long");
-    //ln_get_object_next_rst(JD,observer,object,rst);
     if (ln_get_solar_rst(JD, &observer, &rst) != 0)
     {
         sendError("Sun is circumpolar");
@@ -513,9 +530,6 @@ void Allsky::calculateSunset(void)
         ln_get_local_date(rst.rise, &rise);
         ln_get_local_date(rst.transit, &transit);
         ln_get_local_date(rst.set, &set);
-        qDebug() << "Rise " << rise.hours << rise.minutes;
-        //qDebug() << "Transit " << &transit;
-        qDebug() << "Set " << set.hours << set.minutes ;
         QTime t;
         t.setHMS(rise.hours, rise.minutes, rise.seconds);
         getEltTime("coming", "sunrise")->setValue(t, false);

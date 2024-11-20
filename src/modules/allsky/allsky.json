@@ -208,6 +208,7 @@
             "enable": {
                 "label": "Enable",
                 "type": "bool",
+                "autoupdate":true,
                 "order":"10",
                 "value":false
             }
