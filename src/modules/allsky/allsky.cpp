@@ -1,5 +1,9 @@
 #include "allsky.h"
 #include <QPainter>
+#include <libnova/solar.h>
+#include <libnova/julian_day.h>
+#include <libnova/rise_set.h>
+#include <libnova/transform.h>
 
 Allsky *initialize(QString name, QString label, QString profile, QVariantMap availableModuleLibs)
 {
@@ -54,6 +58,7 @@ Allsky::Allsky(QString name, QString label, QString profile, QVariantMap availab
     connect(&mScheduleTimer, &QTimer::timeout, this, &Allsky::OnScheduleTimer);
     mScheduleTimer.start();
 
+    calculateSunset();
 
 }
 
@@ -455,4 +460,35 @@ void Allsky::moveCurrentToArchives(void)
     dir.rename(getWebroot() + "/" + getModuleName() + "/" + mFolder,
                getWebroot() + "/" + getModuleName() + "/archives/" + mFolder);
     checkArchives();
+}
+void Allsky::calculateSunset(void)
+{
+    qDebug() << "calculateSunset";
+    double JD = ln_get_julian_from_sys();
+
+    //d.fromJulianDay(JD);
+    qDebug() << "JD " <<  QDate().fromJulianDay(JD);
+    ln_rst_time rst;
+    ln_zonedate rise, set, transit;
+    ln_lnlat_posn observer;
+    observer.lat = 48;
+    observer.lng = 1.9;
+    //ln_get_object_next_rst(JD,observer,object,rst);
+    if (ln_get_solar_rst(JD, &observer, &rst) != 0)
+        qDebug() << "Sun is circumpolar\n";
+    else
+    {
+        ln_get_local_date(rst.rise, &rise);
+        ln_get_local_date(rst.transit, &transit);
+        ln_get_local_date(rst.set, &set);
+        qDebug() << "Rise " << rise.hours << rise.minutes;
+        //qDebug() << "Transit " << &transit;
+        qDebug() << "Set " << set.hours << set.minutes ;
+    }
+    QTime t;
+    t.setHMS(rise.hours, rise.minutes, rise.seconds);
+    getEltTime("coming", "sunrise")->setValue(t, false);
+    t.setHMS(set.hours, set.minutes, set.seconds);
+    getEltTime("coming", "sunset")->setValue(t, true);
+
 }
