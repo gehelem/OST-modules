@@ -231,6 +231,43 @@
                 "order":"30"
             }
         }
+    },
+    "geo": {
+        "devcat": "Schedule",
+        "group": "",
+        "order":"BBBSchedule4",
+        "permission": 2,
+        "hasprofile":true,
+        "label": "Position",
+        "hasGrid":true,
+        "showGrid":true,
+        "showElts":true,
+        "elements": {
+            "id": {
+                "label": "Label",
+                "type": "string",
+                "autoupdate":true,
+                "directedit":true,
+                "order":"05",
+                "value":"Default"
+            },
+            "lat": {
+                "label": "Latitude",
+                "type": "float",
+                "autoupdate":true,
+                "directedit":true,
+                "order":"10",
+                "value":50
+            },
+            "long": {
+                "label": "Longitude",
+                "type": "float",
+                "autoupdate":true,
+                "directedit":true,
+                "order":"20",
+                "value":2
+            }
+        }
     }
 }
 }

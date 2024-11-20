@@ -81,6 +81,35 @@ void Allsky::OnMyExternalEvent(const QString &eventType, const QString  &eventMo
         }
         foreach(const QString &keyprop, eventData.keys())
         {
+            if (eventType == "Flcreate" && keyprop == "geo")
+            {
+                getStore()[keyprop]->newLine(eventData[keyprop].toMap()["elements"].toMap());
+                calculateSunset();
+            }
+            if (eventType == "Fldelete" && keyprop == "geo")
+            {
+                double line = eventData[keyprop].toMap()["line"].toDouble();
+                getStore()[keyprop]->deleteLine(line);
+                calculateSunset();
+            }
+            if (eventType == "Flupdate"  && keyprop == "geo")
+            {
+                double line = eventData[keyprop].toMap()["line"].toDouble();
+                getStore()[keyprop]->updateLine(line, eventData[keyprop].toMap()["elements"].toMap());
+                calculateSunset();
+            }
+            if (eventType == "Flselect" && keyprop == "geo")
+            {
+                double line = eventData[keyprop].toMap()["line"].toDouble();
+                QString id = getString("geo", "id", line);
+                float lat = getFloat("geo", "lat", line);
+                float lng = getFloat("geo", "long", line);
+                getEltString("geo", "id")->setValue(id);
+                getEltFloat("geo", "lat")->setValue(lat);
+                getEltFloat("geo", "long")->setValue(lng);
+                calculateSunset();
+            }
+
             foreach(const QString &keyelt, eventData[keyprop].toMap()["elements"].toMap().keys())
             {
                 if (keyprop == "actions")
@@ -145,6 +174,7 @@ void Allsky::OnMyExternalEvent(const QString &eventType, const QString  &eventMo
                 }
             }
         }
+
     }
 }
 void Allsky::startLoop()
@@ -466,16 +496,18 @@ void Allsky::calculateSunset(void)
     qDebug() << "calculateSunset";
     double JD = ln_get_julian_from_sys();
 
-    //d.fromJulianDay(JD);
     qDebug() << "JD " <<  QDate().fromJulianDay(JD);
     ln_rst_time rst;
     ln_zonedate rise, set, transit;
     ln_lnlat_posn observer;
-    observer.lat = 48;
-    observer.lng = 1.9;
+    observer.lat = getFloat("geo", "lat");
+    observer.lng = getFloat("geo", "long");
     //ln_get_object_next_rst(JD,observer,object,rst);
     if (ln_get_solar_rst(JD, &observer, &rst) != 0)
-        qDebug() << "Sun is circumpolar\n";
+    {
+        sendError("Sun is circumpolar");
+        return;
+    }
     else
     {
         ln_get_local_date(rst.rise, &rise);
@@ -484,11 +516,11 @@ void Allsky::calculateSunset(void)
         qDebug() << "Rise " << rise.hours << rise.minutes;
         //qDebug() << "Transit " << &transit;
         qDebug() << "Set " << set.hours << set.minutes ;
+        QTime t;
+        t.setHMS(rise.hours, rise.minutes, rise.seconds);
+        getEltTime("coming", "sunrise")->setValue(t, false);
+        t.setHMS(set.hours, set.minutes, set.seconds);
+        getEltTime("coming", "sunset")->setValue(t, true);
     }
-    QTime t;
-    t.setHMS(rise.hours, rise.minutes, rise.seconds);
-    getEltTime("coming", "sunrise")->setValue(t, false);
-    t.setHMS(set.hours, set.minutes, set.seconds);
-    getEltTime("coming", "sunset")->setValue(t, true);
 
 }
