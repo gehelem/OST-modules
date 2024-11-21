@@ -157,12 +157,18 @@
                 "type": "img",
                 "label": "Kheogram",
                 "showstats":false,
+                "order":"20"
+            },
+            "stack": {
+                "type": "img",
+                "label": "Stack",
+                "showstats":false,
                 "order":"30"
             },
             "timelapse": {
                 "label": "Timelapse",
                 "type": "video",
-                "order":"20"
+                "order":"40"
             }
         }
     },
