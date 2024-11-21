@@ -4,6 +4,7 @@
 #include <libnova/julian_day.h>
 #include <libnova/rise_set.h>
 #include <libnova/transform.h>
+#include <algorithm>
 
 Allsky *initialize(QString name, QString label, QString profile, QVariantMap availableModuleLibs)
 {
@@ -246,6 +247,7 @@ void Allsky::stopLoop()
     }
     mTimer.stop();
     mIsLooping = false;
+    firstStack = true;
     startTimelapseBatch();
     getEltBool("actions", "loop")->setValue(false);
     getProperty("actions")->setState(OST::Ok);
@@ -317,6 +319,30 @@ void Allsky::newBLOB(INDI::PropertyBlob pblob)
         im.setColorTable(rawImage.colorTable());
         QRect r;
         r.setRect(rawImage.width() / 2, 1, 1, rawImage.height());
+        if (firstStack)
+        {
+            imageStacked = im;
+            firstStack = false;
+        }
+        else
+        {
+            for (int y = 0; y < im.height(); ++y)
+            {
+                QRgb *line_current = reinterpret_cast<QRgb*>(im.scanLine(y));
+                QRgb *line_stacked = reinterpret_cast<QRgb*>(imageStacked.scanLine(y));
+                for (int x = 0; x < im.width(); ++x)
+                {
+                    QRgb &rgb_current = line_current[x];
+                    QRgb &rgb_stacked = line_stacked[x];
+                    rgb_stacked = qRgb(
+                                      std::max(qRed(rgb_current), qRed(rgb_stacked)),
+                                      std::max(qGreen(rgb_current), qGreen(rgb_stacked)),
+                                      std::max(qBlue(rgb_current), qBlue(rgb_stacked))
+                                  );
+                }
+            }
+            imageStacked.save(getWebroot() +  "/" + getModuleName() + "/" + mFolder + "/stacked" + ".jpeg", "JPG", 100);
+        }
 
 
         QImage image1 = mKheog;
@@ -347,6 +373,7 @@ void Allsky::newBLOB(INDI::PropertyBlob pblob)
         dta.mUrlJpeg = getModuleName() + QString(pblob.getDeviceName()) + ".jpeg";
         dta.mAlternates.clear();
         dta.mAlternates.push_front(getModuleName() + "/" + mFolder + "/kheogram" + ".jpeg");
+        dta.mAlternates.push_front(getModuleName() + "/" + mFolder + "/stacked" + ".jpeg");
         getEltImg("image", "image")->setValue(dta, true);
 
         QString _n = QStringLiteral("%1").arg(_index, 10, 10, QLatin1Char('0'));
@@ -550,6 +577,9 @@ void Allsky::checkArchives(void)
         OST::ImgData i = getEltImg("archives", "kheogram")->value();
         i.mUrlJpeg = getModuleName() + "/archives" + dd + "/kheogram.jpeg";
         getEltImg("archives", "kheogram")->setValue(i);
+        i = getEltImg("archives", "stack")->value();
+        i.mUrlJpeg = getModuleName() + "/archives" + dd + "/stacked.jpeg";
+        getEltImg("archives", "stack")->setValue(i);
         OST::VideoData v = getEltVideo("archives", "timelapse")->value();
         v.url = getModuleName() + "/archives" + dd + "/timelapse.mp4";
         getEltVideo("archives", "timelapse")->setValue(v);
