@@ -28,6 +28,10 @@ Allsky::Allsky(QString name, QString label, QString profile, QVariantMap availab
     defineMeAsSequencer();
 
 
+    if (getString("devices", "camera") != "") connectDevice(getString("devices", "camera"));
+    if (getString("devices", "gps") != "") connectDevice(getString("devices", "gps"));
+
+
     OST::ElementBool* b = new OST::ElementBool("Loop", "0", "");
     getProperty("actions")->addElt("loop", b);
     b = new OST::ElementBool("Abort", "2", "");
@@ -58,7 +62,15 @@ Allsky::Allsky(QString name, QString label, QString profile, QVariantMap availab
     connect(&mScheduleTimer, &QTimer::timeout, this, &Allsky::OnScheduleTimer);
     mScheduleTimer.start();
 
+    getProperty("gps")->disable();
+    getProperty("geogps")->disable();
+
+    connectIndi();
+    if (getString("devices", "camera") != "") connectDevice(getString("devices", "camera"));
+    if (getString("devices", "gps") != "") connectDevice(getString("devices", "gps"));
+
     calculateSunset();
+
 
 }
 
@@ -139,6 +151,13 @@ void Allsky::OnMyExternalEvent(const QString &eventType, const QString  &eventMo
                     {
                         //bool b = eventData[keyprop].toMap()["elements"].toMap()[keyelt].toBool();
                         //should i disable here other prog ?
+                    }
+                }
+                if (keyprop == "gps")
+                {
+                    if (keyelt == "add")
+                    {
+                        addGPSLocalization();
                     }
                 }
                 if (keyprop == "parms")
@@ -354,6 +373,41 @@ void Allsky::updateProperty(INDI::Property property)
     {
         newBLOB(property);
     }
+    if (
+        (property.getDeviceName() == getString("devices", "gps"))
+        &&  (!getProperty("gps")->isEnabled())
+    )
+    {
+        getProperty("gps")->enable();
+        getProperty("geogps")->enable();
+    }
+
+    if (
+        (property.getDeviceName() == getString("devices", "gps"))
+        &&  (property.getName()   == std::string("GEOGRAPHIC_COORD"))
+        &&  (property.getState() == IPS_OK)
+    )
+    {
+        INDI::PropertyNumber n = property;
+        getEltFloat("geogps", "lat")->setValue(n[0].value, true);
+        getEltFloat("geogps", "long")->setValue(n[1].value, true);
+        getEltFloat("geogps", "elev")->setValue(n[2].value, true);
+    }
+    if (
+        (property.getDeviceName() == getString("devices", "gps"))
+        &&  (property.getName()   == std::string("TIME_UTC"))
+        &&  (property.getState() == IPS_OK)
+    )
+    {
+        INDI::PropertyText t = property;
+        QString time_format = "yyyy-MM-ddTHH:mm:ss";
+        QString s = t[0].text;
+        QDateTime d = QDateTime::fromString(s, time_format);
+        getEltDate("geogps", "date")->setValue(d.date(), false);
+        getEltTime("geogps", "time")->setValue(d.time(), false);
+        getEltString("geogps", "offset")->setValue(t[1].text, true);
+    }
+
 }
 
 void Allsky::OnTimer()
@@ -537,4 +591,11 @@ void Allsky::calculateSunset(void)
         getEltTime("coming", "sunset")->setValue(t, true);
     }
 
+}
+void Allsky::addGPSLocalization(void)
+{
+    getEltFloat("geo", "lat")->setValue(getFloat("geogps", "lat"), false);
+    getEltFloat("geo", "long")->setValue(getFloat("geogps", "long"), false);
+    getEltString("geo", "id")->setValue("GPS", false);
+    getProperty("geo")->push();
 }
