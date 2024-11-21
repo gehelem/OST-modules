@@ -41,6 +41,8 @@ class MODULE_INIT Allsky : public IndiModule
         void addGPSLocalization(void);
 
         QPointer<fileio> _image;
+        QImage imageStacked;
+        bool firstStack = true;
         Solver _solver;
         FITSImage::Statistic stats;
         long _index;
