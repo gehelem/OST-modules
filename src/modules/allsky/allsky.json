@@ -269,6 +269,65 @@
                 "value":2
             }
         }
+    },
+    "gps": {
+        "devcat": "Schedule",
+        "group": "",
+        "order":"BBBSchedule5",
+        "permission": 2,
+        "hasprofile":false,
+        "label": "GPS",
+        "enabled":false,
+        "elements": {
+            "add": {
+                "label": "Add GPS localization",
+                "type": "bool",
+                "autoupdate":false,
+                "order":"10",
+                "value":false
+            }
+        }
+    },
+    "geogps": {
+        "devcat": "Schedule",
+        "group": "",
+        "order":"BBBSchedule6",
+        "permission": 0,
+        "hasprofile":false,
+        "enabled":false,
+        "label": "GPS localization",
+        "elements": {
+            "lat": {
+                "label": "Latitude",
+                "type": "float",
+                "order":"10"
+            },
+            "long": {
+                "label": "Longitude",
+                "type": "float",
+                "order":"20"
+            },
+            "elev": {
+                "label": "Elevation",
+                "type": "float",
+                "order":"30"
+            },
+            "date": {
+                "label": "Date",
+                "type": "date",
+                "order":"35"
+            },
+            "time": {
+                "label": "Time",
+                "type": "time",
+                "order":"40"
+            },
+            "offset": {
+                "label": "Offset",
+                "type": "string",
+                "order":"50"
+            }
+        }
     }
 }
 }
