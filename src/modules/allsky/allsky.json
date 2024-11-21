@@ -313,12 +313,12 @@
                 "order":"30"
             },
             "date": {
-                "label": "Date",
+                "label": "Date (UTC)",
                 "type": "date",
                 "order":"35"
             },
             "time": {
-                "label": "Time",
+                "label": "Time (UTC)",
                 "type": "time",
                 "order":"40"
             },
