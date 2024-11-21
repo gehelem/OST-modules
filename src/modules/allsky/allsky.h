@@ -38,6 +38,7 @@ class MODULE_INIT Allsky : public IndiModule
         void checkArchives(void);
         void moveCurrentToArchives(void);
         void calculateSunset(void);
+        void addGPSLocalization(void);
 
         QPointer<fileio> _image;
         Solver _solver;
@@ -49,7 +50,6 @@ class MODULE_INIT Allsky : public IndiModule
         bool mIsLooping = false;
         QString mFolder;
         QTimer mScheduleTimer;
-
 
 };
 
