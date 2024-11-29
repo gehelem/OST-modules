@@ -202,7 +202,7 @@ void Allsky::startLoop()
     }
 
     _index = 0;
-    mKheog = QImage();
+    mKeog = QImage();
     mFolder = QDateTime::currentDateTime().toString("yyyyMMdd-hh-mm-ss");
 
     getProperty("log")->clearGrid();
@@ -345,18 +345,18 @@ void Allsky::newBLOB(INDI::PropertyBlob pblob)
         }
 
 
-        QImage image1 = mKheog;
+        QImage image1 = mKeog;
         QImage image2 = im.copy(r);
-        QImage result(mKheog.width() + 1, rawImage.height(), QImage::Format_RGB32);
+        QImage result(mKeog.width() + 1, rawImage.height(), QImage::Format_RGB32);
         QPainter painter(&result);
         painter.drawImage(0, 0, image1);
-        painter.drawImage(mKheog.width(), 0, image2);
-        mKheog = result;
+        painter.drawImage(mKeog.width(), 0, image2);
+        mKeog = result;
 
-        mKheog.save(getWebroot() +  "/" + getModuleName() + "/" + mFolder + "/kheogram" + ".jpeg", "JPG", 100);
-        OST::ImgData kh;
-        kh.mUrlJpeg = getModuleName() + "/" + mFolder + "/kheogram" + ".jpeg";
-        getEltImg("kheogram", "image1")->setValue(kh, true);
+        mKeog.save(getWebroot() +  "/" + getModuleName() + "/" + mFolder + "/keogram" + ".jpeg", "JPG", 100);
+        OST::ImgData keo;
+        keo.mUrlJpeg = getModuleName() + "/" + mFolder + "/keogram" + ".jpeg";
+        getEltImg("keogram", "image1")->setValue(keo, true);
 
         r.setRect(0, 0, im.width(), im.height() / 10);
         QPainter p;
@@ -372,7 +372,7 @@ void Allsky::newBLOB(INDI::PropertyBlob pblob)
         OST::ImgData dta = _image->ImgStats();
         dta.mUrlJpeg = getModuleName() + QString(pblob.getDeviceName()) + ".jpeg";
         dta.mAlternates.clear();
-        dta.mAlternates.push_front(getModuleName() + "/" + mFolder + "/kheogram" + ".jpeg");
+        dta.mAlternates.push_front(getModuleName() + "/" + mFolder + "/keogram" + ".jpeg");
         dta.mAlternates.push_front(getModuleName() + "/" + mFolder + "/stacked" + ".jpeg");
         getEltImg("image", "image")->setValue(dta, true);
 
@@ -574,9 +574,9 @@ void Allsky::checkArchives(void)
     for (const auto &f : folders)
     {
         QString dd = f;
-        OST::ImgData i = getEltImg("archives", "kheogram")->value();
-        i.mUrlJpeg = getModuleName() + "/archives" + dd + "/kheogram.jpeg";
-        getEltImg("archives", "kheogram")->setValue(i);
+        OST::ImgData i = getEltImg("archives", "keogram")->value();
+        i.mUrlJpeg = getModuleName() + "/archives" + dd + "/keogram.jpeg";
+        getEltImg("archives", "keogram")->setValue(i);
         i = getEltImg("archives", "stack")->value();
         i.mUrlJpeg = getModuleName() + "/archives" + dd + "/stacked.jpeg";
         getEltImg("archives", "stack")->setValue(i);

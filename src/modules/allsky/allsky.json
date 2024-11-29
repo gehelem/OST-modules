@@ -153,9 +153,9 @@
                 "type": "string",
                 "order":"10"
             },
-            "kheogram": {
+            "keogram": {
                 "type": "img",
-                "label": "Kheogram",
+                "label": "Keogram",
                 "showstats":false,
                 "order":"20"
             },

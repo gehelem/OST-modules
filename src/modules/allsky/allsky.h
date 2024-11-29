@@ -47,7 +47,7 @@ class MODULE_INIT Allsky : public IndiModule
         FITSImage::Statistic stats;
         long _index;
         QProcess *_process;
-        QImage mKheog;
+        QImage mKeog;
         QTimer mTimer;
         bool mIsLooping = false;
         QString mFolder;
