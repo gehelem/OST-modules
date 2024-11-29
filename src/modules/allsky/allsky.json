@@ -90,16 +90,16 @@
             }
         }
     },
-    "kheogram": {
+    "keogram": {
         "devcat": "Results",
         "group": "",
         "order":"AAAResults999",
         "permission": 0,
-        "label": "Kheogram",
+        "label": "Keogram",
         "elements": {
             "image1": {
                 "type": "img",
-                "label": "Kheogram",
+                "label": "Keogram",
                 "order":"1",
                 "showstats":false,
                 "urljpeg":"./dummy.jpg"
