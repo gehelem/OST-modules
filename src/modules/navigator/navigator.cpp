@@ -166,8 +166,10 @@ void Navigator::updateProperty(INDI::Property property)
         (property.getDeviceName() == getString("devices", "mount"))
         &&  (property.getName()   == std::string("EQUATORIAL_EOD_COORD"))
         &&  (property.getState() == IPS_OK)
+        && mState == "running"
     )
     {
+
         sendMessage("Slew finished");
         Shoot();
     }
