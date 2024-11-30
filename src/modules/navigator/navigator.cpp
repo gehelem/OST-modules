@@ -123,6 +123,7 @@ void Navigator::newBLOB(INDI::PropertyBlob pblob)
             mSolver.stellarSolver.setIndexFolderPaths(folders);
             mSolver.ResetSolver(mStats, pImage->getImageBuffer());
             mSolver.stellarSolver.setSearchPositionInDegrees(ra * 360 / 24, dec);
+            mSolver.stellarSolver.setSearchScale(getFloat("optic", "fl") * 0.9, getFloat("optic", "fl") * 1.1, ScaleUnits::FOCAL_MM);
             connect(&mSolver, &Solver::successSolve, this, &Navigator::OnSucessSolve);
             connect(&mSolver, &Solver::solverLog, this, &Navigator::OnSolverLog);
             mSolver.SolveStars(mSolver.stellarSolverProfiles[0]);
