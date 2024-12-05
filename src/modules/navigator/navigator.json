@@ -155,7 +155,8 @@
                     ["ngc","NGC"],
                     ["ldn","LDN"],
                     ["sh2","SH2"],
-                    ["ic","IC"]
+                    ["ic","IC"],
+                    ["stars","Stars"]
                 ]
             }
         }
