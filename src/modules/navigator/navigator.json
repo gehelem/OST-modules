@@ -5,6 +5,7 @@
         "order": "Control0000",
         "group": "",
         "permission": 2,
+        "hasprofile":true,
         "rule":0,
         "label": "Search object",
         "elements": {
@@ -15,7 +16,7 @@
                 "posticon": "forward",
                 "label": "",
                 "order": "1",
-                "value":"M13"
+                "value":"ngc281"
             }
         }
     },
@@ -144,6 +145,7 @@
             },
             "catlg":{
                 "autoupdate":true,
+                "directedit":true,
                 "type":"string",
                 "label": "Catalog",
                 "order": "2",
@@ -153,7 +155,8 @@
                     ["ngc","NGC"],
                     ["ldn","LDN"],
                     ["sh2","SH2"],
-                    ["ic","IC"]
+                    ["ic","IC"],
+                    ["stars","Stars"]
                 ]
             }
         }
