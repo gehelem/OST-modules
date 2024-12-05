@@ -26,6 +26,11 @@ Navigator::Navigator(QString name, QString label, QString profile, QVariantMap a
     connectIndi();
     connectAllDevices();
 
+    connect(this, &Navigator::newImage, this, &Navigator::OnNewImage);
+
+    connect(&stellarSolver, &StellarSolver::logOutput, this, &Navigator::OnSolverLog);
+    connect(&stellarSolver, &StellarSolver::ready, this, &Navigator::OnSucessSolve);
+
 }
 
 Navigator::~Navigator()
@@ -65,6 +70,14 @@ void Navigator::OnMyExternalEvent(const QString &pEventType, const QString  &pEv
                             getProperty(keyprop)->setState(OST::Ok);
                         }
                     }
+                    if (keyelt == "catlg")
+                    {
+                        QString s = pEventData[keyprop].toMap()["elements"].toMap()[keyelt].toString();
+                        qDebug() << "update catlg " << s;
+                        getEltString("popcat", "catlg")->setValue(s, true);
+                        getProperty("popcat")->enable();
+                    }
+
                 }
 
                 if (keyprop == "actions")
@@ -98,43 +111,72 @@ void Navigator::OnMyExternalEvent(const QString &pEventType, const QString  &pEv
 
 void Navigator::newBLOB(INDI::PropertyBlob pblob)
 {
-
     if (
         (QString(pblob.getDeviceName()) == getString("devices", "camera")) && (mState != "idle")
     )
     {
-        double ra, dec;
-        if (
-            !getModNumber(getString("devices", "mount"), "EQUATORIAL_EOD_COORD", "DEC", dec)
-            || !getModNumber(getString("devices", "mount"), "EQUATORIAL_EOD_COORD", "RA", ra)
-        )
-        {
-            sendMessage("Can't find mount device " + getString("devices", "mount") + " solve aborted");
-        }
-        else
-        {
-            getProperty("actions")->setState(OST::Idle);
-            delete pImage;
-            pImage = new fileio();
-            pImage->loadBlob(pblob, 64);
-            mStats = pImage->getStats();
-            QStringList folders;
-            folders.append("/usr/share/astrometry");
-            mSolver.stellarSolver.setIndexFolderPaths(folders);
-            mSolver.ResetSolver(mStats, pImage->getImageBuffer());
-            mSolver.stellarSolver.setSearchPositionInDegrees(ra * 360 / 24, dec);
-            mSolver.stellarSolver.setSearchScale(getFloat("optic", "fl") * 0.9, getFloat("optic", "fl") * 1.1, ScaleUnits::FOCAL_MM);
-            connect(&mSolver, &Solver::successSolve, this, &Navigator::OnSucessSolve);
-            connect(&mSolver, &Solver::solverLog, this, &Navigator::OnSolverLog);
-            mSolver.SolveStars(mSolver.stellarSolverProfiles[0]);
-        }
+        getProperty("actions")->setState(OST::Idle);
+        delete pImage;
+        pImage = new fileio();
+        pImage->loadBlob(pblob, 64);
+        QImage rawImage = pImage->getRawQImage();
+        QImage im = rawImage.convertToFormat(QImage::Format_RGB32);
+        im.setColorTable(rawImage.colorTable());
+        im.save(getWebroot()  + "/" + getModuleName() + ".jpeg", "JPG", 100);
+        OST::ImgData dta = pImage->ImgStats();
+        dta.mUrlJpeg = getModuleName() + ".jpeg";
+        dta.isSolved = false;
+        getEltImg("image", "image")->setValue(dta, true);
+
+        emit newImage();
+    }
+}
+void Navigator::OnNewImage()
+{
+    sendMessage("Solve new image");
+    double ra, dec, pix, ech;
+    if (
+        !getModNumber(getString("devices", "camera"), "CCD_INFO", "CCD_PIXEL_SIZE", pix)
+    )
+    {
+        sendMessage("Can't find camera device " + getString("devices", "camera") + " solve aborted");
+    }
+    ech = 206 * pix / getFloat("optic", "fl");
+
+    if (
+        !getModNumber(getString("devices", "mount"), "EQUATORIAL_EOD_COORD", "DEC", dec)
+        || !getModNumber(getString("devices", "mount"), "EQUATORIAL_EOD_COORD", "RA", ra)
+    )
+    {
+        sendMessage("Can't find mount device " + getString("devices", "mount") + " solve aborted");
+    }
+    else
+    {
+        qDebug() << "mount pos " << ra << dec;
+        double wra = ra * 360 / 24;
+        double wde = dec;
+        stellarSolver.loadNewImageBuffer(pImage->getStats(), pImage->getImageBuffer());
+        QStringList folders;
+        folders.append("/usr/share/astrometry/");
+        stellarSolver.setIndexFolderPaths(folders);
+        stellarSolver.setProperty("UseScale", true);
+        stellarSolver.setSearchScale(ech * 0.9, ech * 1.1, ScaleUnits::ARCSEC_PER_PIX);
+        stellarSolver.setProperty("UsePosition", true);
+        stellarSolver.setSearchPositionInDegrees(wra, wde);
+        stellarSolver.setParameters(StellarSolver::getBuiltInProfiles()[SSolver::Parameters::DEFAULT]);
+        stellarSolver.setProperty("ProcessType", SOLVE);
+        stellarSolver.setProperty("ExtractorType", EXTRACTOR_INTERNAL);
+        stellarSolver.setProperty("SolverType", SOLVER_STELLARSOLVER);
+        stellarSolver.setLogLevel(LOG_ALL);
+        stellarSolver.setSSLogLevel(LOG_VERBOSE);
+        stellarSolver.setProperty("LogToFile", true);
+        stellarSolver.setProperty("LogFileName", "/home/gilles/projets/OST/solver.log");
+        stellarSolver.start();
+
 
 
 
     }
-
-
-
 }
 void Navigator::updateProperty(INDI::Property property)
 {
@@ -152,17 +194,6 @@ void Navigator::updateProperty(INDI::Property property)
         sendWarning("cameraAlert");
         emit cameraAlert();
     }
-
-
-    if (
-        (property.getDeviceName() == getString("devices", "camera"))
-        &&  (property.getName()   == std::string("CCD_FRAME_RESET"))
-        &&  (property.getState() == IPS_OK)
-    )
-    {
-        //sendMessage("FrameResetDone");
-        emit FrameResetDone();
-    }
     if (
         (property.getDeviceName() == getString("devices", "mount"))
         &&  (property.getName()   == std::string("EQUATORIAL_EOD_COORD"))
@@ -172,12 +203,13 @@ void Navigator::updateProperty(INDI::Property property)
     {
 
         sendMessage("Slew finished");
+        mState = "shooting";
         Shoot();
     }
 }
 void Navigator::Shoot()
 {
-    //sendMessage("SMRequestExposure");
+    setFocalLengthAndDiameter();
     if (!requestCapture(getString("devices", "camera"), getFloat("parms", "exposure"), getInt("parms", "gain"), getInt("parms",
                         "offset")))
     {
@@ -200,29 +232,30 @@ void Navigator::initIndi()
     enableDirectBlobAccess(getString("devices", "camera").toStdString().c_str(), nullptr);
 
 }
-void Navigator::OnSolverLog(QString &text)
+void Navigator::OnSolverLog(QString text)
 {
-    sendMessage(text);
+    //sendMessage(text);
+    qDebug() << text;
 }
 void Navigator::OnSucessSolve()
 {
+    qDebug() << "OnSucessSolve";
     getProperty("actions")->setState(OST::Ok);
 
-    QImage rawImage = pImage->getRawQImage();
-    QImage im = rawImage.convertToFormat(QImage::Format_RGB32);
-    im.setColorTable(rawImage.colorTable());
-    im.save(getWebroot()  + "/" + getModuleName() + ".jpeg", "JPG", 100);
     OST::ImgData dta = pImage->ImgStats();
     dta.mUrlJpeg = getModuleName() + ".jpeg";
-    dta.solverRA = mSolver.stellarSolver.getSolution().ra;
-    dta.solverDE = mSolver.stellarSolver.getSolution().dec;
+    dta.solverRA = stellarSolver.getSolution().ra;
+    dta.solverDE = stellarSolver.getSolution().dec;
     dta.isSolved = true;
     qDebug() << "RA=" << dta.solverRA << " DE=" << dta.solverDE;
     getEltImg("image", "image")->setValue(dta, true);
 
     mState = "idle";
-    disconnect(&mSolver, &Solver::successSolve, this, &Navigator::OnSucessSolve);
-    disconnect(&mSolver, &Solver::solverLog, this, &Navigator::OnSolverLog);
+    /*disconnect(&mSolver, &Solver::successSolve, this, &Navigator::OnSucessSolve);
+    disconnect(&mSolver, &Solver::solverLog, this, &Navigator::OnSolverLog);*/
+    if (stellarSolver.failed()) sendMessage("Image NOT solved");
+    else sendMessage("Image solved");
+
 
 
 }
@@ -252,7 +285,7 @@ void Navigator::updateSearchList(void)
 
     for (int i = 0; i < max; i++)
     {
-        qDebug() << results[i].name << results[i].RA;
+        //qDebug() << results[i].name << results[i].RA;
         getEltString("results", "catalog")->setValue(results[i].catalog);
         getEltString("results", "code")->setValue(results[i].code);
         getEltString("results", "NS")->setValue(results[i].NS);

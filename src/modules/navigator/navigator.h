@@ -25,32 +25,14 @@ class MODULE_INIT Navigator : public IndiModule
 
     signals:
 
-        void RequestFrameResetDone();
-        void FrameResetDone();
-        void RequestExposureDone();
-        void ExposureDone();
-        void FindStarsDone();
-        void NextLoop();
-        void LoopFinished();
-        void ComputeDone();
-        void InitDone();
-
-        void RequestExposureBestDone();
-        void ExposureBestDone();
-        void ComputeResultDone();
-        void InitLoopFrameDone();
-        void LoopFrameDone();
-        void NextFrame();
-
-        void blobloaded();
         void cameraAlert();
-        void AbortDone();
-        void Abort();
+        void newImage();
     public slots:
         void OnMyExternalEvent(const QString &pEventType, const QString  &pEventModule, const QString  &pEventKey,
                                const QVariantMap &pEventData) override;
         void OnSucessSolve();
-        void OnSolverLog(QString &text);
+        void OnSolverLog(QString text);
+        void OnNewImage();
 
     private:
         void updateProperty(INDI::Property property) override;
@@ -60,21 +42,17 @@ class MODULE_INIT Navigator : public IndiModule
 
         void Shoot();
         void SMAlert();
-        //void SMLoadblob(IBLOB *bp);
-        void SMLoadblob();
-        void SMAbort();
         void updateSearchList(void);
         void slewToSelection(void);
         void convertSelection(void);
 
 
-        QString mCamera  = "CCD Simulator";
-        QString mMount  = "Telescope Simulator";
         QString mState = "idle";
 
         QPointer<fileio> pImage;
-        Solver mSolver;
-        FITSImage::Statistic mStats;
+
+        StellarSolver stellarSolver;
+        QList<FITSImage::Star> stars;
 
 
 };
