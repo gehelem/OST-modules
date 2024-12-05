@@ -89,6 +89,12 @@ void Navigator::OnMyExternalEvent(const QString &pEventType, const QString  &pEv
                         initIndi();
                         slewToSelection();
                     }
+                    if (keyelt == "abortnavigator")
+                    {
+                        stellarSolver.abort();
+                        mState = "idle";
+                        getProperty(keyprop)->setState(OST::Ok);
+                    }
                 }
             }
             if (pEventType == "Flselect")
