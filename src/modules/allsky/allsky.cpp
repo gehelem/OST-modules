@@ -33,10 +33,10 @@ Allsky::Allsky(QString name, QString label, QString profile, QVariantMap availab
     if (getString("devices", "gps") != "") connectDevice(getString("devices", "gps"));
 
 
-    OST::ElementBool* b = new OST::ElementBool("Loop", "0", "");
+    OST::ElementBool* b = new OST::ElementBool("Play", "0", "");
     getProperty("actions")->addElt("loop", b);
     b->setAutoUpdate(true);
-    b = new OST::ElementBool("Abort", "2", "");
+    b = new OST::ElementBool("Stop", "2", "");
     getProperty("actions")->addElt("abort", b);
     b->setAutoUpdate(true);
     b = new OST::ElementBool("Pause", "1", "");
