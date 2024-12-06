@@ -178,10 +178,6 @@ void Navigator::OnNewImage()
         stellarSolver.setProperty("LogToFile", true);
         stellarSolver.setProperty("LogFileName", "/home/gilles/projets/OST/solver.log");
         stellarSolver.start();
-
-
-
-
     }
 }
 void Navigator::updateProperty(INDI::Property property)
@@ -209,7 +205,6 @@ void Navigator::updateProperty(INDI::Property property)
     {
 
         sendMessage("Slew finished");
-        mState = "shooting";
         Shoot();
     }
 }
@@ -222,7 +217,7 @@ void Navigator::Shoot()
         emit abort();
         return;
     }
-    getProperty("actions")->setState(OST::Error);
+    getProperty("actions")->setState(OST::Busy);
 }
 void Navigator::initIndi()
 {
@@ -253,7 +248,6 @@ void Navigator::OnSucessSolve()
     dta.solverRA = stellarSolver.getSolution().ra;
     dta.solverDE = stellarSolver.getSolution().dec;
     dta.isSolved = true;
-    qDebug() << "RA=" << dta.solverRA << " DE=" << dta.solverDE;
     getEltImg("image", "image")->setValue(dta, true);
 
     mState = "idle";
@@ -261,9 +255,6 @@ void Navigator::OnSucessSolve()
     disconnect(&mSolver, &Solver::solverLog, this, &Navigator::OnSolverLog);*/
     if (stellarSolver.failed()) sendMessage("Image NOT solved");
     else sendMessage("Image solved");
-
-
-
 }
 void Navigator::updateSearchList(void)
 {

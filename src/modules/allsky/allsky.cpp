@@ -622,7 +622,6 @@ void Allsky::moveCurrentToArchives(void)
     if (!getBool("keepimages", "enable"))
     {
         QDir dd(getWebroot() + "/" + getModuleName() + "/archives/" + mFolder + "/images");
-        qDebug() << dd.entryInfoList(QDir::NoFilter, QDir::NoSort);
         dd.removeRecursively();
     }
 
