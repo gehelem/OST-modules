@@ -39,6 +39,7 @@ class MODULE_INIT Allsky : public IndiModule
         void moveCurrentToArchives(void);
         void calculateSunset(void);
         void addGPSLocalization(void);
+        void enableParms(bool enable);
 
         QPointer<fileio> _image;
         QImage imageStacked;

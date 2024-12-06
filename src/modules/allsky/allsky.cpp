@@ -33,15 +33,20 @@ Allsky::Allsky(QString name, QString label, QString profile, QVariantMap availab
     if (getString("devices", "gps") != "") connectDevice(getString("devices", "gps"));
 
 
-    OST::ElementBool* b = new OST::ElementBool("Loop", "0", "");
+    OST::ElementBool* b = new OST::ElementBool("Play", "0", "");
     getProperty("actions")->addElt("loop", b);
-    b = new OST::ElementBool("Abort", "2", "");
+    b->setAutoUpdate(true);
+    b = new OST::ElementBool("Stop", "2", "");
     getProperty("actions")->addElt("abort", b);
-    b = new OST::ElementBool("Timelapse", "1", "");
-    getProperty("actions")->addElt("timelapse", b);
-
+    b->setAutoUpdate(true);
+    b = new OST::ElementBool("Pause", "1", "");
+    b->setAutoUpdate(true);
+    getProperty("actions")->addElt("pause", b);
     getProperty("actions")->deleteElt("startsequence");
     getProperty("actions")->deleteElt("abortsequence");
+    getProperty("actions")->setElt("abort", true);
+    getProperty("actions")->setRule(OST::SwitchsRule::OneOfMany);
+
 
     OST::ElementInt* i = new OST::ElementInt("Delay (s)", "0", "");
     i->setAutoUpdate(false);
@@ -59,7 +64,7 @@ Allsky::Allsky(QString name, QString label, QString profile, QVariantMap availab
     connect(_process, static_cast<void(QProcess::*)(int, QProcess::ExitStatus)>(&QProcess::finished), this,
             &Allsky::processFinished);
 
-    mScheduleTimer.setInterval(10000); // every 10s check
+    mScheduleTimer.setInterval(5000); // every 5s check
     connect(&mScheduleTimer, &QTimer::timeout, this, &Allsky::OnScheduleTimer);
     mScheduleTimer.start();
 
@@ -123,27 +128,23 @@ void Allsky::OnMyExternalEvent(const QString &eventType, const QString  &eventMo
             {
                 if (keyprop == "actions")
                 {
-                    if (keyelt == "timelapse")
+                    if (keyelt == "pause")
                     {
-                        if (getEltBool(keyprop, keyelt)->setValue(false))
-                        {
-                            startTimelapseBatch();
-                        }
+                        if (getBool(keyprop, keyelt)) enableParms(false);
+                        getProperty("actions")->setState(OST::Busy);
+                        //startTimelapseBatch();
                     }
                     if (keyelt == "loop")
                     {
-                        if (getEltBool(keyprop, keyelt)->setValue(true))
-                        {
-                            getProperty("actions")->setState(OST::Busy);
-                            startLoop();
-                        }
+                        if (getBool(keyprop, keyelt)) enableParms(false);
+                        getProperty("actions")->setState(OST::Busy);
+                        //startLoop();
                     }
                     if (keyelt == "abort")
                     {
-                        if (getEltBool(keyprop, keyelt)->setValue(false))
-                        {
-                            stopLoop();
-                        }
+                        if (getBool(keyprop, keyelt)) enableParms(true);
+                        getProperty("actions")->setState(OST::Ok);
+                        stopLoop();
                     }
                 }
                 if (keyprop == "daily")
@@ -201,6 +202,11 @@ void Allsky::startLoop()
         return;
     }
 
+    if (getBool("type", "manual")) sendMessage("Start manual schedule");
+    if (getBool("type", "fixed")) sendMessage("Start fixed schedule");
+    if (getBool("type", "sunset")) sendMessage("Start sunset schedule");
+
+
     _index = 0;
     mKeog = QImage();
     mFolder = QDateTime::currentDateTime().toString("yyyyMMdd-hh-mm-ss");
@@ -240,21 +246,23 @@ void Allsky::startLoop()
 }
 void Allsky::stopLoop()
 {
-    if (!mIsLooping)
-    {
-        sendWarning("Not looping");
-        return;
-    }
+    if (!mIsLooping) return;
+
+    if (getBool("type", "manual")) sendMessage("Stop manual schedule");
+    if (getBool("type", "fixed")) sendMessage("Stop fixed schedule");
+    if (getBool("type", "sunset")) sendMessage("Stop sunset schedule");
+
     mTimer.stop();
+    disconnect(&mTimer, &QTimer::timeout, this, &Allsky::OnTimer);
+
     mIsLooping = false;
     firstStack = true;
     startTimelapseBatch();
-    getEltBool("actions", "loop")->setValue(false);
     getProperty("actions")->setState(OST::Ok);
 }
 void Allsky::startTimelapseBatch()
 {
-    qDebug() << "PROCESS Start Batch";
+    sendMessage("Generating timelapse");
     if (_process->state() != 0)
     {
         qDebug() << "can't start process";
@@ -341,8 +349,8 @@ void Allsky::newBLOB(INDI::PropertyBlob pblob)
                                   );
                 }
             }
-            imageStacked.save(getWebroot() +  "/" + getModuleName() + "/" + mFolder + "/stacked" + ".jpeg", "JPG", 100);
         }
+        imageStacked.save(getWebroot() +  "/" + getModuleName() + "/" + mFolder + "/stacked" + ".jpeg", "JPG", 100);
 
 
         QImage image1 = mKeog;
@@ -439,6 +447,7 @@ void Allsky::updateProperty(INDI::Property property)
 
 void Allsky::OnTimer()
 {
+    if (getBool("actions", "abort") || getBool("actions", "pause")) return;
     if (!requestCapture(getString("devices", "camera"), getFloat("parms", "exposure"), getInt("parms", "gain"), getInt("parms",
                         "offset")))
     {
@@ -446,7 +455,6 @@ void Allsky::OnTimer()
     }
     else
     {
-        mTimer.setInterval(getInt("parms", "delay") * 1000);
         getProperty("actions")->setState(OST::Busy);
     }
 
@@ -454,8 +462,12 @@ void Allsky::OnTimer()
 void Allsky::OnScheduleTimer()
 {
     calculateSunset();
+
+    if (getBool("actions", "abort") || getBool("actions", "pause")) return;
+
     QTime now = QDateTime::currentDateTime().time();
-    if (getBool("sunrise", "enable"))
+
+    if (getBool("type", "sunset"))
     {
         QTime start = getTime("coming", "sunset"); // coucher
         QTime stop = getTime("coming", "sunrise"); // lever
@@ -476,16 +488,17 @@ void Allsky::OnScheduleTimer()
                 stopLoop();
             }
         }
+        return;
     }
 
-    if (getBool("daily", "enable"))
+    if (getBool("type", "fixed"))
     {
         QTime start = getTime("daily", "begin");
         QTime stop = getTime("daily", "end");
         if (start == stop)
         {
             sendError("Can't do anything when start time equals stop time, daily schedule disabled.");
-            getEltBool("daily", "enable")->setValue(false, true);
+            //getEltBool("daily", "enable")->setValue(false, true);
             return;
         }
         if (start < stop) // daytime requested
@@ -514,7 +527,20 @@ void Allsky::OnScheduleTimer()
                 stopLoop();
             }
         }
+        return;
     }
+
+    if (getBool("type", "manual") && !mIsLooping)
+    {
+        startLoop();
+
+    }
+    if (!getBool("type", "manual") && mIsLooping)
+    {
+        stopLoop();
+    }
+
+
 }
 void Allsky::computeExposureOrGain(double fromValue)
 {
@@ -593,6 +619,13 @@ void Allsky::moveCurrentToArchives(void)
     dir.mkdir(getWebroot() + "/" + getModuleName() + "/archives");
     dir.rename(getWebroot() + "/" + getModuleName() + "/" + mFolder,
                getWebroot() + "/" + getModuleName() + "/archives/" + mFolder);
+    if (!getBool("keepimages", "enable"))
+    {
+        QDir dd(getWebroot() + "/" + getModuleName() + "/archives/" + mFolder + "/images");
+        qDebug() << dd.entryInfoList(QDir::NoFilter, QDir::NoSort);
+        dd.removeRecursively();
+    }
+
     checkArchives();
 }
 void Allsky::calculateSunset(void)
@@ -628,4 +661,17 @@ void Allsky::addGPSLocalization(void)
     getEltFloat("geo", "long")->setValue(getFloat("geogps", "long"), false);
     getEltString("geo", "id")->setValue("GPS", false);
     getProperty("geo")->push();
+}
+void Allsky::enableParms(bool enable)
+{
+    if (enable)
+    {
+        getProperty("daily")->enable();
+        getProperty("type")->enable();
+    }
+    else
+    {
+        getProperty("daily")->disable();
+        getProperty("type")->disable();
+    }
 }
