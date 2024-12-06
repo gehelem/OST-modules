@@ -35,13 +35,18 @@ Allsky::Allsky(QString name, QString label, QString profile, QVariantMap availab
 
     OST::ElementBool* b = new OST::ElementBool("Loop", "0", "");
     getProperty("actions")->addElt("loop", b);
+    b->setAutoUpdate(true);
     b = new OST::ElementBool("Abort", "2", "");
     getProperty("actions")->addElt("abort", b);
+    b->setAutoUpdate(true);
     b = new OST::ElementBool("Pause", "1", "");
+    b->setAutoUpdate(true);
     getProperty("actions")->addElt("pause", b);
-
     getProperty("actions")->deleteElt("startsequence");
     getProperty("actions")->deleteElt("abortsequence");
+    getProperty("actions")->setElt("abort", true);
+    getProperty("actions")->setRule(OST::SwitchsRule::OneOfMany);
+
 
     OST::ElementInt* i = new OST::ElementInt("Delay (s)", "0", "");
     i->setAutoUpdate(false);
@@ -123,27 +128,23 @@ void Allsky::OnMyExternalEvent(const QString &eventType, const QString  &eventMo
             {
                 if (keyprop == "actions")
                 {
-                    if (keyelt == "timelapse")
+                    if (keyelt == "pause")
                     {
-                        if (getEltBool(keyprop, keyelt)->setValue(false))
-                        {
-                            startTimelapseBatch();
-                        }
+                        if (getBool(keyprop, keyelt)) enableParms(false);
+                        getProperty("actions")->setState(OST::Busy);
+                        //startTimelapseBatch();
                     }
                     if (keyelt == "loop")
                     {
-                        if (getEltBool(keyprop, keyelt)->setValue(true))
-                        {
-                            getProperty("actions")->setState(OST::Busy);
-                            startLoop();
-                        }
+                        if (getBool(keyprop, keyelt)) enableParms(false);
+                        getProperty("actions")->setState(OST::Busy);
+                        //startLoop();
                     }
                     if (keyelt == "abort")
                     {
-                        if (getEltBool(keyprop, keyelt)->setValue(false))
-                        {
-                            stopLoop();
-                        }
+                        if (getBool(keyprop, keyelt)) enableParms(true);
+                        getProperty("actions")->setState(OST::Ok);
+                        //stopLoop();
                     }
                 }
                 if (keyprop == "daily")
@@ -249,7 +250,6 @@ void Allsky::stopLoop()
     mIsLooping = false;
     firstStack = true;
     startTimelapseBatch();
-    getEltBool("actions", "loop")->setValue(false);
     getProperty("actions")->setState(OST::Ok);
 }
 void Allsky::startTimelapseBatch()
@@ -341,8 +341,8 @@ void Allsky::newBLOB(INDI::PropertyBlob pblob)
                                   );
                 }
             }
-            imageStacked.save(getWebroot() +  "/" + getModuleName() + "/" + mFolder + "/stacked" + ".jpeg", "JPG", 100);
         }
+        imageStacked.save(getWebroot() +  "/" + getModuleName() + "/" + mFolder + "/stacked" + ".jpeg", "JPG", 100);
 
 
         QImage image1 = mKeog;
@@ -455,6 +455,9 @@ void Allsky::OnScheduleTimer()
 {
     calculateSunset();
     QTime now = QDateTime::currentDateTime().time();
+    if (getBool("actions", "abort")) return;
+    if (getBool("actions", "pause")) return;
+
     if (getBool("type", "sunrise"))
     {
         QTime start = getTime("coming", "sunset"); // coucher
@@ -628,4 +631,17 @@ void Allsky::addGPSLocalization(void)
     getEltFloat("geo", "long")->setValue(getFloat("geogps", "long"), false);
     getEltString("geo", "id")->setValue("GPS", false);
     getProperty("geo")->push();
+}
+void Allsky::enableParms(bool enable)
+{
+    if (enable)
+    {
+        getProperty("daily")->enable();
+        getProperty("type")->enable();
+    }
+    else
+    {
+        getProperty("daily")->disable();
+        getProperty("type")->disable();
+    }
 }
