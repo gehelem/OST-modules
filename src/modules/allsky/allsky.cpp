@@ -144,7 +144,7 @@ void Allsky::OnMyExternalEvent(const QString &eventType, const QString  &eventMo
                     {
                         if (getBool(keyprop, keyelt)) enableParms(true);
                         getProperty("actions")->setState(OST::Ok);
-                        //stopLoop();
+                        stopLoop();
                     }
                 }
                 if (keyprop == "daily")
@@ -202,6 +202,11 @@ void Allsky::startLoop()
         return;
     }
 
+    if (getBool("type", "manual")) sendMessage("Start manual schedule");
+    if (getBool("type", "fixed")) sendMessage("Start fixed schedule");
+    if (getBool("type", "sunset")) sendMessage("Start sunset schedule");
+
+
     _index = 0;
     mKeog = QImage();
     mFolder = QDateTime::currentDateTime().toString("yyyyMMdd-hh-mm-ss");
@@ -241,12 +246,15 @@ void Allsky::startLoop()
 }
 void Allsky::stopLoop()
 {
-    if (!mIsLooping)
-    {
-        sendWarning("Not looping");
-        return;
-    }
+    if (!mIsLooping) return;
+
+    if (getBool("type", "manual")) sendMessage("Stop manual schedule");
+    if (getBool("type", "fixed")) sendMessage("Stop fixed schedule");
+    if (getBool("type", "sunset")) sendMessage("Stop sunset schedule");
+
     mTimer.stop();
+    disconnect(&mTimer, &QTimer::timeout, this, &Allsky::OnTimer);
+
     mIsLooping = false;
     firstStack = true;
     startTimelapseBatch();
@@ -254,7 +262,7 @@ void Allsky::stopLoop()
 }
 void Allsky::startTimelapseBatch()
 {
-    qDebug() << "PROCESS Start Batch";
+    sendMessage("Generating timelapse");
     if (_process->state() != 0)
     {
         qDebug() << "can't start process";
@@ -439,6 +447,7 @@ void Allsky::updateProperty(INDI::Property property)
 
 void Allsky::OnTimer()
 {
+    if (getBool("actions", "abort") || getBool("actions", "pause")) return;
     if (!requestCapture(getString("devices", "camera"), getFloat("parms", "exposure"), getInt("parms", "gain"), getInt("parms",
                         "offset")))
     {
@@ -446,7 +455,6 @@ void Allsky::OnTimer()
     }
     else
     {
-        mTimer.setInterval(getInt("parms", "delay") * 1000);
         getProperty("actions")->setState(OST::Busy);
     }
 
@@ -454,11 +462,12 @@ void Allsky::OnTimer()
 void Allsky::OnScheduleTimer()
 {
     calculateSunset();
-    QTime now = QDateTime::currentDateTime().time();
-    if (getBool("actions", "abort")) return;
-    if (getBool("actions", "pause")) return;
 
-    if (getBool("type", "sunrise"))
+    if (getBool("actions", "abort") || getBool("actions", "pause")) return;
+
+    QTime now = QDateTime::currentDateTime().time();
+
+    if (getBool("type", "sunset"))
     {
         QTime start = getTime("coming", "sunset"); // coucher
         QTime stop = getTime("coming", "sunrise"); // lever
@@ -479,6 +488,7 @@ void Allsky::OnScheduleTimer()
                 stopLoop();
             }
         }
+        return;
     }
 
     if (getBool("type", "fixed"))
@@ -517,7 +527,20 @@ void Allsky::OnScheduleTimer()
                 stopLoop();
             }
         }
+        return;
     }
+
+    if (getBool("type", "manual") && !mIsLooping)
+    {
+        startLoop();
+
+    }
+    if (!getBool("type", "manual") && mIsLooping)
+    {
+        stopLoop();
+    }
+
+
 }
 void Allsky::computeExposureOrGain(double fromValue)
 {
