@@ -64,7 +64,7 @@ Allsky::Allsky(QString name, QString label, QString profile, QVariantMap availab
     connect(_process, static_cast<void(QProcess::*)(int, QProcess::ExitStatus)>(&QProcess::finished), this,
             &Allsky::processFinished);
 
-    mScheduleTimer.setInterval(10000); // every 10s check
+    mScheduleTimer.setInterval(5000); // every 5s check
     connect(&mScheduleTimer, &QTimer::timeout, this, &Allsky::OnScheduleTimer);
     mScheduleTimer.start();
 
@@ -619,6 +619,13 @@ void Allsky::moveCurrentToArchives(void)
     dir.mkdir(getWebroot() + "/" + getModuleName() + "/archives");
     dir.rename(getWebroot() + "/" + getModuleName() + "/" + mFolder,
                getWebroot() + "/" + getModuleName() + "/archives/" + mFolder);
+    if (!getBool("keepimages", "enable"))
+    {
+        QDir dd(getWebroot() + "/" + getModuleName() + "/archives/" + mFolder + "/images");
+        qDebug() << dd.entryInfoList(QDir::NoFilter, QDir::NoSort);
+        dd.removeRecursively();
+    }
+
     checkArchives();
 }
 void Allsky::calculateSunset(void)

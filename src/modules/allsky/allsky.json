@@ -342,6 +342,23 @@
                 "order":"50"
             }
         }
+    },
+    "keepimages": {
+        "devcat": "Schedule",
+        "group": "",
+        "order":"BBBSchedule6",
+        "permission": 2,
+        "hasprofile":true,
+        "label": "Keep indiviual images in archives",
+        "elements": {
+            "enable": {
+                "label": "Enable",
+                "type": "bool",
+                "autoupdate":true,
+                "order":"10",
+                "value":false
+            }
+        }
     }
 }
 }
