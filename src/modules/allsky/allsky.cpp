@@ -37,8 +37,8 @@ Allsky::Allsky(QString name, QString label, QString profile, QVariantMap availab
     getProperty("actions")->addElt("loop", b);
     b = new OST::ElementBool("Abort", "2", "");
     getProperty("actions")->addElt("abort", b);
-    b = new OST::ElementBool("Timelapse", "1", "");
-    getProperty("actions")->addElt("timelapse", b);
+    b = new OST::ElementBool("Pause", "1", "");
+    getProperty("actions")->addElt("pause", b);
 
     getProperty("actions")->deleteElt("startsequence");
     getProperty("actions")->deleteElt("abortsequence");
@@ -455,7 +455,7 @@ void Allsky::OnScheduleTimer()
 {
     calculateSunset();
     QTime now = QDateTime::currentDateTime().time();
-    if (getBool("sunrise", "enable"))
+    if (getBool("type", "sunrise"))
     {
         QTime start = getTime("coming", "sunset"); // coucher
         QTime stop = getTime("coming", "sunrise"); // lever
@@ -478,14 +478,14 @@ void Allsky::OnScheduleTimer()
         }
     }
 
-    if (getBool("daily", "enable"))
+    if (getBool("type", "fixed"))
     {
         QTime start = getTime("daily", "begin");
         QTime stop = getTime("daily", "end");
         if (start == stop)
         {
             sendError("Can't do anything when start time equals stop time, daily schedule disabled.");
-            getEltBool("daily", "enable")->setValue(false, true);
+            //getEltBool("daily", "enable")->setValue(false, true);
             return;
         }
         if (start < stop) // daytime requested

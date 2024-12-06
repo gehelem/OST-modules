@@ -172,6 +172,38 @@
             }
         }
     },
+    "type": {
+        "devcat": "Schedule",
+        "group": "",
+        "order":"BBBSchedule0",
+        "permission": 2,
+        "hasprofile":true,
+        "label": "Schedule type",
+        "rule":0,
+        "elements": {
+            "manual": {
+                "label": "Manual",
+                "type": "bool",
+                "autoupdate":true,
+                "order":"10",
+                "value":false
+            },
+            "fixed": {
+                "label": "Fixed time",
+                "type": "bool",
+                "autoupdate":true,
+                "order":"20",
+                "value":true
+            },
+            "sunrise": {
+                "label": "Sunrise",
+                "type": "bool",
+                "autoupdate":true,
+                "order":"30",
+                "value":false
+            }
+        }
+    },
     "daily": {
         "devcat": "Schedule",
         "group": "",
@@ -180,13 +212,6 @@
         "hasprofile":true,
         "label": "Daily schedule",
         "elements": {
-            "enable": {
-                "label": "Enable",
-                "type": "bool",
-                "autoupdate":true,
-                "order":"10",
-                "value":false
-            },
             "begin": {
                 "label": "Start at",
                 "type": "time",
@@ -200,23 +225,6 @@
                 "directedit":true,
                 "label": "End at",
                 "order":"30"
-            }
-        }
-    },
-    "sunrise": {
-        "devcat": "Schedule",
-        "group": "",
-        "order":"BBBSchedule2",
-        "permission": 2,
-        "hasprofile":true,
-        "label": "Sunrise schedule",
-        "elements": {
-            "enable": {
-                "label": "Enable",
-                "type": "bool",
-                "autoupdate":true,
-                "order":"10",
-                "value":false
             }
         }
     },
