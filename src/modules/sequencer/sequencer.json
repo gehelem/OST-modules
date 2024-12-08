@@ -107,6 +107,38 @@
 
             }
         }
+    },
+    "object":{
+            "devcat": "Control",
+            "group": "",
+            "permission": 2,
+            "order":5,
+            "label":"Object",
+            "hasprofile":true,
+            "elements": {
+                "label": {
+                    "type": "string",
+                    "label": "Name",
+                    "dynlabel": "",
+                    "autoupdate":true,
+                    "directedit":true,
+                    "order":0
+                },
+                "ra": {
+                    "type": "float",
+                    "label": "RA",
+                    "autoupdate":true,
+                    "directedit":true,
+                    "order":1
+                },
+                "de": {
+                    "type": "float",
+                    "label": "DEC",
+                    "autoupdate":true,
+                    "directedit":true,
+                    "order":2
+                }
+            }
     }
 }
 }
