@@ -41,10 +41,14 @@ class MODULE_INIT Inspector : public IndiModule
         void cameraAlert();
         void AbortDone();
         void Abort();
+        void newImage();
+
     public slots:
         void OnMyExternalEvent(const QString &eventType, const QString  &eventModule, const QString  &eventKey,
                                const QVariantMap &eventData) override;
         void OnSucessSEP();
+        void OnNewImage();
+
 
     private:
         void updateProperty(INDI::Property property) override;

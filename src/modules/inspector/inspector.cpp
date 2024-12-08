@@ -41,6 +41,7 @@ Inspector::Inspector(QString name, QString label, QString profile, QVariantMap a
     i->setSlider(OST::SliderAndValue);
 
     getProperty("parms")->addElt("cornersize", i);
+    connect(this, &Inspector::newImage, this, &Inspector::OnNewImage);
 
 }
 
@@ -109,9 +110,7 @@ void Inspector::newBLOB(INDI::PropertyBlob pblob)
         _image = new fileio();
         _image->loadBlob(pblob, 64);
         stats = _image->getStats();
-        _solver.ResetSolver(stats, _image->getImageBuffer());
-        connect(&_solver, &Solver::successSEP, this, &Inspector::OnSucessSEP);
-        _solver.FindStars(_solver.stellarSolverProfiles[0]);
+        emit newImage();
     }
 
 
@@ -324,4 +323,10 @@ void Inspector::OnSucessSEP()
     }
 
 
+}
+void Inspector::OnNewImage()
+{
+    _solver.ResetSolver(stats, _image->getImageBuffer());
+    connect(&_solver, &Solver::successSEP, this, &Inspector::OnSucessSEP);
+    _solver.FindStars(_solver.stellarSolverProfiles[0]);
 }
