@@ -282,7 +282,12 @@ void Sequencer::StartLine()
         getProperty("sequence")->updateLine(currentLine);
         int i = getInt("sequence", "filter");
         currentFilter = getEltInt("sequence", "filter")->getLov()[i];
+        currentFrameType = getString("sequence", "frametype");
         sendModNewNumber(getString("devices", "filter"), "FILTER_SLOT", "FILTER_SLOT_VALUE", i);
+        if (currentFrameType == "L") sendModNewSwitch(getString("devices", "camera"), "CCD_FRAME_TYPE", "FRAME_LIGHT", ISS_ON);
+        if (currentFrameType == "B") sendModNewSwitch(getString("devices", "camera"), "CCD_FRAME_TYPE", "FRAME_BIAS", ISS_ON);
+        if (currentFrameType == "D") sendModNewSwitch(getString("devices", "camera"), "CCD_FRAME_TYPE", "FRAME_DARK", ISS_ON);
+        if (currentFrameType == "F") sendModNewSwitch(getString("devices", "camera"), "CCD_FRAME_TYPE", "FRAME_FLAT", ISS_ON);
     }
 }
 void Sequencer::refreshFilterLov()
