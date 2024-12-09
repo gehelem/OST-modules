@@ -104,8 +104,17 @@
                 "order":7,
                 "value":"idle",
                 "gridvalues":[]
-
+            },
+            "progress": {
+                "type":"prg",
+                "label": "Progress",
+                "prgtype": "spinner",
+                "dynlabel": "",
+                "order":7,
+                "value":"idle",
+                "gridvalues":[]
             }
+
         }
     },
     "object":{
