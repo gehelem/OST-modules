@@ -264,7 +264,7 @@ void Sequencer::StartSequence()
         frameReset(getString("devices", "camera"));
         if (getString("devices", "camera") == "CCD Simulator")
         {
-            sendModNewNumber(getString("devices", "camera"), "SIMULATOR_SETTINGS", "SIM_TIME_FACTOR", 1 );
+            sendModNewNumber(getString("devices", "camera"), "SIMULATOR_SETTINGS", "SIM_TIME_FACTOR", 0.01 );
         }
         getProperty("actions")->setState(OST::Busy);
 
