@@ -83,9 +83,13 @@ class MODULE_INIT Sequencer: public IndiModule
         QString currentFilter = "";
         QString currentFrameType = "";
         QString currentStatus = "";
+        QString currentFolder = "";
 
         QVariantMap mActiveSeq;
         bool isSequenceRunning = false;
+        QString mObjectName = "default";
+        QString mDate;
+
 
 
 };

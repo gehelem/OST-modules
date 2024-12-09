@@ -103,10 +103,11 @@ void Sequencer::newBLOB(INDI::PropertyBlob pblob)
         im.save( getWebroot() + "/" + getModuleName() + ".jpeg", "JPG", 100);
 
         QString tt = QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss_zzz");
-        _image->saveAsFITSSimple(getWebroot() + "/" + getModuleName() + "-" + currentFilter + "-" + tt + ".FITS");
+        _image->saveAsFITSSimple(currentFolder + "/" + mObjectName + "-" + currentFrameType + "-"  + currentFilter + "-" + tt +
+                                 ".FITS");
         OST::ImgData dta = _image->ImgStats();
         dta.mUrlJpeg = getModuleName() + ".jpeg";
-        dta.mUrlFits = getModuleName() + "-" + currentFilter + "-" + tt + ".FITS";
+        //dta.mUrlFits = getModuleName() + "-" + currentFilter + "-" + tt + ".FITS";
         getEltImg("image", "image")->setValue(dta, true);
 
         currentCount--;
@@ -236,6 +237,13 @@ void Sequencer::StartSequence()
 
     currentLine = -1;
     isSequenceRunning = true;
+    mObjectName = getString("object", "label");
+    mDate = QDateTime::currentDateTime().toString("yyyyMMdd-hh-mm-ss");
+
+
+    QDir dir;
+    dir.mkdir(getWebroot() + "/" + getModuleName());
+    dir.mkdir(getWebroot() + "/" + getModuleName() + "/" + mObjectName);
 
     connectIndi();
     if (connectDevice(getString("devices", "camera")))
@@ -284,10 +292,35 @@ void Sequencer::StartLine()
         currentFilter = getEltInt("sequence", "filter")->getLov()[i];
         currentFrameType = getString("sequence", "frametype");
         sendModNewNumber(getString("devices", "filter"), "FILTER_SLOT", "FILTER_SLOT_VALUE", i);
-        if (currentFrameType == "L") sendModNewSwitch(getString("devices", "camera"), "CCD_FRAME_TYPE", "FRAME_LIGHT", ISS_ON);
-        if (currentFrameType == "B") sendModNewSwitch(getString("devices", "camera"), "CCD_FRAME_TYPE", "FRAME_BIAS", ISS_ON);
-        if (currentFrameType == "D") sendModNewSwitch(getString("devices", "camera"), "CCD_FRAME_TYPE", "FRAME_DARK", ISS_ON);
-        if (currentFrameType == "F") sendModNewSwitch(getString("devices", "camera"), "CCD_FRAME_TYPE", "FRAME_FLAT", ISS_ON);
+        QDir dir;
+        currentFolder = getWebroot() + "/" + getModuleName() + "/" + mObjectName + "";
+        dir.mkdir(currentFolder);
+        if (currentFrameType == "L")
+        {
+            sendModNewSwitch(getString("devices", "camera"), "CCD_FRAME_TYPE", "FRAME_LIGHT", ISS_ON);
+            currentFolder = getWebroot() + "/" + getModuleName() + "/" + mObjectName + "/LIGHT";
+            dir.mkdir(currentFolder);
+            currentFolder = getWebroot() + "/" + getModuleName() + "/" + mObjectName + "/LIGHT/" + currentFilter;
+        }
+        if (currentFrameType == "F")
+        {
+            sendModNewSwitch(getString("devices", "camera"), "CCD_FRAME_TYPE", "FRAME_FLAT", ISS_ON);
+            currentFolder = getWebroot() + "/" + getModuleName() + "/" + mObjectName + "/FLAT";
+            dir.mkdir(currentFolder);
+            currentFolder = getWebroot() + "/" + getModuleName() + "/" + mObjectName + "/FLAT/" + currentFilter;
+        }
+
+        if (currentFrameType == "B")
+        {
+            sendModNewSwitch(getString("devices", "camera"), "CCD_FRAME_TYPE", "FRAME_BIAS", ISS_ON);
+            currentFolder = getWebroot() + "/" + getModuleName() + "/" + mObjectName + "/BIAS";
+        }
+        if (currentFrameType == "D")
+        {
+            sendModNewSwitch(getString("devices", "camera"), "CCD_FRAME_TYPE", "FRAME_DARK", ISS_ON);
+            currentFolder = getWebroot() + "/" + getModuleName() + "/" + mObjectName + "/DARK";
+        }
+        dir.mkdir(currentFolder);
     }
 }
 void Sequencer::refreshFilterLov()
