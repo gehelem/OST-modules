@@ -15,14 +15,6 @@
                 "value": 0,
                 "order":0
             },
-            "current": {
-                "type": "prg",
-                "prgtype": "spinner",
-                "label": "Current line",
-                "dynlabel": "",
-                "value": 0,
-                "order":1
-            },
             "exposure": {
                 "type": "prg",
                 "prgtype": "spinner",
@@ -97,13 +89,6 @@
                 "value":5,
                 "gridvalues":[],
                 "format": "99"
-            },
-            "status": {
-                "type":"string",
-                "label": "Status",
-                "order":7,
-                "value":"idle",
-                "gridvalues":[]
             },
             "progress": {
                 "type":"prg",

@@ -65,8 +65,6 @@ void Sequencer::OnMyExternalEvent(const QString &eventType, const QString  &even
             if (eventType == "Flcreate")
             {
                 QVariantMap m = eventData[keyprop].toMap()["elements"].toMap();
-                m["status"] = "Added";
-                QVariantMap p;
                 getProperty(keyprop)->newLine(m);
                 getEltPrg(keyprop, "progress")->setPrgValue(0, false);
                 //getEltPrg(keyprop, "progress")->setDynLabel("Added", false);
@@ -76,7 +74,6 @@ void Sequencer::OnMyExternalEvent(const QString &eventType, const QString  &even
             {
                 double line = eventData[keyprop].toMap()["line"].toDouble();
                 QVariantMap m = eventData[keyprop].toMap()["elements"].toMap();
-                m["status"] = "Updated";
                 getProperty(keyprop)->updateLine(line, m);
                 getEltPrg(keyprop, "progress")->setPrgValue(0, false);
                 //getEltPrg(keyprop, "progress")->setDynLabel("Updated", false);
@@ -122,8 +119,8 @@ void Sequencer::newBLOB(INDI::PropertyBlob pblob)
         //sendMessage("RVC frame " + QString::number(currentLine) + "/" + QString::number(currentCount));
         if(currentCount == 0)
         {
-            getEltString("sequence", "status")->setValue("Finished");
-            getProperty("sequence")->updateLine(currentLine);
+            //getEltString("sequence", "status")->setValue("Finished");
+            //getProperty("sequence")->updateLine(currentLine);
             StartLine();
         }
         else
@@ -217,17 +214,11 @@ void Sequencer::Shoot()
     requestCapture(getString("devices", "camera"), exp, gain, offset);
 
     double i = getInt("sequence", "count");
-    getEltString("sequence", "status")->setValue("Running "  + QString::number(
-                i - currentCount) + "/" + QString::number(i), true);
     getEltPrg("sequence", "progress")->setPrgValue(100 * (i - currentCount + 1) / i, false);
     getEltPrg("sequence", "progress")->setDynLabel(QString::number(i - currentCount + 1) + "/" + QString::number(i), false);
 
 
     getProperty("sequence")->updateLine(currentLine);
-
-
-    getEltPrg("progress", "current")->setPrgValue(100 * (i - currentCount + 1) / i, false);
-    getEltPrg("progress", "current")->setDynLabel(QString::number(i - currentCount + 1) + "/" + QString::number(i), false);
 
     int tot = getProperty("sequence")->getGrid().size();
     getEltPrg("progress", "global")->setPrgValue(100 * (currentLine + 1) / (tot), false);
@@ -271,7 +262,8 @@ void Sequencer::StartSequence()
         for (int i = 0; i < getProperty("sequence")->getGrid().count(); i++)
         {
             getProperty("sequence")->fetchLine(i);
-            getEltString("sequence", "status")->setValue("Queued");
+            getEltPrg("sequence", "progress")->setDynLabel("Queued", false);
+            getEltPrg("sequence", "progress")->setPrgValue(0, false);
             getProperty("sequence")->updateLine(i);
         }
 
@@ -298,8 +290,6 @@ void Sequencer::StartLine()
         getProperty("sequence")->fetchLine(currentLine);
         currentCount = getInt("sequence", "count");
         currentExposure = getFloat("sequence", "exposure");
-        getEltString("sequence", "status")->setValue("Running " + QString::number(currentCount), true);
-        getProperty("sequence")->updateLine(currentLine);
         int i = getInt("sequence", "filter");
         currentFilter = getEltInt("sequence", "filter")->getLov()[i];
         currentFrameType = getString("sequence", "frametype");
