@@ -66,7 +66,11 @@ void Sequencer::OnMyExternalEvent(const QString &eventType, const QString  &even
             {
                 QVariantMap m = eventData[keyprop].toMap()["elements"].toMap();
                 m["status"] = "Added";
+                QVariantMap p;
                 getProperty(keyprop)->newLine(m);
+                getEltPrg(keyprop, "progress")->setPrgValue(0, false);
+                //getEltPrg(keyprop, "progress")->setDynLabel("Added", false);
+                getProperty(keyprop)->updateLine(getProperty(keyprop)->getGrid().count() - 1);
             }
             if (eventType == "Flupdate")
             {
@@ -74,6 +78,10 @@ void Sequencer::OnMyExternalEvent(const QString &eventType, const QString  &even
                 QVariantMap m = eventData[keyprop].toMap()["elements"].toMap();
                 m["status"] = "Updated";
                 getProperty(keyprop)->updateLine(line, m);
+                getEltPrg(keyprop, "progress")->setPrgValue(0, false);
+                //getEltPrg(keyprop, "progress")->setDynLabel("Updated", false);
+                getProperty(keyprop)->updateLine(line);
+
             }
         }
     }
@@ -211,6 +219,10 @@ void Sequencer::Shoot()
     double i = getInt("sequence", "count");
     getEltString("sequence", "status")->setValue("Running "  + QString::number(
                 i - currentCount) + "/" + QString::number(i), true);
+    getEltPrg("sequence", "progress")->setPrgValue(100 * (i - currentCount + 1) / i, false);
+    getEltPrg("sequence", "progress")->setDynLabel(QString::number(i - currentCount + 1) + "/" + QString::number(i), false);
+
+
     getProperty("sequence")->updateLine(currentLine);
 
 
