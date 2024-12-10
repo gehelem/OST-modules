@@ -15,14 +15,6 @@
                 "value": 0,
                 "order":0
             },
-            "current": {
-                "type": "prg",
-                "prgtype": "spinner",
-                "label": "Current line",
-                "dynlabel": "",
-                "value": 0,
-                "order":1
-            },
             "exposure": {
                 "type": "prg",
                 "prgtype": "spinner",
@@ -98,15 +90,49 @@
                 "gridvalues":[],
                 "format": "99"
             },
-            "status": {
-                "type":"string",
-                "label": "Status",
+            "progress": {
+                "type":"prg",
+                "label": "Progress",
+                "prgtype": "spinner",
+                "dynlabel": "",
                 "order":7,
                 "value":"idle",
                 "gridvalues":[]
-
             }
+
         }
+    },
+    "object":{
+            "devcat": "Control",
+            "group": "",
+            "permission": 2,
+            "order":5,
+            "label":"Object",
+            "hasprofile":true,
+            "elements": {
+                "label": {
+                    "type": "string",
+                    "label": "Name",
+                    "dynlabel": "",
+                    "autoupdate":true,
+                    "directedit":true,
+                    "order":0
+                },
+                "ra": {
+                    "type": "float",
+                    "label": "RA",
+                    "autoupdate":true,
+                    "directedit":true,
+                    "order":1
+                },
+                "de": {
+                    "type": "float",
+                    "label": "DEC",
+                    "autoupdate":true,
+                    "directedit":true,
+                    "order":2
+                }
+            }
     }
 }
 }
