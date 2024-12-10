@@ -22,13 +22,20 @@ Inspector::Inspector(QString name, QString label, QString profile, QVariantMap a
     defineMeAsSequencer();
 
     OST::ElementBool* b = new OST::ElementBool("Shoot", "0", "");
+    b->setValue(false, false);
     getProperty("actions")->addElt("shoot", b);
-    b = new OST::ElementBool("Loop", "2", "");
+
+    b = new OST::ElementBool("Loop", "1", "");
     b->setValue(false, false);
     getProperty("actions")->addElt("loop", b);
-    b = new OST::ElementBool("Abort", "2", "");
-    getProperty("actions")->addElt("abort", b);
+
+    b = new OST::ElementBool("Reload", "2", "");
     b->setValue(false, false);
+    getProperty("actions")->addElt("reload", b);
+
+    b = new OST::ElementBool("Abort", "3", "");
+    b->setValue(false, false);
+    getProperty("actions")->addElt("abort", b);
 
     getProperty("actions")->deleteElt("startsequence");
     getProperty("actions")->deleteElt("abortsequence");
@@ -82,6 +89,13 @@ void Inspector::OnMyExternalEvent(const QString &eventType, const QString  &even
                             Shoot();
                         }
                     }
+                    if (keyelt == "reload")
+                    {
+                        if (getEltBool(keyprop, keyelt)->setValue(false, true))
+                        {
+                            emit newImage();
+                        }
+                    }
                     if (keyelt == "abort")
                     {
                         if (getEltBool(keyprop, keyelt)->setValue(false, true))
@@ -109,6 +123,9 @@ void Inspector::newBLOB(INDI::PropertyBlob pblob)
         delete _image;
         _image = new fileio();
         _image->loadBlob(pblob, 64);
+        // testing : load fits, comment previous and uncomment **2** lines below
+        //_image->loadFits("/pathoftheimage/Light_LLL_008.fits");
+        //_image->generateQImage();
         stats = _image->getStats();
         emit newImage();
     }
@@ -195,22 +212,68 @@ void Inspector::OnSucessSEP()
     //r.setRect(0,0,im.width(),im.height());
 
     /* Drw HFR ellipses around found stars */
-    QPainter p;
-    p.begin(&immap);
-    p.setPen(QPen(Qt::red));
-    //p.setFont(QFont("Times", 15, QFont::Normal));
-    //p.drawText(r, Qt::AlignLeft, QDateTime::currentDateTime().toString("dd/MM/yyyy hh:mm:ss zzz") );
-    p.setPen(QPen(Qt::green));
     foreach( FITSImage::Star s, _solver.stars )
     {
+        QPainter p2;
+        p2.begin(&immap);
+        p2.setPen(QPen(Qt::green));
+
         //qDebug() << "draw " << s.x << "/" << s.y;
         int x = s.x;
         int y = s.y;
         int a = s.a;
         int b = s.b;
+        float dx = 2 * s.a * cos(s.theta * 3.14159 / 360) / s.b;
+        float dy = 2 * s.a * sin(s.theta * 3.14159 / 360) / s.b;
+
         //qDebug() << "draw " << x << "/" << y;
-        p.drawEllipse(QPoint(x / 2, y / 2), a * 5, b * 5);
+        //p2.rotate(s.theta);
+        //p2.drawEllipse(QPoint(x / 2, y / 2), a * 5, b * 5);
+        p2.drawLine(x / 2 - dx, y / 2 - dy, x / 2 + dx, y / 2 + dy);
+        p2.end();
     }
+
+    int imgWidth = _image->getStats().width;
+    int imgHeight = _image->getStats().height;
+    int ellipseSize = 0.20 * imgHeight / _solver.HFRZones;
+
+    for (int line = 0; line < _solver.HFRZones ; line++)
+    {
+        for (int column = 0; column < _solver.HFRZones; column++)
+        {
+            int zone = _solver.HFRZones * line + column;
+
+            //qDebug() << "zones theta" << zone << _solver.thetaAvgZone[zone] << _solver.thetaDevAvgZone[zone] <<
+            //         _solver.aAxeAvgZone[zone] <<
+            //         _solver.bAxeAvgZone[zone] << _solver.eAxeAvgZone[zone];
+
+
+            int x = (imgWidth / _solver.HFRZones) * (column + 0.5) ;
+            int y = (imgHeight / _solver.HFRZones) * (line + 0.5) ;
+            float e = _solver.aAxeAvgZone[zone] / _solver.bAxeAvgZone[zone] - 1;
+            float dx = ellipseSize * e * e * cos(_solver.thetaAvgZone[zone] * 3.14159 / 360);
+            float dy = ellipseSize * e * e * sin(_solver.thetaAvgZone[zone] * 3.14159 / 360);
+
+            QPainter p2;
+            p2.begin(&immap);
+            p2.setPen(QPen(Qt::red, 5));
+
+            //qDebug() << "draw " << x << "/" << y;
+            //p2.rotate(_solver.thetaAvgZone[zone]);
+            //p2.drawEllipse(QPoint(x / 2, y / 2), a * 15, b * 15);
+            p2.drawEllipse(QPoint(x / 2, y / 2), ellipseSize, ellipseSize);
+            p2.drawLine(x / 2 - dx, y / 2 - dy, x / 2 + dx, y / 2 + dy);
+            p2.end();
+        }
+    }
+    QPainter p;
+    p.begin(&immap);
+    p.setPen(QPen(Qt::red));
+
+    //p.drawLine(0, imgHeight / 6, imgWidth / 2, imgHeight / 6);
+    //p.drawLine(0, 2 * imgHeight / 6, imgWidth / 2, 2 * imgHeight / 6);
+    //p.drawLine(imgWidth / 6, 0, imgWidth / 6, imgHeight / 2);
+    //p.drawLine(2 * imgWidth / 6, 0, 2 * imgWidth / 6, imgHeight / 2);
 
     /* determine 4 corner HFR */
     int upperLeftI = 0;
@@ -326,7 +389,7 @@ void Inspector::OnSucessSEP()
 }
 void Inspector::OnNewImage()
 {
-    _solver.ResetSolver(stats, _image->getImageBuffer());
+    _solver.ResetSolver(stats, _image->getImageBuffer(), getInt("parameters", "zoning"));
     connect(&_solver, &Solver::successSEP, this, &Inspector::OnSucessSEP);
     _solver.FindStars(_solver.stellarSolverProfiles[0]);
 }
