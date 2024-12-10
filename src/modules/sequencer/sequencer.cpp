@@ -65,15 +65,20 @@ void Sequencer::OnMyExternalEvent(const QString &eventType, const QString  &even
             if (eventType == "Flcreate")
             {
                 QVariantMap m = eventData[keyprop].toMap()["elements"].toMap();
-                m["status"] = "Added";
                 getProperty(keyprop)->newLine(m);
+                getEltPrg(keyprop, "progress")->setPrgValue(0, false);
+                //getEltPrg(keyprop, "progress")->setDynLabel("Added", false);
+                getProperty(keyprop)->updateLine(getProperty(keyprop)->getGrid().count() - 1);
             }
             if (eventType == "Flupdate")
             {
                 double line = eventData[keyprop].toMap()["line"].toDouble();
                 QVariantMap m = eventData[keyprop].toMap()["elements"].toMap();
-                m["status"] = "Updated";
                 getProperty(keyprop)->updateLine(line, m);
+                getEltPrg(keyprop, "progress")->setPrgValue(0, false);
+                //getEltPrg(keyprop, "progress")->setDynLabel("Updated", false);
+                getProperty(keyprop)->updateLine(line);
+
             }
         }
     }
@@ -103,18 +108,19 @@ void Sequencer::newBLOB(INDI::PropertyBlob pblob)
         im.save( getWebroot() + "/" + getModuleName() + ".jpeg", "JPG", 100);
 
         QString tt = QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss_zzz");
-        _image->saveAsFITSSimple(getWebroot() + "/" + getModuleName() + "-" + currentFilter + "-" + tt + ".FITS");
+        _image->saveAsFITSSimple(currentFolder + "/" + mObjectName + "-" + currentFrameType + "-"  + currentFilter + "-" + tt +
+                                 ".FITS");
         OST::ImgData dta = _image->ImgStats();
         dta.mUrlJpeg = getModuleName() + ".jpeg";
-        dta.mUrlFits = getModuleName() + "-" + currentFilter + "-" + tt + ".FITS";
+        //dta.mUrlFits = getModuleName() + "-" + currentFilter + "-" + tt + ".FITS";
         getEltImg("image", "image")->setValue(dta, true);
 
         currentCount--;
         //sendMessage("RVC frame " + QString::number(currentLine) + "/" + QString::number(currentCount));
         if(currentCount == 0)
         {
-            getEltString("sequence", "status")->setValue("Finished");
-            getProperty("sequence")->updateLine(currentLine);
+            //getEltString("sequence", "status")->setValue("Finished");
+            //getProperty("sequence")->updateLine(currentLine);
             StartLine();
         }
         else
@@ -208,13 +214,11 @@ void Sequencer::Shoot()
     requestCapture(getString("devices", "camera"), exp, gain, offset);
 
     double i = getInt("sequence", "count");
-    getEltString("sequence", "status")->setValue("Running "  + QString::number(
-                i - currentCount) + "/" + QString::number(i), true);
+    getEltPrg("sequence", "progress")->setPrgValue(100 * (i - currentCount + 1) / i, false);
+    getEltPrg("sequence", "progress")->setDynLabel(QString::number(i - currentCount + 1) + "/" + QString::number(i), false);
+
+
     getProperty("sequence")->updateLine(currentLine);
-
-
-    getEltPrg("progress", "current")->setPrgValue(100 * (i - currentCount + 1) / i, false);
-    getEltPrg("progress", "current")->setDynLabel(QString::number(i - currentCount + 1) + "/" + QString::number(i), false);
 
     int tot = getProperty("sequence")->getGrid().size();
     getEltPrg("progress", "global")->setPrgValue(100 * (currentLine + 1) / (tot), false);
@@ -236,6 +240,13 @@ void Sequencer::StartSequence()
 
     currentLine = -1;
     isSequenceRunning = true;
+    mObjectName = getString("object", "label");
+    mDate = QDateTime::currentDateTime().toString("yyyyMMdd-hh-mm-ss");
+
+
+    QDir dir;
+    dir.mkdir(getWebroot() + "/" + getModuleName());
+    dir.mkdir(getWebroot() + "/" + getModuleName() + "/" + mObjectName);
 
     connectIndi();
     if (connectDevice(getString("devices", "camera")))
@@ -244,14 +255,15 @@ void Sequencer::StartSequence()
         frameReset(getString("devices", "camera"));
         if (getString("devices", "camera") == "CCD Simulator")
         {
-            sendModNewNumber(getString("devices", "camera"), "SIMULATOR_SETTINGS", "SIM_TIME_FACTOR", 1 );
+            sendModNewNumber(getString("devices", "camera"), "SIMULATOR_SETTINGS", "SIM_TIME_FACTOR", 0.01 );
         }
         getProperty("actions")->setState(OST::Busy);
 
         for (int i = 0; i < getProperty("sequence")->getGrid().count(); i++)
         {
             getProperty("sequence")->fetchLine(i);
-            getEltString("sequence", "status")->setValue("Queued");
+            getEltPrg("sequence", "progress")->setDynLabel("Queued", false);
+            getEltPrg("sequence", "progress")->setPrgValue(0, false);
             getProperty("sequence")->updateLine(i);
         }
 
@@ -278,11 +290,39 @@ void Sequencer::StartLine()
         getProperty("sequence")->fetchLine(currentLine);
         currentCount = getInt("sequence", "count");
         currentExposure = getFloat("sequence", "exposure");
-        getEltString("sequence", "status")->setValue("Running " + QString::number(currentCount), true);
-        getProperty("sequence")->updateLine(currentLine);
         int i = getInt("sequence", "filter");
         currentFilter = getEltInt("sequence", "filter")->getLov()[i];
+        currentFrameType = getString("sequence", "frametype");
         sendModNewNumber(getString("devices", "filter"), "FILTER_SLOT", "FILTER_SLOT_VALUE", i);
+        QDir dir;
+        currentFolder = getWebroot() + "/" + getModuleName() + "/" + mObjectName + "";
+        dir.mkdir(currentFolder);
+        if (currentFrameType == "L")
+        {
+            sendModNewSwitch(getString("devices", "camera"), "CCD_FRAME_TYPE", "FRAME_LIGHT", ISS_ON);
+            currentFolder = getWebroot() + "/" + getModuleName() + "/" + mObjectName + "/LIGHT";
+            dir.mkdir(currentFolder);
+            currentFolder = getWebroot() + "/" + getModuleName() + "/" + mObjectName + "/LIGHT/" + currentFilter;
+        }
+        if (currentFrameType == "F")
+        {
+            sendModNewSwitch(getString("devices", "camera"), "CCD_FRAME_TYPE", "FRAME_FLAT", ISS_ON);
+            currentFolder = getWebroot() + "/" + getModuleName() + "/" + mObjectName + "/FLAT";
+            dir.mkdir(currentFolder);
+            currentFolder = getWebroot() + "/" + getModuleName() + "/" + mObjectName + "/FLAT/" + currentFilter;
+        }
+
+        if (currentFrameType == "B")
+        {
+            sendModNewSwitch(getString("devices", "camera"), "CCD_FRAME_TYPE", "FRAME_BIAS", ISS_ON);
+            currentFolder = getWebroot() + "/" + getModuleName() + "/" + mObjectName + "/BIAS";
+        }
+        if (currentFrameType == "D")
+        {
+            sendModNewSwitch(getString("devices", "camera"), "CCD_FRAME_TYPE", "FRAME_DARK", ISS_ON);
+            currentFolder = getWebroot() + "/" + getModuleName() + "/" + mObjectName + "/DARK";
+        }
+        dir.mkdir(currentFolder);
     }
 }
 void Sequencer::refreshFilterLov()
