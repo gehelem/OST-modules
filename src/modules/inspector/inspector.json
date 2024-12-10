@@ -1,4 +1,38 @@
 {
 "properties":{
+    "parameters": {
+        "devcat": "Parameters",
+        "group": "",
+        "permission": 2,
+        "hasprofile":true,
+        "order":"222Parms000",
+        "label": "Zoning parameters",
+        "elements": {
+            "zoning": {
+                "order":"70",
+                "autoupdate":true,
+                "directedit":true,
+                "type":"int",
+                "label": "Zoning",
+                "value":2,
+                "format": "99999",
+                "min":1,
+                "max":64,
+                "listOfValues":[
+                    [1,"1x1"],
+                    [2,"2x2"],
+                    [3,"3x3"],
+                    [4,"4x4"],
+                    [5,"5x5"],
+                    [6,"6x6"],
+                    [7,"7x7"],
+                    [8,"8x8"],
+                    [9,"9x9"]
+                ]
+
+            }
+
+        }
+    }
 }
 }
