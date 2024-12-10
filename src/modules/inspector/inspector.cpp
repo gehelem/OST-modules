@@ -22,13 +22,20 @@ Inspector::Inspector(QString name, QString label, QString profile, QVariantMap a
     defineMeAsSequencer();
 
     OST::ElementBool* b = new OST::ElementBool("Shoot", "0", "");
+    b->setValue(false, false);
     getProperty("actions")->addElt("shoot", b);
-    b = new OST::ElementBool("Loop", "2", "");
+
+    b = new OST::ElementBool("Loop", "1", "");
     b->setValue(false, false);
     getProperty("actions")->addElt("loop", b);
-    b = new OST::ElementBool("Abort", "2", "");
-    getProperty("actions")->addElt("abort", b);
+
+    b = new OST::ElementBool("Reload", "2", "");
     b->setValue(false, false);
+    getProperty("actions")->addElt("reload", b);
+
+    b = new OST::ElementBool("Abort", "3", "");
+    b->setValue(false, false);
+    getProperty("actions")->addElt("abort", b);
 
     getProperty("actions")->deleteElt("startsequence");
     getProperty("actions")->deleteElt("abortsequence");
@@ -82,6 +89,13 @@ void Inspector::OnMyExternalEvent(const QString &eventType, const QString  &even
                             Shoot();
                         }
                     }
+                    if (keyelt == "reload")
+                    {
+                        if (getEltBool(keyprop, keyelt)->setValue(false, true))
+                        {
+                            emit newImage();
+                        }
+                    }
                     if (keyelt == "abort")
                     {
                         if (getEltBool(keyprop, keyelt)->setValue(false, true))
@@ -109,7 +123,8 @@ void Inspector::newBLOB(INDI::PropertyBlob pblob)
         delete _image;
         _image = new fileio();
         _image->loadBlob(pblob, 64);
-        //_image->loadFits("/home/gilles/traitements/M101/Light/LLL/Light_LLL_008.fits");
+        // testing : load fits, comment previous and uncomment **2** lines below
+        //_image->loadFits("/pathoftheimage/Light_LLL_008.fits");
         //_image->generateQImage();
         stats = _image->getStats();
         emit newImage();
