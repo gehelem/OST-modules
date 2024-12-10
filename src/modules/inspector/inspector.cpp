@@ -251,17 +251,17 @@ void Inspector::OnSucessSEP()
             int x = (imgWidth / _solver.HFRZones) * (column + 0.5) ;
             int y = (imgHeight / _solver.HFRZones) * (line + 0.5) ;
             float e = _solver.aAxeAvgZone[zone] / _solver.bAxeAvgZone[zone] - 1;
-            float dx = ellipseSize * e * e * cos(_solver.thetaAvgZone[zone] * 3.14159 / 360);
-            float dy = ellipseSize * e * e * sin(_solver.thetaAvgZone[zone] * 3.14159 / 360);
+            float dx = (imgWidth / _solver.HFRZones) * e * e * cos(_solver.thetaAvgZone[zone] * 3.14159 / 360);
+            float dy = (imgWidth / _solver.HFRZones) * e * e * sin(_solver.thetaAvgZone[zone] * 3.14159 / 360);
 
             QPainter p2;
             p2.begin(&immap);
-            p2.setPen(QPen(Qt::red, 5));
+            p2.setPen(QPen(Qt::red, 20));
 
             //qDebug() << "draw " << x << "/" << y;
             //p2.rotate(_solver.thetaAvgZone[zone]);
             //p2.drawEllipse(QPoint(x / 2, y / 2), a * 15, b * 15);
-            p2.drawEllipse(QPoint(x / 2, y / 2), ellipseSize, ellipseSize);
+            //p2.drawEllipse(QPoint(x / 2, y / 2), ellipseSize, ellipseSize);
             p2.drawLine(x / 2 - dx, y / 2 - dy, x / 2 + dx, y / 2 + dy);
             p2.end();
         }
