@@ -106,6 +106,23 @@ void Inspector::OnMyExternalEvent(const QString &eventType, const QString  &even
                             getProperty("actions")->setState(OST::Ok);
                         }
                     }
+
+                }
+                if (keyprop == "fileselect")
+                {
+                    if (keyelt == "name")
+                    {
+                        if (eventType == "Fposticon")
+                        {
+                            getProperty("actions")->setState(OST::Ok);
+                            delete _image;
+                            _image = new fileio();
+                            _image->loadFits(getString("fileselect", "name"));
+                            _image->generateQImage();
+                            stats = _image->getStats();
+                            emit newImage();
+                        }
+                    }
                 }
             }
         }

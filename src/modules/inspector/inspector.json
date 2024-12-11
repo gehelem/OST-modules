@@ -1,5 +1,25 @@
 {
 "properties":{
+    "fileselect": {
+        "devcat": "Parameters",
+        "order": "222Parms222",
+        "group": "",
+        "permission": 2,
+        "hasprofile":true,
+        "rule":0,
+        "label": "Select a file to reload",
+        "elements": {
+            "name": {
+                "autoupdate":true,
+                "directedit":true,
+                "posticon": "forward",
+                "type": "string",
+                "label": "",
+                "order": "1",
+                "value":""
+            }
+        }
+    },
     "parameters": {
         "devcat": "Parameters",
         "group": "",
