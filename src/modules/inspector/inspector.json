@@ -1,11 +1,31 @@
 {
 "properties":{
-    "parameters": {
-        "devcat": "Parameters",
+    "fileselect": {
+        "devcat": "Control",
+        "order": "000Control115",
         "group": "",
         "permission": 2,
         "hasprofile":true,
-        "order":"222Parms000",
+        "rule":0,
+        "label": "Select a file to reload",
+        "elements": {
+            "name": {
+                "autoupdate":true,
+                "directedit":true,
+                "posticon": "forward",
+                "type": "string",
+                "label": "",
+                "order": "1",
+                "value":""
+            }
+        }
+    },
+    "parameters": {
+        "devcat": "Control",
+        "group": "",
+        "permission": 2,
+        "hasprofile":true,
+        "order":"000Control114",
         "label": "Zoning parameters",
         "elements": {
             "zoning": {
@@ -29,12 +49,60 @@
                     [8,"08x08"],
                     [9,"09x09"],
                     [12,"12x12"],
-                    [16,"16x16"]
+                    [16,"16x16"],
+                    [32,"32x32"],
+                    [64,"64x64"]
                 ]
 
             }
 
         }
+    },
+    "hfr": {
+        "devcat": "Control",
+        "group": "",
+        "order":"AAAResults999",
+        "permission": 0,
+        "label": "HFR map",
+        "elements": {
+            "image": {
+                "type": "img",
+                "label": "HFR map",
+                "order":"1",
+                "showstats":false
+            }
+        }
+    },
+    "shape": {
+        "devcat": "Control",
+        "group": "",
+        "order":"AAAResults999",
+        "permission": 0,
+        "label": "Shape map",
+        "elements": {
+            "image": {
+                "type": "img",
+                "label": "Shape map",
+                "order":"1",
+                "showstats":false
+            }
+        }
+    },
+    "corners": {
+        "devcat": "Control",
+        "group": "",
+        "order":"AAAResults999",
+        "permission": 0,
+        "label": "Corners map",
+        "elements": {
+            "image": {
+                "type": "img",
+                "label": "Corners map",
+                "order":"1",
+                "showstats":false
+            }
+        }
     }
+
 }
 }
