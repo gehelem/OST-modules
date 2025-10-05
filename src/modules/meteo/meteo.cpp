@@ -107,7 +107,9 @@ void Meteo::newProperty(INDI::Property property)
             {
                 QString lab = QString(n.getDeviceName()) + "-" +  n.getLabel() + "-" + n[i].getLabel();
                 mAvailableMeasures[propname] = lab;
-                getEltString("selection", "dpv")->lovAdd(propname, lab);
+                /*this goes too fast and kills everything - we'll se that later as we dont really need that
+                getEltString("selection", "dpv")->lovAdd(propname, lab);*/
+
                 //sendMessage(lab);
             }
             QStringList propnames;
