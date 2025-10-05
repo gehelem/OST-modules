@@ -26,7 +26,7 @@
         "group": "",
         "permission": 0,
         "grid":0,
-        "arrayLimit":255,
+        "gridLimit":255,
         "hasGrid":true,
         "showGrid":true,
         "showElts":false,

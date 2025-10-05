@@ -139,7 +139,7 @@
     },
     "snr": {
         "devcat": "Control",
-        "arrayLimit":50,
+        "gridLimit":50,
         "order":"Control300",
         "rule":0,
         "hasGrid":true,
