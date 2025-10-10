@@ -455,6 +455,13 @@ void Allsky::updateProperty(INDI::Property property)
                 getEltFloat("history", "Y")->setValue(n[i].value, false);
                 getProperty("history")->push();
             }
+            if (n[i].getName() == std::string("WEATHER_PRESSURE"))
+            {
+                getEltFloat("measures", "press")->setValue(n[i].value, true);
+                getEltString("history", "S")->setValue("press", false);
+                getEltFloat("history", "Y")->setValue(n[i].value, false);
+                getProperty("history")->push();
+            }
         }
     }
     if (

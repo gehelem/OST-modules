@@ -388,6 +388,11 @@
                 "type": "float",
                 "order":"40"
             },
+            "press": {
+                "label": "Pressure",
+                "type": "float",
+                "order":"60"
+            },
             "sqm": {
                 "label": "SQM",
                 "type": "float",
@@ -413,6 +418,7 @@
             "graphColors":{
                 "temp":{"R":255,"G":0,"B":0},
                 "hum":{"R":0,"G":255,"B":0},
+                "press":{"R":0,"G":0,"B":255},
                 "clouds":{"R":0,"G":0,"B":255},
                 "precip":{"R":255,"G":255,"B":0},
                 "sqm":{"R":0,"G":255,"B":255}
@@ -420,12 +426,14 @@
             "axis":{
                 "temp":{"min":-15,"max":35,"pos":"right","text":"Temperature"},
                 "hum-clouds":{"min":0,"max":100,"pos":"right","text":"Humidity/Clouds"},
+                "pressure":{"min":950,"max":1100,"pos":"right","text":"Pressure"},
                 "precip":{"min":0,"max":10,"pos":"left","text":"Rain"},
                 "sqm":{"min":0,"max":30,"pos":"left","text":"SQM"}
             },
             "mapping":{
                 "temp":"temp",
                 "hum":"hum-clouds",
+                "press":"pressure",
                 "clouds":"hum-clouds",
                 "precip":"precip",
                 "sqm":"sqm"
