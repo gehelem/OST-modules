@@ -359,6 +359,93 @@
                 "value":false
             }
         }
+    },
+    "measures": {
+        "devcat": "Meteo",
+        "group": "",
+        "order":"CCCMeteo010",
+        "permission": 0,
+        "hasprofile":false,
+        "label": "Measures",
+        "elements": {
+            "temp": {
+                "label": "Temperature",
+                "type": "float",
+                "order":"10"
+            },
+            "hum": {
+                "label": "Humidity",
+                "type": "float",
+                "order":"20"
+            },
+            "clouds": {
+                "label": "Clouds",
+                "type": "float",
+                "order":"30"
+            },
+            "precip": {
+                "label": "Precipitations",
+                "type": "float",
+                "order":"40"
+            },
+            "sqm": {
+                "label": "SQM",
+                "type": "float",
+                "order":"50"
+            }
+        }
+    },
+    "history": {
+        "devcat": "Meteo",
+        "group": "",
+        "order":"CCCMeteo020",
+        "permission": 0,
+        "hasprofile":false,
+        "label": "History",
+        "hasGrid":true,
+        "showGrid":false,
+        "showElts":false,
+        "graphType":"SDY",
+        "graphParams":{
+            "S":"S",
+            "D":"D",
+            "Y":"Y",
+            "graphColors":{
+                "temp":{"R":255,"G":0,"B":0},
+                "hum":{"R":0,"G":255,"B":0},
+                "clouds":{"R":0,"G":0,"B":255},
+                "precip":{"R":255,"G":255,"B":0},
+                "sqm":{"R":0,"G":255,"B":255}
+            },
+            "axis":{
+                "temp":{"min":-15,"max":35,"pos":"right","text":"Temperature"},
+                "hum-clouds":{"min":0,"max":100,"pos":"right","text":"Humidity/Clouds"},
+                "precip":{"min":0,"max":10,"pos":"left","text":"Rain"},
+                "sqm":{"min":0,"max":30,"pos":"left","text":"SQM"}
+            },
+            "mapping":{
+                "temp":"temp",
+                "hum":"hum-clouds",
+                "clouds":"hum-clouds",
+                "precip":"precip",
+                "sqm":"sqm"
+            }
+        },
+        "elements": {
+            "S": {
+                "type": "string",
+                "order":"A"
+            },
+            "D": {
+                "type": "float",
+                "order":"B"
+            },
+            "Y": {
+                "type": "float",
+                "order":"C"
+            }
+        }
     }
+
 }
 }
