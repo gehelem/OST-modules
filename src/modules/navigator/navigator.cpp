@@ -8,7 +8,12 @@ Navigator *initialize(QString name, QString label, QString profile, QVariantMap 
 }
 
 Navigator::Navigator(QString name, QString label, QString profile, QVariantMap availableModuleLibs)
-    : IndiModule(name, label, profile, availableModuleLibs)
+    : IndiModule(name, label, profile, availableModuleLibs),
+      mMaxIterations(0),
+      mCurrentIteration(0),
+      mToleranceArcsec(0.0),
+      mTargetRA(0.0),
+      mTargetDEC(0.0)
 
 {
 
@@ -16,7 +21,7 @@ Navigator::Navigator(QString name, QString label, QString profile, QVariantMap a
     setClassName(QString(metaObject()->className()).toLower());
 
     setModuleDescription("Navigator module");
-    setModuleVersion("0.1");
+    setModuleVersion("0.2");
 
     giveMeADevice("camera", "Camera", INDI::BaseDevice::CCD_INTERFACE);
     giveMeADevice("mount", "Mount", INDI::BaseDevice::TELESCOPE_INTERFACE);
@@ -86,6 +91,15 @@ void Navigator::OnMyExternalEvent(const QString &pEventType, const QString  &pEv
                     if (keyelt == "gototarget")
                     {
                         mState = "running";
+                        mCurrentIteration = 0;
+                        // Load centering parameters from properties
+                        mMaxIterations = getInt("centeringparams", "maxiterations");
+                        mToleranceArcsec = getFloat("centeringparams", "tolerance");
+                        // Store target coordinates for centering loop
+                        mTargetRA = getFloat("selectnow", "RA");
+                        mTargetDEC = getFloat("selectnow", "DEC");
+                        sendMessage(QString("Starting goto with centering: max %1 iterations, tolerance %2\"")
+                                    .arg(mMaxIterations).arg(mToleranceArcsec, 0, 'f', 1));
                         initIndi();
                         slewToSelection();
                     }
@@ -93,6 +107,7 @@ void Navigator::OnMyExternalEvent(const QString &pEventType, const QString  &pEv
                     {
                         stellarSolver.abort();
                         mState = "idle";
+                        mCurrentIteration = 0;
                         getProperty(keyprop)->setState(OST::Ok);
                     }
                 }
@@ -176,7 +191,7 @@ void Navigator::OnNewImage()
         stellarSolver.setLogLevel(LOG_ALL);
         stellarSolver.setSSLogLevel(LOG_VERBOSE);
         stellarSolver.setProperty("LogToFile", true);
-        stellarSolver.setProperty("LogFileName", "/home/gilles/projets/OST/solver.log");
+        stellarSolver.setProperty("LogFileName", getWebroot() + "/navigator_solver.log");
         stellarSolver.start();
     }
 }
@@ -229,7 +244,6 @@ void Navigator::initIndi()
     {
         sendModNewNumber(getString("devices", "camera"), "SIMULATOR_SETTINGS", "SIM_TIME_FACTOR", 0.01 );
     }
-    sendModNewNumber(getString("devices", "camera"), "SIMULATOR_SETTINGS", "SIM_TIME_FACTOR", 0.01 );
     enableDirectBlobAccess(getString("devices", "camera").toStdString().c_str(), nullptr);
 
 }
@@ -241,20 +255,56 @@ void Navigator::OnSolverLog(QString text)
 void Navigator::OnSucessSolve()
 {
     qDebug() << "OnSucessSolve";
-    getProperty("actions")->setState(OST::Ok);
 
+    if (stellarSolver.failed())
+    {
+        sendError("Image NOT solved - centering aborted");
+        getProperty("actions")->setState(OST::Error);
+        mState = "idle";
+        mCurrentIteration = 0;
+        return;
+    }
+
+    // Get solved coordinates
+    double solvedRA = stellarSolver.getSolution().ra;
+    double solvedDEC = stellarSolver.getSolution().dec;
+
+    // Update image with solve data
     OST::ImgData dta = pImage->ImgStats();
     dta.mUrlJpeg = getModuleName() + ".jpeg";
-    dta.solverRA = stellarSolver.getSolution().ra;
-    dta.solverDE = stellarSolver.getSolution().dec;
+    dta.solverRA = solvedRA;
+    dta.solverDE = solvedDEC;
     dta.isSolved = true;
     getEltImg("image", "image")->setValue(dta, true);
 
-    mState = "idle";
-    /*disconnect(&mSolver, &Solver::successSolve, this, &Navigator::OnSucessSolve);
-    disconnect(&mSolver, &Solver::solverLog, this, &Navigator::OnSolverLog);*/
-    if (stellarSolver.failed()) sendMessage("Image NOT solved");
-    else sendMessage("Image solved");
+    mCurrentIteration++;
+
+    // Check if centering is satisfactory
+    if (checkCentering(solvedRA, solvedDEC, mTargetRA, mTargetDEC))
+    {
+        sendMessage(QString("Centering successful after %1 iteration(s) - within tolerance")
+                    .arg(mCurrentIteration));
+        getProperty("actions")->setState(OST::Ok);
+        mState = "idle";
+        mCurrentIteration = 0;
+        return;
+    }
+
+    // Check max iterations
+    if (mCurrentIteration >= mMaxIterations)
+    {
+        sendError(QString("Centering failed after %1 iterations - tolerance not reached")
+                  .arg(mMaxIterations));
+        getProperty("actions")->setState(OST::Error);
+        mState = "idle";
+        mCurrentIteration = 0;
+        return;
+    }
+
+    // Need correction - continue centering loop
+    sendMessage(QString("Centering iteration %1/%2 - applying correction")
+                .arg(mCurrentIteration).arg(mMaxIterations));
+    correctOffset(solvedRA, solvedDEC);
 }
 void Navigator::updateSearchList(void)
 {
@@ -336,4 +386,74 @@ void Navigator::convertSelection(void)
     getEltString("selectnow", "code")->setValue(code);
     getEltFloat("selectnow", "RA")->setValue(observed.rightascension);
     getEltFloat("selectnow", "DEC")->setValue(observed.declination, true);
+}
+
+bool Navigator::checkCentering(double solvedRA, double solvedDEC, double targetRA, double targetDEC)
+{
+    // Calculate angular distance in arcseconds
+    // RA difference needs to be scaled by cos(DEC) for spherical geometry
+    double deltaRA = (solvedRA - targetRA) * 15.0; // Convert hours to degrees
+    double deltaDEC = solvedDEC - targetDEC;
+
+    // Apply spherical correction for RA
+    double decRad = targetDEC * PI / 180.0;
+    deltaRA *= cos(decRad);
+
+    // Total angular distance in arcseconds
+    double distance = sqrt(deltaRA * deltaRA + deltaDEC * deltaDEC) * 3600.0;
+
+    sendMessage(QString("Offset: RA=%1\" DEC=%2\" Total=%3\"")
+                .arg(deltaRA * 3600.0, 0, 'f', 1)
+                .arg(deltaDEC * 3600.0, 0, 'f', 1)
+                .arg(distance, 0, 'f', 1));
+
+    // Check tolerance (convert to arcsec from JSON parameter if needed)
+    return (distance <= mToleranceArcsec);
+}
+
+void Navigator::correctOffset(double solvedRA, double solvedDEC)
+{
+    // Calculate correction offset
+    double deltaRA = mTargetRA - solvedRA;  // Hours
+    double deltaDEC = mTargetDEC - solvedDEC; // Degrees
+
+    // Get current mount position
+    QString mount = getString("devices", "mount");
+    INDI::BaseDevice dp = getDevice(mount.toStdString().c_str());
+    if (!dp.isValid())
+    {
+        sendError("Error - unable to find " + mount + " device for correction.");
+        mState = "idle";
+        return;
+    }
+
+    INDI::PropertyNumber prop = dp.getProperty("EQUATORIAL_EOD_COORD");
+    if (!prop.isValid())
+    {
+        sendError("Error - unable to find mount coordinates for correction.");
+        mState = "idle";
+        return;
+    }
+
+    // Read current position
+    double currentRA = prop.findWidgetByName("RA")->value;
+    double currentDEC = prop.findWidgetByName("DEC")->value;
+
+    // Apply correction
+    double newRA = currentRA + deltaRA;
+    double newDEC = currentDEC + deltaDEC;
+
+    sendMessage(QString("Applying correction: RA %1h → %2h, DEC %3° → %4°")
+                .arg(currentRA, 0, 'f', 4)
+                .arg(newRA, 0, 'f', 4)
+                .arg(currentDEC, 0, 'f', 2)
+                .arg(newDEC, 0, 'f', 2));
+
+    // Send corrected position to mount
+    prop.findWidgetByName("RA")->value = newRA;
+    prop.findWidgetByName("DEC")->value = newDEC;
+    sendNewNumber(prop);
+
+    // Mount will trigger updateProperty when slew is complete
+    // which will call Shoot() again for next iteration
 }
