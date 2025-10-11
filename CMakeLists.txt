@@ -232,6 +232,22 @@ target_link_libraries(ostdarkassist PRIVATE
 )
 target_compile_definitions(ostdarkassist PRIVATE DARKASSIST_MODULE)
 
+# template module - skeleton for creating new modules
+add_library(osttemplate SHARED
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/template/template.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/template/template.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/template/template.qrc
+)
+target_link_libraries(osttemplate PRIVATE
+    ${OST_LIBRARY_INDI}
+    Qt${QT_VERSION_MAJOR}::Core
+    Qt${QT_VERSION_MAJOR}::Concurrent
+    Qt${QT_VERSION_MAJOR}::Widgets
+    Threads::Threads
+    z
+)
+target_compile_definitions(osttemplate PRIVATE TEMPLATE_MODULE)
+
 
 install(TARGETS
     ostallsky
@@ -244,6 +260,7 @@ install(TARGETS
     ostpolar
     ostblindpec
     ostdarkassist
+    osttemplate
     RUNTIME DESTINATION "/usr/bin"
     LIBRARY DESTINATION "/usr/lib"
 )
