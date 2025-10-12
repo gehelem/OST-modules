@@ -154,6 +154,7 @@
             "focusmodule": {
                 "type": "string",
                 "label": "Focus module instance",
+                "listOfValues":"loadedModules",
                 "autoupdate": true,
                 "directedit": true,
                 "value": "focus",
