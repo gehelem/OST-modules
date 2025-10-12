@@ -45,6 +45,8 @@ class MODULE_INIT Navigator : public IndiModule
         void updateSearchList(void);
         void slewToSelection(void);
         void convertSelection(void);
+        void correctOffset(double solvedRA, double solvedDEC);
+        bool checkCentering(double solvedRA, double solvedDEC, double targetRA, double targetDEC);
 
 
         QString mState = "idle";
@@ -53,6 +55,13 @@ class MODULE_INIT Navigator : public IndiModule
 
         StellarSolver stellarSolver;
         QList<FITSImage::Star> stars;
+
+        // Centering iteration parameters
+        int mMaxIterations;
+        int mCurrentIteration;
+        double mToleranceArcsec;
+        double mTargetRA;
+        double mTargetDEC;
 
 
 };

@@ -56,8 +56,16 @@ Focus::~Focus()
 void Focus::OnMyExternalEvent(const QString &eventType, const QString  &eventModule, const QString  &eventKey,
                               const QVariantMap &eventData)
 {
-    Q_UNUSED(eventType);
     Q_UNUSED(eventKey);
+
+    // Handle external autofocus request from other modules (e.g., sequencer)
+    if (eventType == "requestautofocus" && getModuleName() == eventModule)
+    {
+        sendMessage("Autofocus requested by another module - starting");
+        getProperty("actions")->setState(OST::Busy);
+        startCoarse();
+        return;
+    }
 
     if (getModuleName() == eventModule)
     {
@@ -561,5 +569,24 @@ void Focus::SMFocusDone()
     getEltFloat("results", "hfr")->setValue(_solver.HFRavg * ech, true);
 
     getProperty("actions")->setState(OST::Ok);
+
+    // Emit event to notify other modules that focus is complete
+    // IMPORTANT: Do this BEFORE stopping the state machine
+    QVariantMap eventData;
+    QVariantMap resultsMap;
+    QVariantMap elementsMap;
+    QVariantMap hfrMap;
+    QVariantMap posMap;
+
+    hfrMap["value"] = _solver.HFRavg * ech;
+    posMap["value"] = getFloat("results", "pos");
+    elementsMap["hfr"] = hfrMap;
+    elementsMap["pos"] = posMap;
+    resultsMap["elements"] = elementsMap;
+    eventData["results"] = resultsMap;
+
+    emit moduleEvent("focusdone", getModuleName(), "results", eventData);
+
+    // Stop state machine AFTER emitting the event
     pMachine->stop();
 }

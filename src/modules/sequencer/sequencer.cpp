@@ -14,7 +14,7 @@ Sequencer::Sequencer(QString name, QString label, QString profile, QVariantMap a
     setClassName(QString(metaObject()->className()).toLower());
     loadOstPropertiesFromFile(":sequencer.json");
     setModuleDescription("Sequencer module");
-    setModuleVersion("0.1");
+    setModuleVersion("0.2");
 
     giveMeADevice("camera", "Camera", INDI::BaseDevice::CCD_INTERFACE);
     giveMeADevice("filter", "Filter wheel", INDI::BaseDevice::FILTER_INTERFACE);
@@ -31,6 +31,14 @@ void Sequencer::OnMyExternalEvent(const QString &eventType, const QString  &even
                                   const QVariantMap &eventData)
 {
     //BOOST_LOG_TRIVIAL(debug) << "OnMyExternalEvent - recv : " << getName().toStdString() << "-" << eventType.toStdString() << "-" << eventKey.toStdString();
+
+    // Check if this is a focus completion event
+    if (eventType == "focusdone" && mWaitingForFocus)
+    {
+        OnFocusDone(eventType, eventModule, eventKey, eventData);
+        return;
+    }
+
     if (getModuleName() == eventModule)
     {
         foreach(const QString &keyprop, eventData.keys())
@@ -47,6 +55,7 @@ void Sequencer::OnMyExternalEvent(const QString &eventType, const QString  &even
                     {
                         emit Abort();
                         isSequenceRunning = false;
+                        mWaitingForFocus = false;
                     }
                 }
                 if (keyprop == "devices")
@@ -89,6 +98,7 @@ void Sequencer::newBLOB(INDI::PropertyBlob pblob)
     if (
         (QString(pblob.getDeviceName()) == getString("devices", "camera"))
         && isSequenceRunning
+        && !mWaitingForFocus  // Don't process images while focus is running
     )
     {
         delete _image;
@@ -121,7 +131,11 @@ void Sequencer::newBLOB(INDI::PropertyBlob pblob)
         {
             //getEltString("sequence", "status")->setValue("Finished");
             //getProperty("sequence")->updateLine(currentLine);
-            StartLine();
+            // Don't start next line if waiting for focus to complete
+            if (!mWaitingForFocus)
+            {
+                StartLine();
+            }
         }
         else
         {
@@ -145,6 +159,7 @@ void Sequencer::newProperty(INDI::Property property)
         &&  (QString(property.getName())   == "FILTER_SLOT")
         &&  (property.getState() == IPS_OK)
         && isSequenceRunning
+        && !mWaitingForFocus  // Don't shoot if waiting for focus
     )
     {
         Shoot();
@@ -184,6 +199,7 @@ void Sequencer::updateProperty(INDI::Property property)
         &&  (QString(property.getName())   == "FILTER_SLOT")
         &&  (property.getState() == IPS_OK)
         && isSequenceRunning
+        && !mWaitingForFocus  // Don't shoot if waiting for focus
     )
     {
         //sendMessage("Filter OK");
@@ -284,6 +300,7 @@ void Sequencer::StartLine()
         sendMessage("Sequence completed");
         getProperty("actions")->setState(OST::Ok);
         isSequenceRunning = false;
+        previousFilter = "";
     }
     else
     {
@@ -293,6 +310,47 @@ void Sequencer::StartLine()
         int i = getInt("sequence", "filter");
         currentFilter = getEltInt("sequence", "filter")->getLov()[i];
         currentFrameType = getString("sequence", "frametype");
+
+        // Check if filter has changed and autofocus is enabled
+        bool filterChanged = (!previousFilter.isEmpty() && previousFilter != currentFilter);
+        bool autofocusEnabled = getBool("parameters", "autofocusonfilterchange");
+
+        if (filterChanged && autofocusEnabled && (currentFrameType == "L" || currentFrameType == "F"))
+        {
+            sendMessage("Filter changed from " + previousFilter + " to " + currentFilter);
+            previousFilter = currentFilter;
+
+            // First change the filter
+            sendModNewNumber(getString("devices", "filter"), "FILTER_SLOT", "FILTER_SLOT_VALUE", i);
+
+            // Setup folders before requesting focus
+            QDir dir;
+            currentFolder = getWebroot() + "/" + getModuleName() + "/" + mObjectName + "";
+            dir.mkdir(currentFolder);
+            if (currentFrameType == "L")
+            {
+                sendModNewSwitch(getString("devices", "camera"), "CCD_FRAME_TYPE", "FRAME_LIGHT", ISS_ON);
+                currentFolder = getWebroot() + "/" + getModuleName() + "/" + mObjectName + "/LIGHT";
+                dir.mkdir(currentFolder);
+                currentFolder = getWebroot() + "/" + getModuleName() + "/" + mObjectName + "/LIGHT/" + currentFilter;
+            }
+            if (currentFrameType == "F")
+            {
+                sendModNewSwitch(getString("devices", "camera"), "CCD_FRAME_TYPE", "FRAME_FLAT", ISS_ON);
+                currentFolder = getWebroot() + "/" + getModuleName() + "/" + mObjectName + "/FLAT";
+                dir.mkdir(currentFolder);
+                currentFolder = getWebroot() + "/" + getModuleName() + "/" + mObjectName + "/FLAT/" + currentFilter;
+            }
+            dir.mkdir(currentFolder);
+
+            // Request focus and return - Shoot() will be called after focus completes
+            requestFocus();
+            return;
+        }
+
+        // Update previous filter for next iteration
+        previousFilter = currentFilter;
+
         sendModNewNumber(getString("devices", "filter"), "FILTER_SLOT", "FILTER_SLOT_VALUE", i);
         QDir dir;
         currentFolder = getWebroot() + "/" + getModuleName() + "/" + mObjectName + "";
@@ -348,4 +406,29 @@ void Sequencer::refreshFilterLov()
         getEltInt("sequence", "filter")->lovAdd(i + 1, txt[i].getText());
     }
 
+}
+
+void Sequencer::requestFocus()
+{
+    QString focusModule = getString("parameters", "focusmodule");
+    sendMessage("Filter changed - requesting autofocus from module: " + focusModule);
+
+    mWaitingForFocus = true;
+
+    // Emit custom event type "requestautofocus" that focus module will handle
+    emit moduleEvent("requestautofocus", focusModule, "", QVariantMap());
+}
+
+void Sequencer::OnFocusDone(const QString &eventType, const QString &eventModule, const QString &eventKey, const QVariantMap &eventData)
+{
+    Q_UNUSED(eventType);
+    Q_UNUSED(eventModule);
+    Q_UNUSED(eventKey);
+    Q_UNUSED(eventData);
+
+    sendMessage("Autofocus completed - resuming sequence");
+    mWaitingForFocus = false;
+
+    // After focus completes, shoot the first image of the current line
+    Shoot();
 }

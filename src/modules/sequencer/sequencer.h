@@ -45,6 +45,7 @@ class MODULE_INIT Sequencer: public IndiModule
         void OnMyExternalEvent(const QString &eventType, const QString  &eventModule, const QString  &eventKey,
                                const QVariantMap &eventData) override;
         void OnSucessSEP();
+        void OnFocusDone(const QString &eventType, const QString &eventModule, const QString &eventKey, const QVariantMap &eventData);
 
     private:
         void newBLOB(INDI::PropertyBlob pblob);
@@ -62,6 +63,7 @@ class MODULE_INIT Sequencer: public IndiModule
         void StartLine();
 
         void refreshFilterLov();
+        void requestFocus();
 
         bool    _newblob;
 
@@ -81,12 +83,14 @@ class MODULE_INIT Sequencer: public IndiModule
         int currentGain = 0;
         int currentOffset = 0;
         QString currentFilter = "";
+        QString previousFilter = "";
         QString currentFrameType = "";
         QString currentStatus = "";
         QString currentFolder = "";
 
         QVariantMap mActiveSeq;
         bool isSequenceRunning = false;
+        bool mWaitingForFocus = false;
         QString mObjectName = "default";
         QString mDate;
 
