@@ -1,4 +1,5 @@
 #include "template.h"
+#include "versionModule.cc"
 
 /**
  * @brief Required export function for dynamic module loading
@@ -29,6 +30,9 @@ Template::Template(QString name, QString label, QString profile, QVariantMap ava
     // Set module metadata
     setModuleDescription("Template module - adapt to your needs");
     setModuleVersion("1.0.0");
+    getEltString("thisGit", "hash")->setValue(QString::fromStdString(VersionModule::GIT_SHA1), true);
+    getEltString("thisGit", "date")->setValue(QString::fromStdString(VersionModule::GIT_DATE), true);
+    getEltString("thisGit", "message")->setValue(QString::fromStdString(VersionModule::GIT_COMMIT_SUBJECT), true);
 
     // Initialize properties and request INDI devices
     initProperties();
@@ -286,10 +290,10 @@ void Template::processImage(INDI::PropertyBlob blob)
     getEltImg("image", "image")->setValue(imgData, true);
 
     sendMessage(QString("Image received: %1x%2, %3 stars, HFR: %4")
-        .arg(imgData.width)
-        .arg(imgData.height)
-        .arg(imgData.starsCount)
-        .arg(imgData.HFRavg, 0, 'f', 2));
+                .arg(imgData.width)
+                .arg(imgData.height)
+                .arg(imgData.starsCount)
+                .arg(imgData.HFRavg, 0, 'f', 2));
 
     // Continue operation or finish
     if (mIsRunning)
@@ -306,9 +310,9 @@ void Template::processImage(INDI::PropertyBlob blob)
 
             // Request next capture
             requestCapture(mCameraDevice,
-                          getFloat("parms", "exposure"),
-                          getInt("parms", "gain"),
-                          getInt("parms", "offset"));
+                           getFloat("parms", "exposure"),
+                           getInt("parms", "gain"),
+                           getInt("parms", "offset"));
         }
         else
         {

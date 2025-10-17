@@ -1,5 +1,6 @@
 #include "focus.h"
 #include "polynomialfit.h"
+#include "versionModule.cc"
 
 Focus *initialize(QString name, QString label, QString profile, QVariantMap availableModuleLibs)
 {
@@ -15,6 +16,9 @@ Focus::Focus(QString name, QString label, QString profile, QVariantMap available
 
     loadOstPropertiesFromFile(":focus.json");
     setClassName(QString(metaObject()->className()).toLower());
+    getEltString("thisGit", "hash")->setValue(QString::fromStdString(VersionModule::GIT_SHA1), true);
+    getEltString("thisGit", "date")->setValue(QString::fromStdString(VersionModule::GIT_DATE), true);
+    getEltString("thisGit", "message")->setValue(QString::fromStdString(VersionModule::GIT_COMMIT_SUBJECT), true);
 
     setModuleDescription("Focus (scxml)");
     setModuleVersion("0.1");

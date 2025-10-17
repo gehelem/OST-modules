@@ -21,7 +21,7 @@ jobs:
 
     - name: Preinstall
       # -
-      run: sudo apt-add-repository ppa:mutlaqja/ppa && sudo add-apt-repository --yes ppa:gehelem/ostserver-daily && sudo apt-get update && sudo apt upgrade && sudo apt-get install libindi-dev indi-dbg libstellarsolver-dev libnova-dev libgsl-dev wcslib-dev libcfitsio-dev libopencv-dev ostserver 
+      run: sudo apt-add-repository ppa:mutlaqja/ppa && sudo add-apt-repository --yes ppa:gehelem/ostserver-daily && sudo apt-get update && sudo apt upgrade && sudo apt-get install libindi-dev indi-dbg libstellarsolver-dev libnova-dev libgsl-dev wcslib-dev libcfitsio-dev libopencv-dev ostserver qtmultimedia5-dev
 
     - name: Install Qt
       uses: jurplel/install-qt-action@v3

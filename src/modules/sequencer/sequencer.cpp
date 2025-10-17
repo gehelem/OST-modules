@@ -1,5 +1,6 @@
 #include "sequencer.h"
 #include <QPainter>
+#include "versionModule.cc"
 
 Sequencer *initialize(QString name, QString label, QString profile, QVariantMap availableModuleLibs)
 {
@@ -15,6 +16,9 @@ Sequencer::Sequencer(QString name, QString label, QString profile, QVariantMap a
     loadOstPropertiesFromFile(":sequencer.json");
     setModuleDescription("Sequencer module");
     setModuleVersion("0.2");
+    getEltString("thisGit", "hash")->setValue(QString::fromStdString(VersionModule::GIT_SHA1), true);
+    getEltString("thisGit", "date")->setValue(QString::fromStdString(VersionModule::GIT_DATE), true);
+    getEltString("thisGit", "message")->setValue(QString::fromStdString(VersionModule::GIT_COMMIT_SUBJECT), true);
 
     giveMeADevice("camera", "Camera", INDI::BaseDevice::CCD_INTERFACE);
     giveMeADevice("filter", "Filter wheel", INDI::BaseDevice::FILTER_INTERFACE);
@@ -448,7 +452,8 @@ void Sequencer::requestFocus()
     emit moduleEvent("requestautofocus", focusModule, "", QVariantMap());
 }
 
-void Sequencer::OnFocusDone(const QString &eventType, const QString &eventModule, const QString &eventKey, const QVariantMap &eventData)
+void Sequencer::OnFocusDone(const QString &eventType, const QString &eventModule, const QString &eventKey,
+                            const QVariantMap &eventData)
 {
     Q_UNUSED(eventType);
     Q_UNUSED(eventModule);

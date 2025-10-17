@@ -5,6 +5,7 @@
 #include <libnova/rise_set.h>
 #include <libnova/transform.h>
 #include <algorithm>
+#include "versionModule.cc"
 
 Allsky *initialize(QString name, QString label, QString profile, QVariantMap availableModuleLibs)
 {
@@ -23,6 +24,9 @@ Allsky::Allsky(QString name, QString label, QString profile, QVariantMap availab
 
     setModuleDescription("Simple allsky camera module");
     setModuleVersion("0.1");
+    getEltString("thisGit", "hash")->setValue(QString::fromStdString(VersionModule::GIT_SHA1), true);
+    getEltString("thisGit", "date")->setValue(QString::fromStdString(VersionModule::GIT_DATE), true);
+    getEltString("thisGit", "message")->setValue(QString::fromStdString(VersionModule::GIT_COMMIT_SUBJECT), true);
 
     giveMeADevice("camera", "Camera", INDI::BaseDevice::CCD_INTERFACE);
     giveMeADevice("gps", "GPS", INDI::BaseDevice::GPS_INTERFACE);

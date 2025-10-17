@@ -1,4 +1,5 @@
 ﻿#include "meteo.h"
+#include "versionModule.cc"
 
 Meteo *initialize(QString name, QString label, QString profile, QVariantMap availableModuleLibs)
 {
@@ -16,6 +17,9 @@ Meteo::Meteo(QString name, QString label, QString profile, QVariantMap available
 
     setModuleDescription("Meteo module - work in progress");
     setModuleVersion("0.1");
+    getEltString("thisGit", "hash")->setValue(QString::fromStdString(VersionModule::GIT_SHA1), true);
+    getEltString("thisGit", "date")->setValue(QString::fromStdString(VersionModule::GIT_DATE), true);
+    getEltString("thisGit", "message")->setValue(QString::fromStdString(VersionModule::GIT_COMMIT_SUBJECT), true);
 
     connectIndi();
     connectAllDevices();

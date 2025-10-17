@@ -1,4 +1,5 @@
 #include "guider.h"
+#include "versionModule.cc"
 //#include "polynomialfit.h"
 #define PI 3.14159265
 
@@ -15,6 +16,9 @@ Guider::Guider(QString name, QString label, QString profile, QVariantMap availab
     setClassName(QString(metaObject()->className()).toLower());
     setModuleDescription("Guider module - work in progress");
     setModuleVersion("0.1");
+    getEltString("thisGit", "hash")->setValue(QString::fromStdString(VersionModule::GIT_SHA1), true);
+    getEltString("thisGit", "date")->setValue(QString::fromStdString(VersionModule::GIT_DATE), true);
+    getEltString("thisGit", "message")->setValue(QString::fromStdString(VersionModule::GIT_COMMIT_SUBJECT), true);
 
     buildInitStateMachines();
     buildCalStateMachines();
