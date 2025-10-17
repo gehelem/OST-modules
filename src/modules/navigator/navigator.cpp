@@ -384,11 +384,10 @@ void Navigator::convertSelection(void)
     INDI::IEquatorialCoordinates observed;
     j2000pos.declination = mTargetDEC;
     j2000pos.rightascension = mTargetRA;
-    mTargetRAnow = observed.rightascension;
-    mTargetDECnow = observed.declination;
-
 
     INDI::J2000toObserved(&j2000pos, jd, &observed);
+    mTargetRAnow = observed.rightascension;
+    mTargetDECnow = observed.declination;
     getEltString("selectnow", "jd")->setValue(""); // we'll see that later
     getEltString("selectnow", "code")->setValue(code);
     getEltFloat("selectnow", "RA")->setValue(observed.rightascension);
