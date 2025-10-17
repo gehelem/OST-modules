@@ -56,7 +56,26 @@ message(STATUS "OST_INCLUDE_DIR=${OST_INCLUDE_DIR}")
 
 include(CMakeCommon)
 
+# Generate versionModule.cc at build time (not configure time)
+# This ensures version information is always up-to-date with each build
 
+# Create a custom target that always runs
+add_custom_target(
+    generate_version ALL
+    COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/generate-version.sh"
+            "${CMAKE_CURRENT_BINARY_DIR}/versionModule.cc"
+            "${CMAKE_CURRENT_SOURCE_DIR}/src/versionModule.cc.in"
+    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+    BYPRODUCTS "${CMAKE_CURRENT_BINARY_DIR}/versionModule.cc"
+    COMMENT "Generating versionModule.cc from git information..."
+    VERBATIM
+)
+
+# Add versionModule.cc to sources
+list(APPEND SOURCES "${CMAKE_CURRENT_BINARY_DIR}/versionModule.cc" versionModule.hh)
+
+message(STATUS "CMAKE_SOURCE_DIR=${CMAKE_SOURCE_DIR}")
+message(STATUS "Version file will be generated at build time: ${CMAKE_CURRENT_BINARY_DIR}/versionModule.cc")
 
 # Focus module
 #list (APPEND RESOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/focus/focus.qrc)
