@@ -210,6 +210,7 @@ void Sequencer::updateProperty(INDI::Property property)
         &&  (QString(property.getName())   == "CCD_EXPOSURE")
         //&&  (property.getState() == IPS_OK)
         && isSequenceRunning
+        && !mWaitingForFocus  // Don't update exposure progress while focus is running
     )
     {
         newExp(property);
