@@ -24,7 +24,7 @@ default:
     - apt-get install -y software-properties-common
     - apt-add-repository ppa:mutlaqja/ppa
     - apt-add-repository ppa:gehelem/ostserver-daily
-    - apt-get install -y ostserver build-essential software-properties-common cmake git npm qtbase5-dev libqt5websockets5-dev libindi-dev indi-dbg libstellarsolver-dev libnova-dev libgsl-dev wcslib-dev libcfitsio-dev libavahi-client-dev libavahi-common-dev zlib1g-dev libopencv-dev qtmultimedia5-dev libqt5scxml5-dev
+    - apt-get install -y ostserver build-essential software-properties-common cmake git npm qtbase5-dev libqt5websockets5-dev libindi-dev indi-dbg libstellarsolver-dev libnova-dev libgsl-dev wcslib-dev libcfitsio-dev libavahi-client-dev libavahi-common-dev zlib1g-dev libopencv-dev qtmultimedia5-dev libqt5scxml5-dev libqt5qml5
 stages:          # List of stages for jobs, and their order of execution
   - build
 #  - test
