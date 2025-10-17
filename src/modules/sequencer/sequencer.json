@@ -133,6 +133,35 @@
                     "order":2
                 }
             }
+    },
+    "parameters": {
+        "devcat": "Parameters",
+        "group": "",
+        "permission": 2,
+        "order": 0,
+        "hasprofile": true,
+        "label": "Parameters",
+        "elements": {
+            "autofocusonfilterchange": {
+                "type": "bool",
+                "label": "Auto-focus on filter change",
+                "autoupdate": true,
+                "directedit": true,
+                "value": false,
+                "order": 1,
+                "hint": "Automatically trigger focus when filter changes during sequence"
+            },
+            "focusmodule": {
+                "type": "string",
+                "label": "Focus module instance",
+                "listOfValues":"loadedModules",
+                "autoupdate": true,
+                "directedit": true,
+                "value": "focus",
+                "order": 2,
+                "hint": "Name of the focus module INSTANCE to use (e.g. 'focus', 'myfocus1')"
+            }
+        }
     }
 }
 }

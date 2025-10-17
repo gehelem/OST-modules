@@ -1,5 +1,6 @@
 #include "focus.h"
 #include "polynomialfit.h"
+#include "versionModule.cc"
 
 Focus *initialize(QString name, QString label, QString profile, QVariantMap availableModuleLibs)
 {
@@ -15,6 +16,9 @@ Focus::Focus(QString name, QString label, QString profile, QVariantMap available
 
     loadOstPropertiesFromFile(":focus.json");
     setClassName(QString(metaObject()->className()).toLower());
+    getEltString("thisGit", "hash")->setValue(QString::fromStdString(VersionModule::GIT_SHA1), true);
+    getEltString("thisGit", "date")->setValue(QString::fromStdString(VersionModule::GIT_DATE), true);
+    getEltString("thisGit", "message")->setValue(QString::fromStdString(VersionModule::GIT_COMMIT_SUBJECT), true);
 
     setModuleDescription("Focus (scxml)");
     setModuleVersion("0.1");
@@ -56,8 +60,16 @@ Focus::~Focus()
 void Focus::OnMyExternalEvent(const QString &eventType, const QString  &eventModule, const QString  &eventKey,
                               const QVariantMap &eventData)
 {
-    Q_UNUSED(eventType);
     Q_UNUSED(eventKey);
+
+    // Handle external autofocus request from other modules (e.g., sequencer)
+    if (eventType == "requestautofocus" && getModuleName() == eventModule)
+    {
+        sendMessage("Autofocus requested by another module - starting");
+        getProperty("actions")->setState(OST::Busy);
+        startCoarse();
+        return;
+    }
 
     if (getModuleName() == eventModule)
     {
@@ -561,5 +573,24 @@ void Focus::SMFocusDone()
     getEltFloat("results", "hfr")->setValue(_solver.HFRavg * ech, true);
 
     getProperty("actions")->setState(OST::Ok);
+
+    // Emit event to notify other modules that focus is complete
+    // IMPORTANT: Do this BEFORE stopping the state machine
+    QVariantMap eventData;
+    QVariantMap resultsMap;
+    QVariantMap elementsMap;
+    QVariantMap hfrMap;
+    QVariantMap posMap;
+
+    hfrMap["value"] = _solver.HFRavg * ech;
+    posMap["value"] = getFloat("results", "pos");
+    elementsMap["hfr"] = hfrMap;
+    elementsMap["pos"] = posMap;
+    resultsMap["elements"] = elementsMap;
+    eventData["results"] = resultsMap;
+
+    emit moduleEvent("focusdone", getModuleName(), "results", eventData);
+
+    // Stop state machine AFTER emitting the event
     pMachine->stop();
 }

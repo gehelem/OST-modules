@@ -56,7 +56,26 @@ message(STATUS "OST_INCLUDE_DIR=${OST_INCLUDE_DIR}")
 
 include(CMakeCommon)
 
+# Generate versionModule.cc at build time (not configure time)
+# This ensures version information is always up-to-date with each build
 
+# Create a custom target that always runs
+add_custom_target(
+    generate_version ALL
+    COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/generate-version.sh"
+            "${CMAKE_CURRENT_BINARY_DIR}/versionModule.cc"
+            "${CMAKE_CURRENT_SOURCE_DIR}/src/versionModule.cc.in"
+    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+    BYPRODUCTS "${CMAKE_CURRENT_BINARY_DIR}/versionModule.cc"
+    COMMENT "Generating versionModule.cc from git information..."
+    VERBATIM
+)
+
+# Add versionModule.cc to sources
+list(APPEND SOURCES "${CMAKE_CURRENT_BINARY_DIR}/versionModule.cc" versionModule.hh)
+
+message(STATUS "CMAKE_SOURCE_DIR=${CMAKE_SOURCE_DIR}")
+message(STATUS "Version file will be generated at build time: ${CMAKE_CURRENT_BINARY_DIR}/versionModule.cc")
 
 # Focus module
 #list (APPEND RESOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/focus/focus.qrc)
@@ -232,6 +251,22 @@ target_link_libraries(ostdarkassist PRIVATE
 )
 target_compile_definitions(ostdarkassist PRIVATE DARKASSIST_MODULE)
 
+# template module - skeleton for creating new modules
+add_library(osttemplate SHARED
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/template/template.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/template/template.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/template/template.qrc
+)
+target_link_libraries(osttemplate PRIVATE
+    ${OST_LIBRARY_INDI}
+    Qt${QT_VERSION_MAJOR}::Core
+    Qt${QT_VERSION_MAJOR}::Concurrent
+    Qt${QT_VERSION_MAJOR}::Widgets
+    Threads::Threads
+    z
+)
+target_compile_definitions(osttemplate PRIVATE TEMPLATE_MODULE)
+
 
 install(TARGETS
     ostallsky
@@ -244,6 +279,7 @@ install(TARGETS
     ostpolar
     ostblindpec
     ostdarkassist
+    osttemplate
     RUNTIME DESTINATION "/usr/bin"
     LIBRARY DESTINATION "/usr/lib"
 )

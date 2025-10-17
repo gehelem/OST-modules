@@ -5,6 +5,7 @@
 #include <libnova/rise_set.h>
 #include <libnova/transform.h>
 #include <algorithm>
+#include "versionModule.cc"
 
 Allsky *initialize(QString name, QString label, QString profile, QVariantMap availableModuleLibs)
 {
@@ -23,14 +24,19 @@ Allsky::Allsky(QString name, QString label, QString profile, QVariantMap availab
 
     setModuleDescription("Simple allsky camera module");
     setModuleVersion("0.1");
+    getEltString("thisGit", "hash")->setValue(QString::fromStdString(VersionModule::GIT_SHA1), true);
+    getEltString("thisGit", "date")->setValue(QString::fromStdString(VersionModule::GIT_DATE), true);
+    getEltString("thisGit", "message")->setValue(QString::fromStdString(VersionModule::GIT_COMMIT_SUBJECT), true);
 
     giveMeADevice("camera", "Camera", INDI::BaseDevice::CCD_INTERFACE);
     giveMeADevice("gps", "GPS", INDI::BaseDevice::GPS_INTERFACE);
+    giveMeADevice("meteo", "Météo", INDI::BaseDevice::GENERAL_INTERFACE);
     defineMeAsSequencer();
 
 
     if (getString("devices", "camera") != "") connectDevice(getString("devices", "camera"));
     if (getString("devices", "gps") != "") connectDevice(getString("devices", "gps"));
+    if (getString("devices", "meteo") != "") connectDevice(getString("devices", "meteo"));
 
 
     OST::ElementBool* b = new OST::ElementBool("Play", "0", "");
@@ -74,6 +80,7 @@ Allsky::Allsky(QString name, QString label, QString profile, QVariantMap availab
     connectIndi();
     if (getString("devices", "camera") != "") connectDevice(getString("devices", "camera"));
     if (getString("devices", "gps") != "") connectDevice(getString("devices", "gps"));
+    if (getString("devices", "meteo") != "") connectDevice(getString("devices", "meteo"));
 
     calculateSunset();
 
@@ -427,6 +434,39 @@ void Allsky::updateProperty(INDI::Property property)
         getEltFloat("geogps", "lat")->setValue(n[0].value, true);
         getEltFloat("geogps", "long")->setValue(n[1].value, true);
         getEltFloat("geogps", "elev")->setValue(n[2].value, true);
+    }
+    if (
+        (property.getDeviceName() == getString("devices", "meteo"))
+        &&  (property.getName()   == std::string("WEATHER_PARAMETERS"))
+    )
+    {
+        double dd = QDateTime::currentDateTime().toMSecsSinceEpoch();
+        getEltFloat("history", "D")->setValue(dd, true);
+        INDI::PropertyNumber n = property;
+        for (int i = 0; i < n.size(); i++)
+        {
+            if (n[i].getName() == std::string("WEATHER_TEMPERATURE"))
+            {
+                getEltFloat("measures", "temp")->setValue(n[i].value, true);
+                getEltString("history", "S")->setValue("temp", false);
+                getEltFloat("history", "Y")->setValue(n[i].value, false);
+                getProperty("history")->push();
+            }
+            if (n[i].getName() == std::string("WEATHER_HUMIDITY"))
+            {
+                getEltFloat("measures", "hum")->setValue(n[i].value, true);
+                getEltString("history", "S")->setValue("hum", false);
+                getEltFloat("history", "Y")->setValue(n[i].value, false);
+                getProperty("history")->push();
+            }
+            if (n[i].getName() == std::string("WEATHER_PRESSURE"))
+            {
+                getEltFloat("measures", "press")->setValue(n[i].value, true);
+                getEltString("history", "S")->setValue("press", false);
+                getEltFloat("history", "Y")->setValue(n[i].value, false);
+                getProperty("history")->push();
+            }
+        }
     }
     if (
         (property.getDeviceName() == getString("devices", "gps"))
