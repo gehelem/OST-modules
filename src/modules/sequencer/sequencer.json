@@ -142,6 +142,15 @@
         "hasprofile": true,
         "label": "Parameters",
         "elements": {
+            "autofocusatstart": {
+                "type": "bool",
+                "label": "Auto-focus at sequence start",
+                "autoupdate": true,
+                "directedit": true,
+                "value": true,
+                "order": 0,
+                "hint": "Automatically trigger focus before starting the sequence (using first line filter)"
+            },
             "autofocusonfilterchange": {
                 "type": "bool",
                 "label": "Auto-focus on filter change",
