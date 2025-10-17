@@ -1,5 +1,6 @@
 #include "navigator.h"
 #include <QPainter>
+#include "versionModule.cc"
 
 Navigator *initialize(QString name, QString label, QString profile, QVariantMap availableModuleLibs)
 {
@@ -24,6 +25,9 @@ Navigator::Navigator(QString name, QString label, QString profile, QVariantMap a
 
     setModuleDescription("Navigator module");
     setModuleVersion("0.2");
+    getEltString("thisGit", "hash")->setValue(QString::fromStdString(VersionModule::GIT_SHA1), true);
+    getEltString("thisGit", "date")->setValue(QString::fromStdString(VersionModule::GIT_DATE), true);
+    getEltString("thisGit", "message")->setValue(QString::fromStdString(VersionModule::GIT_COMMIT_SUBJECT), true);
 
     giveMeADevice("camera", "Camera", INDI::BaseDevice::CCD_INTERFACE);
     giveMeADevice("mount", "Mount", INDI::BaseDevice::TELESCOPE_INTERFACE);

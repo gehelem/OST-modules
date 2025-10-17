@@ -1,5 +1,6 @@
 #include "inspector.h"
 #include <QPainter>
+#include "versionModule.cc"
 
 Inspector *initialize(QString name, QString label, QString profile, QVariantMap availableModuleLibs)
 {
@@ -17,6 +18,9 @@ Inspector::Inspector(QString name, QString label, QString profile, QVariantMap a
 
     setModuleDescription("Inspector module - work in progress");
     setModuleVersion("0.1");
+    getEltString("thisGit", "hash")->setValue(QString::fromStdString(VersionModule::GIT_SHA1), true);
+    getEltString("thisGit", "date")->setValue(QString::fromStdString(VersionModule::GIT_DATE), true);
+    getEltString("thisGit", "message")->setValue(QString::fromStdString(VersionModule::GIT_COMMIT_SUBJECT), true);
 
     giveMeADevice("camera", "Camera", INDI::BaseDevice::CCD_INTERFACE);
     defineMeAsSequencer();
