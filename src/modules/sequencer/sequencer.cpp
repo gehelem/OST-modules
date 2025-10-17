@@ -284,6 +284,34 @@ void Sequencer::StartSequence()
             getProperty("sequence")->updateLine(i);
         }
 
+        // Check if autofocus at sequence start is enabled
+        bool autofocusAtStart = getBool("parameters", "autofocusatstart");
+
+        if (autofocusAtStart && getProperty("sequence")->getGrid().count() > 0)
+        {
+            // Get first line filter information
+            getProperty("sequence")->fetchLine(0);
+            int filterIndex = getInt("sequence", "filter");
+            QString firstFilter = getEltInt("sequence", "filter")->getLov()[filterIndex];
+            QString firstFrameType = getString("sequence", "frametype");
+
+            // Only do initial focus for light or flat frames
+            if (firstFrameType == "L" || firstFrameType == "F")
+            {
+                sendMessage("Starting sequence with autofocus using filter: " + firstFilter);
+
+                // Set the filter to the first line's filter
+                sendModNewNumber(getString("devices", "filter"), "FILTER_SLOT", "FILTER_SLOT_VALUE", filterIndex);
+
+                // Initialize previousFilter so first line doesn't trigger another focus
+                previousFilter = firstFilter;
+
+                // Request focus before starting sequence
+                requestFocus();
+                return;  // StartLine() will be called after focus completes
+            }
+        }
+
         StartLine();
     }
     else
@@ -430,6 +458,15 @@ void Sequencer::OnFocusDone(const QString &eventType, const QString &eventModule
     sendMessage("Autofocus completed - resuming sequence");
     mWaitingForFocus = false;
 
-    // After focus completes, shoot the first image of the current line
-    Shoot();
+    // If currentLine is -1, focus was done at sequence start, so start the first line
+    if (currentLine == -1)
+    {
+        sendMessage("Initial autofocus completed - starting sequence");
+        StartLine();
+    }
+    else
+    {
+        // After focus completes during sequence, shoot the first image of the current line
+        Shoot();
+    }
 }
