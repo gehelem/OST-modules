@@ -62,6 +62,9 @@ class MODULE_INIT Navigator : public IndiModule
         double mToleranceArcsec;
         double mTargetRA;
         double mTargetDEC;
+        double mTargetRAnow;
+        double mTargetDECnow;
+        bool mWaitingSlew;
 
 
 };
