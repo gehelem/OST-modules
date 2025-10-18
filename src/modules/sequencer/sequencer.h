@@ -46,6 +46,7 @@ class MODULE_INIT Sequencer: public IndiModule
                                const QVariantMap &eventData) override;
         void OnSucessSEP();
         void OnFocusDone(const QString &eventType, const QString &eventModule, const QString &eventKey, const QVariantMap &eventData);
+        void OnGuidingSettleTimeout();
 
     private:
         void newBLOB(INDI::PropertyBlob pblob);
@@ -91,6 +92,8 @@ class MODULE_INIT Sequencer: public IndiModule
         QVariantMap mActiveSeq;
         bool isSequenceRunning = false;
         bool mWaitingForFocus = false;
+        bool mWaitingForGuidingSettle = false;
+        QTimer *mGuidingSettleTimer = nullptr;
         QString mObjectName = "default";
         QString mDate;
 

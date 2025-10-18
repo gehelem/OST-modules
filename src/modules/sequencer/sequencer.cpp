@@ -1,5 +1,6 @@
 #include "sequencer.h"
 #include <QPainter>
+#include <QTimer>
 #include "versionModule.cc"
 
 Sequencer *initialize(QString name, QString label, QString profile, QVariantMap availableModuleLibs)
@@ -24,6 +25,11 @@ Sequencer::Sequencer(QString name, QString label, QString profile, QVariantMap a
     giveMeADevice("filter", "Filter wheel", INDI::BaseDevice::FILTER_INTERFACE);
     defineMeAsSequencer();
     refreshFilterLov();
+
+    // Initialize guiding settle timer
+    mGuidingSettleTimer = new QTimer(this);
+    mGuidingSettleTimer->setSingleShot(true);
+    connect(mGuidingSettleTimer, &QTimer::timeout, this, &Sequencer::OnGuidingSettleTimeout);
 
 }
 
@@ -60,6 +66,11 @@ void Sequencer::OnMyExternalEvent(const QString &eventType, const QString  &even
                         emit Abort();
                         isSequenceRunning = false;
                         mWaitingForFocus = false;
+                        mWaitingForGuidingSettle = false;
+                        if (mGuidingSettleTimer->isActive())
+                        {
+                            mGuidingSettleTimer->stop();
+                        }
                     }
                 }
                 if (keyprop == "devices")
@@ -479,8 +490,19 @@ void Sequencer::OnFocusDone(const QString &eventType, const QString &eventModule
         QString guiderModule = getString("parameters", "guidermodule");
         sendMessage("Resuming guiding on module: " + guiderModule);
         emit moduleEvent("resumeguiding", guiderModule, "", QVariantMap());
+
+        // Wait for guiding to settle before continuing
+        int settleTime = getInt("parameters", "guidingsettletime");
+        if (settleTime > 0)
+        {
+            sendMessage("Waiting " + QString::number(settleTime) + " seconds for guiding to settle...");
+            mWaitingForGuidingSettle = true;
+            mGuidingSettleTimer->start(settleTime * 1000); // Convert seconds to milliseconds
+            return; // OnGuidingSettleTimeout() will continue the sequence
+        }
     }
 
+    // Continue sequence immediately if no settle time needed
     // If currentLine is -1, focus was done at sequence start, so start the first line
     if (currentLine == -1)
     {
@@ -490,6 +512,24 @@ void Sequencer::OnFocusDone(const QString &eventType, const QString &eventModule
     else
     {
         // After focus completes during sequence, shoot the first image of the current line
+        Shoot();
+    }
+}
+
+void Sequencer::OnGuidingSettleTimeout()
+{
+    sendMessage("Guiding settle time completed - continuing sequence");
+    mWaitingForGuidingSettle = false;
+
+    // Continue sequence after settle time
+    if (currentLine == -1)
+    {
+        sendMessage("Starting sequence");
+        StartLine();
+    }
+    else
+    {
+        // Shoot the first image of the current line
         Shoot();
     }
 }

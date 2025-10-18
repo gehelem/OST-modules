@@ -188,6 +188,16 @@
                 "value": "guider",
                 "order": 4,
                 "hint": "Name of the guider module INSTANCE to use (e.g. 'guider', 'myguider1')"
+            },
+            "guidingsettletime": {
+                "type": "int",
+                "label": "Resume guiding settle time (s)",
+                "autoupdate": true,
+                "directedit": true,
+                "value": 10,
+                "order": 5,
+                "format": "99",
+                "hint": "Wait time in seconds after resuming guiding before continuing sequence (allows guiding to stabilize)"
             }
         }
     }
