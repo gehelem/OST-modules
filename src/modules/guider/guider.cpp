@@ -38,10 +38,30 @@ Guider::~Guider()
 void Guider::OnMyExternalEvent(const QString &eventType, const QString  &eventModule, const QString  &eventKey,
                                const QVariantMap &eventData)
 {
-    Q_UNUSED(eventType);
     Q_UNUSED(eventKey);
 
     //BOOST_LOG_TRIVIAL(debug) << "OnMyExternalEvent - recv : " << getName().toStdString() << "-" << eventType.toStdString() << "-" << eventKey.toStdString();
+
+    // Handle suspend/resume guiding events from sequencer
+    if (eventType == "suspendguiding" && getModuleName() == eventModule)
+    {
+        sendMessage("Guiding suspended by external request (focus in progress)");
+        // Stop the guiding state machine
+        _SMGuide.stop();
+        return;
+    }
+
+    if (eventType == "resumeguiding" && getModuleName() == eventModule)
+    {
+        sendMessage("Resuming guiding after external suspension (focus completed)");
+        // Restart the guiding state machine
+        disconnect(&_SMInit,        &QStateMachine::finished, nullptr, nullptr);
+        disconnect(&_SMCalibration, &QStateMachine::finished, nullptr, nullptr);
+        connect(&_SMInit,           &QStateMachine::finished, &_SMGuide, &QStateMachine::start);
+        _SMInit.start();
+        return;
+    }
+
     if (getModuleName() == eventModule)
     {
         foreach(const QString &keyprop, eventData.keys())

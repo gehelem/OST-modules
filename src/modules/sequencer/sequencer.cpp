@@ -448,6 +448,15 @@ void Sequencer::requestFocus()
 
     mWaitingForFocus = true;
 
+    // Suspend guiding if option is enabled
+    bool suspendGuiding = getBool("parameters", "suspendguidingduringfocus");
+    if (suspendGuiding)
+    {
+        QString guiderModule = getString("parameters", "guidermodule");
+        sendMessage("Suspending guiding on module: " + guiderModule);
+        emit moduleEvent("suspendguiding", guiderModule, "", QVariantMap());
+    }
+
     // Emit custom event type "requestautofocus" that focus module will handle
     emit moduleEvent("requestautofocus", focusModule, "", QVariantMap());
 }
@@ -462,6 +471,15 @@ void Sequencer::OnFocusDone(const QString &eventType, const QString &eventModule
 
     sendMessage("Autofocus completed - resuming sequence");
     mWaitingForFocus = false;
+
+    // Resume guiding if it was suspended
+    bool suspendGuiding = getBool("parameters", "suspendguidingduringfocus");
+    if (suspendGuiding)
+    {
+        QString guiderModule = getString("parameters", "guidermodule");
+        sendMessage("Resuming guiding on module: " + guiderModule);
+        emit moduleEvent("resumeguiding", guiderModule, "", QVariantMap());
+    }
 
     // If currentLine is -1, focus was done at sequence start, so start the first line
     if (currentLine == -1)
