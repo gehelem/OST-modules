@@ -11,51 +11,68 @@
                 "type":"int",
                 "label": "Pulse N",
                 "order":"01",
+                "value": 0,
                 "format": "99.99"
             },
             "pulseS": {
                 "type":"int",
                 "label": "Pulse S",
                 "order":"02",
+                "value": 0,
                 "format": "99.99"
             },
             "pulseE": {
                 "type":"int",
                 "label": "Pulse E",
                 "order":"03",
+                "value": 0,
                 "format": "99.99"
             },
             "pulseW": {
                 "type":"int",
                 "label": "Pulse W",
                 "order":"04",
+                "value": 0,
                 "format": "99.99"
-            },
+            }
+        }
+    },
+    "calibrationvalues": {
+        "devcat": "Control",
+        "group": "",
+        "order":"Control850",
+        "permission": 0,
+        "hasprofile": true,
+        "label": "Calibration Values",
+        "elements": {
             "calPulseN": {
                 "type":"int",
                 "label": "Calibration Pulse N",
-                "order":"91",
+                "order":"01",
+                "value": 0,
                 "format": "99.99"
             },
             "calPulseS": {
                 "type":"int",
                 "label": "Calibration Pulse S",
-                "order":"92",
+                "order":"02",
+                "value": 0,
                 "format": "99.99"
             },
             "calPulseE": {
                 "type":"int",
                 "label": "Calibration Pulse E",
-                "order":"93",
+                "order":"03",
+                "value": 0,
                 "format": "99.99"
             },
             "calPulseW": {
                 "type":"int",
                 "label": "Calibration Pulse W",
-                "order":"94",
+                "order":"04",
+                "value": 0,
                 "format": "99.99"
             }
-
         }
     },
     "drift": {
