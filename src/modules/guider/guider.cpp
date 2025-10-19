@@ -394,6 +394,7 @@ void Guider::SMInitCal()
     //emit propertyUpdated(_states,&_modulename);
     //_propertyStore.update(_states);
 
+    sendMessage("Starting calibration...");
     _calState = 0;
     _calStep = 0;
     _calPulseN = 0;
@@ -524,7 +525,9 @@ void Guider::SMComputeCal()
     }
     else
     {
-        qDebug() << "houston, we have a problem";
+        sendError("No stars, can't calibrate");
+        emit abort();
+        return;
     }
     //BOOST_LOG_TRIVIAL(debug) << "Drifts // prev " << sqrt(square(_dxPrev) + square(_dyPrev));
     _trigPrev = _trigCurrent;
@@ -540,6 +543,16 @@ void Guider::SMComputeCal()
     _pulseE = 0;
     _pulseW = 0;
     _calStep++;
+
+    // Send progress messages during calibration
+    QString directionName;
+    if (_calState == 0) directionName = "West";
+    else if (_calState == 1) directionName = "East";
+    else if (_calState == 2) directionName = "North";
+    else if (_calState == 3) directionName = "South";
+
+    sendMessage("Calibration " + directionName + " - step " + QString::number(_calStep) + "/" + QString::number(getInt("calParams", "calsteps")));
+
     if (_calStep >= getInt("calParams", "calsteps") )
     {
         double ddx = 0;
@@ -562,6 +575,7 @@ void Guider::SMComputeCal()
             _ccdOrientation = a;
             _calMountPointingWest = _mountPointingWest;
             _calCcdOrientation = _ccdOrientation;
+            sendMessage("West calibration complete: " + QString::number(_calPulseW, 'f', 2) + " ms/px");
 
             //BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " Drift orientation =  " << a * 180 / PI;
             //BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " W drift (px) " <<  sqrt(square(ddy) + square(
@@ -573,6 +587,7 @@ void Guider::SMComputeCal()
         if (_calState == 1)
         {
             _calPulseE = getInt("calParams", "pulse") / sqrt(square(ddx) + square(ddy));
+            sendMessage("East calibration complete: " + QString::number(_calPulseE, 'f', 2) + " ms/px");
             //BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " Drift orientation =  " << a * 180 / PI;
             //BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " E drift (px) " <<  sqrt(square(ddy) + square(
             //                             ddy));
@@ -583,6 +598,7 @@ void Guider::SMComputeCal()
         if (_calState == 2)
         {
             _calPulseN = getInt("calParams", "pulse") / sqrt(square(ddx) + square(ddy));
+            sendMessage("North calibration complete: " + QString::number(_calPulseN, 'f', 2) + " ms/px");
             //BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " Drift orientation =  " << a * 180 / PI;
             //BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " N drift (px) " <<  sqrt(square(ddy) + square(
             //                             ddy));
@@ -593,6 +609,7 @@ void Guider::SMComputeCal()
         if (_calState == 3)
         {
             _calPulseS = getInt("calParams", "pulse") / sqrt(square(ddx) + square(ddy));
+            sendMessage("South calibration complete: " + QString::number(_calPulseS, 'f', 2) + " ms/px");
             //BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " Drift orientation =  " << a * 180 / PI;
             //BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " S drift (px) " <<  sqrt(square(ddy) + square(
             //                             ddy));
@@ -618,6 +635,7 @@ void Guider::SMComputeCal()
             getEltInt("calibrationvalues", "calPulseS")->setValue(_calPulseS);
             getEltInt("calibrationvalues", "calPulseE")->setValue(_calPulseE);
             getEltInt("calibrationvalues", "calPulseW")->setValue(_calPulseW, true);
+            sendMessage("Calibration completed successfully");
             emit CalibrationDone();
             _trigFirst = _trigCurrent;
             return;
