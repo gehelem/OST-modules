@@ -429,6 +429,10 @@ void Guider::SMInitGuide()
     _calPulseE = getInt("calibrationvalues", "calPulseE");
     _calPulseW = getInt("calibrationvalues", "calPulseW");
 
+    // Clear RMS drift history when starting guide
+    _dRAvector.clear();
+    _dDEvector.clear();
+
     //BOOST_LOG_TRIVIAL(debug) << "************************************************************";
     //BOOST_LOG_TRIVIAL(debug) << "************************************************************";
     //BOOST_LOG_TRIVIAL(debug) << "Guider module - Start guide with fllowing calibration data : ";
@@ -760,10 +764,45 @@ void Guider::SMComputeGuide()
 
     _itt++;
 
+    // Store drift history for RMS calculation
+    _dRAvector.push_back(_driftRA * getSampling());
+    _dDEvector.push_back(_driftDE * getSampling());
+
+    // Limit vector size to rmsOver parameter
+    int rmsOver = getInt("guideParams", "rmsOver");
+    while (_dRAvector.size() > (size_t)rmsOver)
+    {
+        _dRAvector.erase(_dRAvector.begin());
+    }
+    while (_dDEvector.size() > (size_t)rmsOver)
+    {
+        _dDEvector.erase(_dDEvector.begin());
+    }
+
+    // Calculate RMS
+    double rmsRA = 0;
+    double rmsDEC = 0;
+    double rmsTotal = 0;
+
+    if (_dRAvector.size() > 0)
+    {
+        for (size_t i = 0; i < _dRAvector.size(); i++)
+        {
+            rmsRA += square(_dRAvector[i]);
+            rmsDEC += square(_dDEvector[i]);
+        }
+        rmsRA = sqrt(rmsRA / _dRAvector.size());
+        rmsDEC = sqrt(rmsDEC / _dDEvector.size());
+        rmsTotal = sqrt(square(rmsRA) + square(rmsDEC));
+    }
+
     getEltInt("values", "pulseN")->setValue(_pulseN);
     getEltInt("values", "pulseS")->setValue(_pulseS);
     getEltInt("values", "pulseE")->setValue(_pulseE);
-    getEltInt("values", "pulseW")->setValue(_pulseW, true);
+    getEltInt("values", "pulseW")->setValue(_pulseW);
+    getEltFloat("values", "rmsRA")->setValue(rmsRA);
+    getEltFloat("values", "rmsDEC")->setValue(rmsDEC);
+    getEltFloat("values", "rmsTotal")->setValue(rmsTotal, true);
     double ech = getSampling();
     getEltFloat("drift", "RA")->setValue(_driftRA * ech);
     getEltFloat("drift", "DEC")->setValue(_driftDE * ech, true);

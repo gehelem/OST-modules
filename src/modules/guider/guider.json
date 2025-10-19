@@ -34,6 +34,27 @@
                 "order":"04",
                 "value": 0,
                 "format": "99.99"
+            },
+            "rmsRA": {
+                "type":"float",
+                "label": "RMS RA",
+                "order":"05",
+                "value": 0,
+                "format": "99.99"
+            },
+            "rmsDEC": {
+                "type":"float",
+                "label": "RMS DEC",
+                "order":"06",
+                "value": 0,
+                "format": "99.99"
+            },
+            "rmsTotal": {
+                "type":"float",
+                "label": "RMS Total",
+                "order":"07",
+                "value": 0,
+                "format": "99.99"
             }
         }
     },
@@ -240,6 +261,16 @@
                 "order":"04",
                 "value":0.8,
                 "format": "99"
+            },
+            "rmsOver": {
+                "type":"int",
+                "autoupdate":true,
+                "directedit":true,
+                "label": "RMS drift over x",
+                "order":"05",
+                "value":10,
+                "format": "99",
+                "hint": "Number of frames to calculate RMS drift"
             }
         }
     },
