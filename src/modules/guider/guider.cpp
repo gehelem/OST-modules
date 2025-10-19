@@ -424,6 +424,10 @@ void Guider::SMInitGuide()
 {
     //sendMessage("SMInitGuide");
     getProperty("drift")->clearGrid();;
+    _calPulseN = getInt("calibrationvalues", "calPulseN");
+    _calPulseS = getInt("calibrationvalues", "calPulseS");
+    _calPulseE = getInt("calibrationvalues", "calPulseE");
+    _calPulseW = getInt("calibrationvalues", "calPulseW");
 
     //BOOST_LOG_TRIVIAL(debug) << "************************************************************";
     //BOOST_LOG_TRIVIAL(debug) << "************************************************************";
