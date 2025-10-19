@@ -82,12 +82,17 @@
         "permission": 0,
         "label": "Drift",
         "hasGrid":true,
+        "showElts":false,
         "showGrid":false,
         "gridLimit":200,
         "graphType":"XY",
         "graphParams":{
             "X":"RA",
-            "Y":"DEC"
+            "Y":"DEC",
+            "Xmin":-10,
+            "Xmax":10,
+            "Ymin":-10,
+            "Ymax":10
         },
         "elements": {
             "RA": {
@@ -111,6 +116,7 @@
         "permission": 0,
         "label": "Guiding graph",
         "hasGrid":true,
+        "showElts":false,
         "showGrid":false,
         "gridLimit":20,
         "graphType":"PHD",
@@ -119,7 +125,8 @@
             "RA":"RA",
             "DE":"DE",
             "pRA":"pRA",
-            "pDE":"pDE"
+            "pDE":"pDE",
+            "RSB":"SNR"
         },
         "elements": {
             "time": {
@@ -151,39 +158,14 @@
                 "label": "Pulse (DE)",
                 "order":"05",
                 "format": "99.99"
+            },
+            "SNR": {
+                "type": "float",
+                "label": "SNR",
+                "value":0,
+                "order":6
             }
         }
-    },
-    "snr": {
-        "devcat": "Control",
-        "gridLimit":50,
-        "order":"Control300",
-        "rule":0,
-        "hasGrid":true,
-        "showGrid":false,
-        "gridLimit":20,
-        "graphType":"DY",
-        "graphParams":{
-            "D":"time",
-            "Y":"snr"
-        },
-        "elements": {
-                "time": {
-                    "type":"float",
-                    "label": "Time",
-                    "order":"01",
-                    "value":0
-                },
-                "snr": {
-                    "type":"float",
-                    "label": "SNR",
-                    "order":"02",
-                    "value":0
-                }
-        },
-        "group": "",
-        "permission": 0,
-        "label": "SNR"
     },
     "calParams": {
         "devcat": "Parameters",

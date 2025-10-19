@@ -348,7 +348,6 @@ void Guider::SMInitInit()
         getProperty("actions")->setState(OST::Busy);
         getProperty("drift")->clearGrid();
         getProperty("guiding")->clearGrid();
-        getProperty("snr")->clearGrid();
     }
 
     else
@@ -739,12 +738,8 @@ void Guider::SMComputeGuide()
     getEltFloat("guiding", "DE")->setValue(_driftDE);
     getEltFloat("guiding", "pDE")->setValue(_pulseN - _pulseS);
     getEltFloat("guiding", "pRA")->setValue( _pulseE - _pulseW);
+    getEltFloat("guiding", "SNR")->setValue(_image->getStats().SNR);
     getProperty("guiding")->push();
-
-    //setOstElementValue("snr", "time", QDateTime::currentDateTime().toString("dd/MM/yyyy hh:mm:ss zzz"), false);
-    getEltFloat("snr", "time")->setValue(tt);
-    getEltFloat("snr", "snr")->setValue(_image->getStats().SNR);
-    getProperty("snr")->push();
 
     emit ComputeGuideDone();
 }
