@@ -104,6 +104,7 @@ class MODULE_INIT Guider  : public IndiModule
         bool   _calMountPointingWest = false;
         double _ccdOrientation;
         double _calCcdOrientation;
+        double _calMountDEC = 0;  // DEC at calibration time for compensation
         double _ccdSampling = 206 * 5.2 / 800;
         int _itt = 0;
 

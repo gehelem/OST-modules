@@ -29,6 +29,12 @@ Guider::Guider(QString name, QString label, QString profile, QVariantMap availab
 
     defineMeAsGuider();
 
+    // Add reset calibration button to actions
+    OST::PropertyMulti* pm = getProperty("actions");
+    OST::ElementBool* b = new OST::ElementBool("Reset calibration", "guid10", "");
+    b->setValue(false, false);
+    pm->addElt("resetcalibration", b);
+
 }
 
 Guider::~Guider()
@@ -110,11 +116,44 @@ void Guider::OnMyExternalEvent(const QString &eventType, const QString  &eventMo
                         if (getEltBool(keyprop, keyelt)->setValue(false))
                         {
                             getProperty(keyprop)->setState(OST::Ok);
-                            disconnect(&_SMInit,        &QStateMachine::finished, nullptr, nullptr);
-                            disconnect(&_SMCalibration, &QStateMachine::finished, nullptr, nullptr);
-                            connect(&_SMInit,           &QStateMachine::finished, &_SMGuide, &QStateMachine::start) ;
-                            _SMInit.start();
 
+                            // Check if calibration data exists
+                            int calN = getInt("calibrationvalues", "calPulseN");
+                            int calS = getInt("calibrationvalues", "calPulseS");
+                            int calE = getInt("calibrationvalues", "calPulseE");
+                            int calW = getInt("calibrationvalues", "calPulseW");
+
+                            if (calN == 0 || calS == 0 || calE == 0 || calW == 0)
+                            {
+                                sendMessage("No calibration data found - starting calibration first");
+                                disconnect(&_SMInit,        &QStateMachine::finished, nullptr, nullptr);
+                                disconnect(&_SMCalibration, &QStateMachine::finished, nullptr, nullptr);
+                                connect(&_SMInit,           &QStateMachine::finished, &_SMCalibration, &QStateMachine::start) ;
+                                connect(&_SMCalibration,    &QStateMachine::finished, &_SMGuide,      &QStateMachine::start) ;
+                                _SMInit.start();
+                            }
+                            else
+                            {
+                                disconnect(&_SMInit,        &QStateMachine::finished, nullptr, nullptr);
+                                disconnect(&_SMCalibration, &QStateMachine::finished, nullptr, nullptr);
+                                connect(&_SMInit,           &QStateMachine::finished, &_SMGuide, &QStateMachine::start) ;
+                                _SMInit.start();
+                            }
+                        }
+                    }
+                    if (keyelt == "resetcalibration")
+                    {
+                        if (getEltBool(keyprop, keyelt)->setValue(false))
+                        {
+                            getProperty(keyprop)->setState(OST::Ok);
+
+                            // Reset all calibration values to 0
+                            getEltInt("calibrationvalues", "calPulseN")->setValue(0);
+                            getEltInt("calibrationvalues", "calPulseS")->setValue(0);
+                            getEltInt("calibrationvalues", "calPulseE")->setValue(0);
+                            getEltInt("calibrationvalues", "calPulseW")->setValue(0, true);
+
+                            sendMessage("Calibration data reset");
                         }
                     }
 
@@ -429,6 +468,27 @@ void Guider::SMInitGuide()
     _calPulseE = getInt("calibrationvalues", "calPulseE");
     _calPulseW = getInt("calibrationvalues", "calPulseW");
 
+    // Get current mount DEC for compensation
+    if (!getModNumber(getString("devices", "guider"), "EQUATORIAL_EOD_COORD", "DEC", _mountDEC))
+    {
+        sendWarning("Could not read mount DEC, using DEC=0 for compensation");
+        _mountDEC = 0;
+    }
+
+    // Display guiding start message with compensation info
+    sendMessage("Starting guiding session...");
+    sendMessage("Current DEC: " + QString::number(_mountDEC, 'f', 1) + "°");
+
+    double currentDecCompensation = cos(_mountDEC * PI / 180.0);
+    double calPulseECompensated = _calPulseE * currentDecCompensation;
+    double calPulseWCompensated = _calPulseW * currentDecCompensation;
+
+    sendMessage("RA compensation factor: " + QString::number(currentDecCompensation, 'f', 3));
+    sendMessage("Adjusted calibration: W=" + QString::number(calPulseWCompensated, 'f', 2) +
+                " E=" + QString::number(calPulseECompensated, 'f', 2) +
+                " N=" + QString::number(_calPulseN, 'f', 2) +
+                " S=" + QString::number(_calPulseS, 'f', 2) + " ms/px");
+
     // Clear RMS drift history when starting guide
     _dRAvector.clear();
     _dDEvector.clear();
@@ -652,6 +712,20 @@ void Guider::SMComputeCal()
             //BOOST_LOG_TRIVIAL(debug) << "*********************** cal E " << _calPulseE;
             //BOOST_LOG_TRIVIAL(debug) << "*********************** cal N " << _calPulseN;
             //BOOST_LOG_TRIVIAL(debug) << "*********************** cal S " << _calPulseS;
+
+            // Store calibration DEC for later compensation
+            _calMountDEC = _mountDEC;
+
+            // Compensate RA calibration values for declination
+            // Store as "equatorial" values (compensated to DEC=0)
+            double decCompensation = cos(_calMountDEC * PI / 180.0);
+            if (decCompensation > 0.1)  // Avoid division by zero near poles
+            {
+                _calPulseE = _calPulseE / decCompensation;
+                _calPulseW = _calPulseW / decCompensation;
+                sendMessage("DEC compensation applied: DEC=" + QString::number(_calMountDEC, 'f', 1) + "° factor=" + QString::number(decCompensation, 'f', 3));
+            }
+
             getEltInt("calibrationvalues", "calPulseN")->setValue(_calPulseN);
             getEltInt("calibrationvalues", "calPulseS")->setValue(_calPulseS);
             getEltInt("calibrationvalues", "calPulseE")->setValue(_calPulseE);
@@ -717,6 +791,13 @@ void Guider::SMComputeGuide()
     double _driftDE = -_dxFirst * sin(_calCcdOrientation) + _dyFirst * cos(_calCcdOrientation);
     //BOOST_LOG_TRIVIAL(debug) << "*********************** guide  RA drift (px) " << _driftRA;
     //BOOST_LOG_TRIVIAL(debug) << "*********************** guide  DE drift (px) " << _driftDE;
+
+    // Apply DEC compensation for current position
+    // calPulseE/W are stored as "equatorial" (DEC=0), need to adjust for current DEC
+    double currentDecCompensation = cos(_mountDEC * PI / 180.0);
+    double calPulseECompensated = _calPulseE * currentDecCompensation;
+    double calPulseWCompensated = _calPulseW * currentDecCompensation;
+
     int  revRA = 1;
     if (getBool("revCorrections", "revRA")) revRA = -1;
     int  revDE = 1;
@@ -728,7 +809,7 @@ void Guider::SMComputeGuide()
 
     if (revRA * _driftRA > 0 && !disRAO)
     {
-        _pulseW = getFloat("guideParams", "raAgr") * revRA * _driftRA * _calPulseW;
+        _pulseW = getFloat("guideParams", "raAgr") * revRA * _driftRA * calPulseWCompensated;
         if (_pulseW > getInt("guideParams", "pulsemax")) _pulseW = getInt("guideParams", "pulsemax");
         if (_pulseW < getInt("guideParams", "pulsemin")) _pulseW = 0;
     }
@@ -737,7 +818,7 @@ void Guider::SMComputeGuide()
 
     if (revRA * _driftRA < 0 && !disRAE)
     {
-        _pulseE = - getFloat("guideParams", "raAgr")  * revRA * _driftRA * _calPulseE;
+        _pulseE = - getFloat("guideParams", "raAgr")  * revRA * _driftRA * calPulseECompensated;
         if (_pulseE > getInt("guideParams", "pulsemax")) _pulseE = getInt("guideParams", "pulsemax");
         if (_pulseE < getInt("guideParams", "pulsemin")) _pulseE = 0;
     }
@@ -932,6 +1013,7 @@ void Guider::OnSucessSEP()
 
 void Guider::SMAbort()
 {
+    sendMessage("Guiding stopped");
 
     disconnect(&_SMInit,        &QStateMachine::finished, nullptr, nullptr);
     disconnect(&_SMCalibration, &QStateMachine::finished, nullptr, nullptr);
