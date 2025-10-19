@@ -169,6 +169,35 @@
                 "value": "focus",
                 "order": 2,
                 "hint": "Name of the focus module INSTANCE to use (e.g. 'focus', 'myfocus1')"
+            },
+            "suspendguidingduringfocus": {
+                "type": "bool",
+                "label": "Suspend guiding during focus",
+                "autoupdate": true,
+                "directedit": true,
+                "value": false,
+                "order": 3,
+                "hint": "Suspend guiding when autofocus is triggered and resume after focus completes"
+            },
+            "guidermodule": {
+                "type": "string",
+                "label": "Guider module instance",
+                "listOfValues":"loadedModules",
+                "autoupdate": true,
+                "directedit": true,
+                "value": "guider",
+                "order": 4,
+                "hint": "Name of the guider module INSTANCE to use (e.g. 'guider', 'myguider1')"
+            },
+            "guidingsettletime": {
+                "type": "int",
+                "label": "Resume guiding settle time (s)",
+                "autoupdate": true,
+                "directedit": true,
+                "value": 10,
+                "order": 5,
+                "format": "99",
+                "hint": "Wait time in seconds after resuming guiding before continuing sequence (allows guiding to stabilize)"
             }
         }
     }

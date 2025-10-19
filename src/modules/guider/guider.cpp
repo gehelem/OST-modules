@@ -38,10 +38,30 @@ Guider::~Guider()
 void Guider::OnMyExternalEvent(const QString &eventType, const QString  &eventModule, const QString  &eventKey,
                                const QVariantMap &eventData)
 {
-    Q_UNUSED(eventType);
     Q_UNUSED(eventKey);
 
     //BOOST_LOG_TRIVIAL(debug) << "OnMyExternalEvent - recv : " << getName().toStdString() << "-" << eventType.toStdString() << "-" << eventKey.toStdString();
+
+    // Handle suspend/resume guiding events from sequencer
+    if (eventType == "suspendguiding" && getModuleName() == eventModule)
+    {
+        sendMessage("Guiding suspended by external request (focus in progress)");
+        // Stop the guiding state machine
+        _SMGuide.stop();
+        return;
+    }
+
+    if (eventType == "resumeguiding" && getModuleName() == eventModule)
+    {
+        sendMessage("Resuming guiding after external suspension (focus completed)");
+        // Restart the guiding state machine
+        disconnect(&_SMInit,        &QStateMachine::finished, nullptr, nullptr);
+        disconnect(&_SMCalibration, &QStateMachine::finished, nullptr, nullptr);
+        connect(&_SMInit,           &QStateMachine::finished, &_SMGuide, &QStateMachine::start);
+        _SMInit.start();
+        return;
+    }
+
     if (getModuleName() == eventModule)
     {
         foreach(const QString &keyprop, eventData.keys())
@@ -328,7 +348,6 @@ void Guider::SMInitInit()
         getProperty("actions")->setState(OST::Busy);
         getProperty("drift")->clearGrid();
         getProperty("guiding")->clearGrid();
-        getProperty("snr")->clearGrid();
     }
 
     else
@@ -375,16 +394,17 @@ void Guider::SMInitCal()
     //emit propertyUpdated(_states,&_modulename);
     //_propertyStore.update(_states);
 
+    sendMessage("Starting calibration...");
     _calState = 0;
     _calStep = 0;
     _calPulseN = 0;
     _calPulseS = 0;
     _calPulseE = 0;
     _calPulseW = 0;
-    getEltInt("values", "calPulseN")->setValue(_calPulseN);
-    getEltInt("values", "calPulseS")->setValue(_calPulseS);
-    getEltInt("values", "calPulseE")->setValue(_calPulseE);
-    getEltInt("values", "calPulseW")->setValue(_calPulseW, true);
+    getEltInt("calibrationvalues", "calPulseN")->setValue(_calPulseN);
+    getEltInt("calibrationvalues", "calPulseS")->setValue(_calPulseS);
+    getEltInt("calibrationvalues", "calPulseE")->setValue(_calPulseE);
+    getEltInt("calibrationvalues", "calPulseW")->setValue(_calPulseW, true);
     _pulseN = 0;
     _pulseS = 0;
     _pulseE = 0;
@@ -404,6 +424,14 @@ void Guider::SMInitGuide()
 {
     //sendMessage("SMInitGuide");
     getProperty("drift")->clearGrid();;
+    _calPulseN = getInt("calibrationvalues", "calPulseN");
+    _calPulseS = getInt("calibrationvalues", "calPulseS");
+    _calPulseE = getInt("calibrationvalues", "calPulseE");
+    _calPulseW = getInt("calibrationvalues", "calPulseW");
+
+    // Clear RMS drift history when starting guide
+    _dRAvector.clear();
+    _dDEvector.clear();
 
     //BOOST_LOG_TRIVIAL(debug) << "************************************************************";
     //BOOST_LOG_TRIVIAL(debug) << "************************************************************";
@@ -501,7 +529,9 @@ void Guider::SMComputeCal()
     }
     else
     {
-        qDebug() << "houston, we have a problem";
+        sendError("No stars, can't calibrate");
+        emit abort();
+        return;
     }
     //BOOST_LOG_TRIVIAL(debug) << "Drifts // prev " << sqrt(square(_dxPrev) + square(_dyPrev));
     _trigPrev = _trigCurrent;
@@ -517,6 +547,17 @@ void Guider::SMComputeCal()
     _pulseE = 0;
     _pulseW = 0;
     _calStep++;
+
+    // Send progress messages during calibration
+    QString directionName;
+    if (_calState == 0) directionName = "West";
+    else if (_calState == 1) directionName = "East";
+    else if (_calState == 2) directionName = "North";
+    else if (_calState == 3) directionName = "South";
+
+    sendMessage("Calibration " + directionName + " - step " + QString::number(_calStep) + "/" + QString::number(
+                    getInt("calParams", "calsteps")));
+
     if (_calStep >= getInt("calParams", "calsteps") )
     {
         double ddx = 0;
@@ -539,6 +580,11 @@ void Guider::SMComputeCal()
             _ccdOrientation = a;
             _calMountPointingWest = _mountPointingWest;
             _calCcdOrientation = _ccdOrientation;
+            double ech = getSampling();
+            double drift_arcsec = sqrt(square(ddx) + square(ddy)) * ech;
+            sendMessage("West calibration complete: " + QString::number(_calPulseW, 'f',
+                        2) + " ms/px (" + QString::number(_calPulseW / ech, 'f', 2) + " ms/arcsec, drift=" + QString::number(drift_arcsec, 'f',
+                                2) + "\")");
 
             //BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " Drift orientation =  " << a * 180 / PI;
             //BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " W drift (px) " <<  sqrt(square(ddy) + square(
@@ -550,6 +596,11 @@ void Guider::SMComputeCal()
         if (_calState == 1)
         {
             _calPulseE = getInt("calParams", "pulse") / sqrt(square(ddx) + square(ddy));
+            double ech = getSampling();
+            double drift_arcsec = sqrt(square(ddx) + square(ddy)) * ech;
+            sendMessage("East calibration complete: " + QString::number(_calPulseE, 'f',
+                        2) + " ms/px (" + QString::number(_calPulseE / ech, 'f', 2) + " ms/arcsec, drift=" + QString::number(drift_arcsec, 'f',
+                                2) + "\")");
             //BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " Drift orientation =  " << a * 180 / PI;
             //BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " E drift (px) " <<  sqrt(square(ddy) + square(
             //                             ddy));
@@ -560,6 +611,11 @@ void Guider::SMComputeCal()
         if (_calState == 2)
         {
             _calPulseN = getInt("calParams", "pulse") / sqrt(square(ddx) + square(ddy));
+            double ech = getSampling();
+            double drift_arcsec = sqrt(square(ddx) + square(ddy)) * ech;
+            sendMessage("North calibration complete: " + QString::number(_calPulseN, 'f',
+                        2) + " ms/px (" + QString::number(_calPulseN / ech, 'f', 2) + " ms/arcsec, drift=" + QString::number(drift_arcsec, 'f',
+                                2) + "\")");
             //BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " Drift orientation =  " << a * 180 / PI;
             //BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " N drift (px) " <<  sqrt(square(ddy) + square(
             //                             ddy));
@@ -570,6 +626,11 @@ void Guider::SMComputeCal()
         if (_calState == 3)
         {
             _calPulseS = getInt("calParams", "pulse") / sqrt(square(ddx) + square(ddy));
+            double ech = getSampling();
+            double drift_arcsec = sqrt(square(ddx) + square(ddy)) * ech;
+            sendMessage("South calibration complete: " + QString::number(_calPulseS, 'f',
+                        2) + " ms/px (" + QString::number(_calPulseS / ech, 'f', 2) + " ms/arcsec, drift=" + QString::number(drift_arcsec, 'f',
+                                2) + "\")");
             //BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " Drift orientation =  " << a * 180 / PI;
             //BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " S drift (px) " <<  sqrt(square(ddy) + square(
             //                             ddy));
@@ -591,10 +652,12 @@ void Guider::SMComputeCal()
             //BOOST_LOG_TRIVIAL(debug) << "*********************** cal E " << _calPulseE;
             //BOOST_LOG_TRIVIAL(debug) << "*********************** cal N " << _calPulseN;
             //BOOST_LOG_TRIVIAL(debug) << "*********************** cal S " << _calPulseS;
-            getEltInt("values", "calPulseN")->setValue(_calPulseN);
-            getEltInt("values", "calPulseS")->setValue(_calPulseS);
-            getEltInt("values", "calPulseE")->setValue(_calPulseE);
-            getEltInt("values", "calPulseW")->setValue(_calPulseW, true);
+            getEltInt("calibrationvalues", "calPulseN")->setValue(_calPulseN);
+            getEltInt("calibrationvalues", "calPulseS")->setValue(_calPulseS);
+            getEltInt("calibrationvalues", "calPulseE")->setValue(_calPulseE);
+            getEltInt("calibrationvalues", "calPulseW")->setValue(_calPulseW, true);
+            sendMessage("Calibration completed successfully");
+            getProperty("actions")->setState(OST::Ok);
             emit CalibrationDone();
             _trigFirst = _trigCurrent;
             return;
@@ -618,8 +681,9 @@ void Guider::SMComputeCal()
     }
     double _driftRA =  _dxFirst * cos(_calCcdOrientation) + _dyFirst * sin(_calCcdOrientation);
     double _driftDE =  _dxFirst * sin(_calCcdOrientation) + _dyFirst * cos(_calCcdOrientation);
-    getEltFloat("drift", "RA")->setValue(_driftRA);
-    getEltFloat("drift", "DEC")->setValue(_driftDE);
+    double ech = getSampling();
+    getEltFloat("drift", "RA")->setValue(_driftRA * ech);
+    getEltFloat("drift", "DEC")->setValue(_driftDE * ech);
     getProperty("drift")->push();
 
 
@@ -700,27 +764,60 @@ void Guider::SMComputeGuide()
 
     _itt++;
 
+    // Store drift history for RMS calculation
+    _dRAvector.push_back(_driftRA * getSampling());
+    _dDEvector.push_back(_driftDE * getSampling());
+
+    // Limit vector size to rmsOver parameter
+    int rmsOver = getInt("guideParams", "rmsOver");
+    while (_dRAvector.size() > (size_t)rmsOver)
+    {
+        _dRAvector.erase(_dRAvector.begin());
+    }
+    while (_dDEvector.size() > (size_t)rmsOver)
+    {
+        _dDEvector.erase(_dDEvector.begin());
+    }
+
+    // Calculate RMS
+    double rmsRA = 0;
+    double rmsDEC = 0;
+    double rmsTotal = 0;
+
+    if (_dRAvector.size() > 0)
+    {
+        for (size_t i = 0; i < _dRAvector.size(); i++)
+        {
+            rmsRA += square(_dRAvector[i]);
+            rmsDEC += square(_dDEvector[i]);
+        }
+        rmsRA = sqrt(rmsRA / _dRAvector.size());
+        rmsDEC = sqrt(rmsDEC / _dDEvector.size());
+        rmsTotal = sqrt(square(rmsRA) + square(rmsDEC));
+    }
+
     getEltInt("values", "pulseN")->setValue(_pulseN);
     getEltInt("values", "pulseS")->setValue(_pulseS);
     getEltInt("values", "pulseE")->setValue(_pulseE);
-    getEltInt("values", "pulseW")->setValue(_pulseW, true);
-    getEltFloat("drift", "RA")->setValue(_driftRA);
-    getEltFloat("drift", "DEC")->setValue(_driftDE, true);
+    getEltInt("values", "pulseW")->setValue(_pulseW);
+    getEltFloat("values", "rmsRA")->setValue(rmsRA);
+    getEltFloat("values", "rmsDEC")->setValue(rmsDEC);
+    getEltFloat("values", "rmsTotal")->setValue(rmsTotal, true);
+    double ech = getSampling();
+    getEltFloat("drift", "RA")->setValue(_driftRA * ech);
+    getEltFloat("drift", "DEC")->setValue(_driftDE * ech, true);
     getProperty("drift")->push();
 
     //setOstElementValue("guiding", "time", QDateTime::currentDateTime().toString("dd/MM/yyyy hh:mm:ss zzz"), false);
     double tt = QDateTime::currentDateTime().toMSecsSinceEpoch();
     getEltFloat("guiding", "time")->setValue(tt);
-    getEltFloat("guiding", "RA")->setValue(_driftRA);
-    getEltFloat("guiding", "DE")->setValue(_driftDE);
+    getEltFloat("guiding", "RA")->setValue(_driftRA * ech);
+    getEltFloat("guiding", "DE")->setValue(_driftDE * ech);
     getEltFloat("guiding", "pDE")->setValue(_pulseN - _pulseS);
     getEltFloat("guiding", "pRA")->setValue( _pulseE - _pulseW);
+    getEltFloat("guiding", "SNR")->setValue(_image->getStats().SNR);
+    getEltFloat("guiding", "RMS")->setValue(rmsTotal);
     getProperty("guiding")->push();
-
-    //setOstElementValue("snr", "time", QDateTime::currentDateTime().toString("dd/MM/yyyy hh:mm:ss zzz"), false);
-    getEltFloat("snr", "time")->setValue(tt);
-    getEltFloat("snr", "snr")->setValue(_image->getStats().SNR);
-    getProperty("snr")->push();
 
     emit ComputeGuideDone();
 }
@@ -822,7 +919,8 @@ void Guider::OnSucessSEP()
 {
     //BOOST_LOG_TRIVIAL(debug) << "OnSucessSEP";
     OST::ImgData dta = getEltImg("image", "image")->value();
-    dta.HFRavg = _solver.HFRavg;
+    double ech = getSampling();
+    dta.HFRavg = _solver.HFRavg * ech;
     dta.starsCount = _solver.stars.size();
     getEltImg("image", "image")->setValue(dta, true);
 
