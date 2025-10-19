@@ -110,10 +110,10 @@
         "graphParams":{
             "X":"RA",
             "Y":"DEC",
-            "Xmin":-10,
-            "Xmax":10,
-            "Ymin":-10,
-            "Ymax":10
+            "Xmin":-5,
+            "Xmax":5,
+            "Ymin":-5,
+            "Ymax":5
         },
         "elements": {
             "RA": {
