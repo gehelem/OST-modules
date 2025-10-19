@@ -362,6 +362,57 @@ void Allsky::newBLOB(INDI::PropertyBlob pblob)
 
         QImage image1 = mKeog;
         QImage image2 = im.copy(r);
+
+        // Draw weather data overlay on the 1px band
+        QPainter bandPainter(&image2);
+
+        // Temperature: red point (range -15°C to +35°C)
+        float tempKeog = getFloat("measures", "temp");
+        // Always draw temperature (0°C is a valid value)
+        float tempMin = -15.0;
+        float tempMax = 35.0;
+        float tempNormalized = (tempKeog - tempMin) / (tempMax - tempMin); // 0 to 1
+        int tempY = image2.height() - (int)(tempNormalized * image2.height()); // Invert Y (0=top)
+
+        // Clamp to image bounds
+        if (tempY < 0) tempY = 0;
+        if (tempY >= image2.height()) tempY = image2.height() - 1;
+
+        bandPainter.setPen(QPen(QColor(255, 0, 0), 1)); // Red
+        bandPainter.drawPoint(0, tempY);
+
+        // Humidity: green point (range 0% to 100%)
+        float humKeog = getFloat("measures", "hum");
+        if (humKeog != 0)
+        {
+            float humNormalized = humKeog / 100.0; // 0 to 1
+            int humY = image2.height() - (int)(humNormalized * image2.height());
+
+            if (humY < 0) humY = 0;
+            if (humY >= image2.height()) humY = image2.height() - 1;
+
+            bandPainter.setPen(QPen(QColor(0, 255, 0), 1)); // Green
+            bandPainter.drawPoint(0, humY);
+        }
+
+        // Pressure: blue point (range 950 to 1050 hPa)
+        float pressKeog = getFloat("measures", "press");
+        if (pressKeog != 0)
+        {
+            float pressMin = 950.0;
+            float pressMax = 1050.0;
+            float pressNormalized = (pressKeog - pressMin) / (pressMax - pressMin);
+            int pressY = image2.height() - (int)(pressNormalized * image2.height());
+
+            if (pressY < 0) pressY = 0;
+            if (pressY >= image2.height()) pressY = image2.height() - 1;
+
+            bandPainter.setPen(QPen(QColor(0, 0, 255), 1)); // Blue
+            bandPainter.drawPoint(0, pressY);
+        }
+
+        bandPainter.end();
+
         QImage result(mKeog.width() + 1, rawImage.height(), QImage::Format_RGB32);
         QPainter painter(&result);
         painter.drawImage(0, 0, image1);
@@ -379,6 +430,39 @@ void Allsky::newBLOB(INDI::PropertyBlob pblob)
         p.setPen(QPen(Qt::red));
         p.setFont(QFont("Times", 15, QFont::Bold));
         p.drawText(r, Qt::AlignLeft, QDateTime::currentDateTime().toString("dd/MM/yyyy hh:mm:ss zzz") );
+
+        // Display weather data below date/time with color-coded text (vertical layout)
+        float temp = getFloat("measures", "temp");
+        float hum = getFloat("measures", "hum");
+        float press = getFloat("measures", "press");
+
+        int lineHeight = 18; // Reduced line height for tighter spacing
+        int yStart = im.height() / 10; // Start position below date/time
+        int xPos = 5; // Left margin
+
+        p.setFont(QFont("Times", 12, QFont::Bold)); // Slightly smaller font
+
+        // Temperature in red (always displayed)
+        p.setPen(QPen(QColor(255, 0, 0))); // Red
+        QString tempText = QString("T: %1°C").arg(temp, 0, 'f', 1);
+        p.drawText(xPos, yStart, tempText);
+
+        // Humidity in green
+        if (hum != 0)
+        {
+            p.setPen(QPen(QColor(0, 255, 0))); // Green
+            QString humText = QString("H: %1%").arg(hum, 0, 'f', 0);
+            p.drawText(xPos, yStart + lineHeight, humText);
+        }
+
+        // Pressure in blue
+        if (press != 0)
+        {
+            p.setPen(QPen(QColor(0, 0, 255))); // Blue
+            QString pressText = QString("P: %1 hPa").arg(press, 0, 'f', 0);
+            p.drawText(xPos, yStart + 2 * lineHeight, pressText);
+        }
+
         p.end();
 
 
