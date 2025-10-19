@@ -147,7 +147,8 @@
             "DE":"DE",
             "pRA":"pRA",
             "pDE":"pDE",
-            "RSB":"SNR"
+            "RSB":"SNR",
+            "RMS":"RMS"
         },
         "elements": {
             "time": {
@@ -185,6 +186,12 @@
                 "label": "SNR",
                 "value":0,
                 "order":6
+            },
+            "RMS": {
+                "type": "float",
+                "label": "RMS",
+                "value":0,
+                "order":7
             }
         }
     },

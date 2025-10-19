@@ -816,6 +816,7 @@ void Guider::SMComputeGuide()
     getEltFloat("guiding", "pDE")->setValue(_pulseN - _pulseS);
     getEltFloat("guiding", "pRA")->setValue( _pulseE - _pulseW);
     getEltFloat("guiding", "SNR")->setValue(_image->getStats().SNR);
+    getEltFloat("guiding", "RMS")->setValue(rmsTotal);
     getProperty("guiding")->push();
 
     emit ComputeGuideDone();
