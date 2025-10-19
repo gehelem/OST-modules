@@ -1,5 +1,6 @@
 #include "navigator.h"
 #include <QPainter>
+#include "versionModule.cc"
 
 Navigator *initialize(QString name, QString label, QString profile, QVariantMap availableModuleLibs)
 {
@@ -8,15 +9,25 @@ Navigator *initialize(QString name, QString label, QString profile, QVariantMap 
 }
 
 Navigator::Navigator(QString name, QString label, QString profile, QVariantMap availableModuleLibs)
-    : IndiModule(name, label, profile, availableModuleLibs)
-
+    : IndiModule(name, label, profile, availableModuleLibs),
+      mMaxIterations(0),
+      mCurrentIteration(0),
+      mToleranceArcsec(0.0),
+      mTargetRA(0.0),
+      mTargetDEC(0.0),
+      mTargetRAnow(0.0),
+      mTargetDECnow(0.0),
+      mWaitingSlew(false)
 {
 
     loadOstPropertiesFromFile(":navigator.json");
     setClassName(QString(metaObject()->className()).toLower());
 
     setModuleDescription("Navigator module");
-    setModuleVersion("0.1");
+    setModuleVersion("0.2");
+    getEltString("thisGit", "hash")->setValue(QString::fromStdString(VersionModule::GIT_SHA1), true);
+    getEltString("thisGit", "date")->setValue(QString::fromStdString(VersionModule::GIT_DATE), true);
+    getEltString("thisGit", "message")->setValue(QString::fromStdString(VersionModule::GIT_COMMIT_SUBJECT), true);
 
     giveMeADevice("camera", "Camera", INDI::BaseDevice::CCD_INTERFACE);
     giveMeADevice("mount", "Mount", INDI::BaseDevice::TELESCOPE_INTERFACE);
@@ -86,6 +97,15 @@ void Navigator::OnMyExternalEvent(const QString &pEventType, const QString  &pEv
                     if (keyelt == "gototarget")
                     {
                         mState = "running";
+                        mCurrentIteration = 0;
+                        // Load centering parameters from properties
+                        mMaxIterations = getInt("centeringparams", "maxiterations");
+                        mToleranceArcsec = getFloat("centeringparams", "tolerance");
+                        // Store target coordinates for centering loop
+                        mTargetRAnow = getFloat("selectnow", "RA");
+                        mTargetDECnow = getFloat("selectnow", "DEC");
+                        sendMessage(QString("Starting goto with centering: max %1 iterations, tolerance %2\"")
+                                    .arg(mMaxIterations).arg(mToleranceArcsec, 0, 'f', 1));
                         initIndi();
                         slewToSelection();
                     }
@@ -93,6 +113,7 @@ void Navigator::OnMyExternalEvent(const QString &pEventType, const QString  &pEv
                     {
                         stellarSolver.abort();
                         mState = "idle";
+                        mCurrentIteration = 0;
                         getProperty(keyprop)->setState(OST::Ok);
                     }
                 }
@@ -158,7 +179,6 @@ void Navigator::OnNewImage()
     }
     else
     {
-        qDebug() << "mount pos " << ra << dec;
         double wra = ra * 360 / 24;
         double wde = dec;
         stellarSolver.loadNewImageBuffer(pImage->getStats(), pImage->getImageBuffer());
@@ -176,7 +196,7 @@ void Navigator::OnNewImage()
         stellarSolver.setLogLevel(LOG_ALL);
         stellarSolver.setSSLogLevel(LOG_VERBOSE);
         stellarSolver.setProperty("LogToFile", true);
-        stellarSolver.setProperty("LogFileName", "/home/gilles/projets/OST/solver.log");
+        stellarSolver.setProperty("LogFileName", getWebroot() + "/navigator_solver.log");
         stellarSolver.start();
     }
 }
@@ -204,12 +224,17 @@ void Navigator::updateProperty(INDI::Property property)
     )
     {
 
-        sendMessage("Slew finished");
-        Shoot();
+        if (mWaitingSlew)
+        {
+            mWaitingSlew = false;
+            sendMessage("Slew finished");
+            Shoot();
+        }
     }
 }
 void Navigator::Shoot()
 {
+    sendMessage("Shoot new image");
     setFocalLengthAndDiameter();
     if (!requestCapture(getString("devices", "camera"), getFloat("parms", "exposure"), getInt("parms", "gain"), getInt("parms",
                         "offset")))
@@ -229,7 +254,6 @@ void Navigator::initIndi()
     {
         sendModNewNumber(getString("devices", "camera"), "SIMULATOR_SETTINGS", "SIM_TIME_FACTOR", 0.01 );
     }
-    sendModNewNumber(getString("devices", "camera"), "SIMULATOR_SETTINGS", "SIM_TIME_FACTOR", 0.01 );
     enableDirectBlobAccess(getString("devices", "camera").toStdString().c_str(), nullptr);
 
 }
@@ -240,21 +264,55 @@ void Navigator::OnSolverLog(QString text)
 }
 void Navigator::OnSucessSolve()
 {
-    qDebug() << "OnSucessSolve";
-    getProperty("actions")->setState(OST::Ok);
+    if (stellarSolver.failed())
+    {
+        sendError("Image NOT solved - centering aborted");
+        stellarSolver.abort();
+        getProperty("actions")->setState(OST::Error);
+        mState = "idle";
+        mCurrentIteration = 0;
+        return;
+    }
 
+    // Get solved coordinates
+    double solvedRA = stellarSolver.getSolution().ra * 24 / 360;
+    double solvedDEC = stellarSolver.getSolution().dec;
+    // Update image with solve data
     OST::ImgData dta = pImage->ImgStats();
     dta.mUrlJpeg = getModuleName() + ".jpeg";
-    dta.solverRA = stellarSolver.getSolution().ra;
-    dta.solverDE = stellarSolver.getSolution().dec;
+    dta.solverRA = solvedRA;
+    dta.solverDE = solvedDEC;
     dta.isSolved = true;
     getEltImg("image", "image")->setValue(dta, true);
 
-    mState = "idle";
-    /*disconnect(&mSolver, &Solver::successSolve, this, &Navigator::OnSucessSolve);
-    disconnect(&mSolver, &Solver::solverLog, this, &Navigator::OnSolverLog);*/
-    if (stellarSolver.failed()) sendMessage("Image NOT solved");
-    else sendMessage("Image solved");
+    mCurrentIteration++;
+
+    // Check if centering is satisfactory
+    if (checkCentering(solvedRA, solvedDEC, mTargetRA, mTargetDEC))
+    {
+        sendMessage(QString("Centering successful after %1 iteration(s) - within tolerance")
+                    .arg(mCurrentIteration));
+        getProperty("actions")->setState(OST::Ok);
+        mState = "idle";
+        mCurrentIteration = 0;
+        return;
+    }
+
+    // Check max iterations
+    if (mCurrentIteration >= mMaxIterations)
+    {
+        sendError(QString("Centering failed after %1 iterations - tolerance not reached")
+                  .arg(mMaxIterations));
+        getProperty("actions")->setState(OST::Error);
+        mState = "idle";
+        mCurrentIteration = 0;
+        return;
+    }
+
+    // Need correction - continue centering loop
+    sendMessage(QString("Centering iteration %1/%2 - applying correction")
+                .arg(mCurrentIteration).arg(mMaxIterations));
+    correctOffset(solvedRA, solvedDEC);
 }
 void Navigator::updateSearchList(void)
 {
@@ -300,8 +358,6 @@ void Navigator::slewToSelection(void)
 {
     QString mount = getString("devices", "mount");
     QString cam  = getString("devices", "camera");
-    double ra  = getFloat("selectnow", "RA");
-    double dec  = getFloat("selectnow", "DEC");
     INDI::BaseDevice dp = getDevice(mount.toStdString().c_str());
     if (!dp.isValid())
     {
@@ -314,8 +370,10 @@ void Navigator::slewToSelection(void)
         sendError("Error - unable to find " + mount + "/" + prop + " property. Aborting.");
         return;
     }
-    prop.findWidgetByName("RA")->value = ra;
-    prop.findWidgetByName("DEC")->value = dec;
+    prop.findWidgetByName("RA")->value = mTargetRAnow;
+    prop.findWidgetByName("DEC")->value = mTargetDECnow;
+
+    mWaitingSlew = true;
     sendNewNumber(prop);
     sendMessage("Slewing to " + getString("actions", "targetname"));
 
@@ -323,17 +381,90 @@ void Navigator::slewToSelection(void)
 void Navigator::convertSelection(void)
 {
     QString code = getString("actions", "targetname");
-    float ra = getFloat("actions", "targetra");
-    float dec = getFloat("actions", "targetde");
+    mTargetRA = getFloat("actions", "targetra");
+    mTargetDEC = getFloat("actions", "targetde");
     double jd = ln_get_julian_from_sys();
     INDI::IEquatorialCoordinates j2000pos;
     INDI::IEquatorialCoordinates observed;
-    j2000pos.declination = dec;
-    j2000pos.rightascension = ra;
+    j2000pos.declination = mTargetDEC;
+    j2000pos.rightascension = mTargetRA;
 
     INDI::J2000toObserved(&j2000pos, jd, &observed);
+    mTargetRAnow = observed.rightascension;
+    mTargetDECnow = observed.declination;
     getEltString("selectnow", "jd")->setValue(""); // we'll see that later
     getEltString("selectnow", "code")->setValue(code);
     getEltFloat("selectnow", "RA")->setValue(observed.rightascension);
     getEltFloat("selectnow", "DEC")->setValue(observed.declination, true);
+
+}
+
+bool Navigator::checkCentering(double solvedRA, double solvedDEC, double targetRA, double targetDEC)
+{
+    // Calculate angular distance in arcseconds
+    double deltaRA = (solvedRA * 360 / 24 - targetRA * 360 / 24) * 3600 ;
+    double deltaDEC = (solvedDEC - targetDEC) * 3600 ;
+
+    // Total angular distance in arcseconds
+    double distance = sqrt(deltaRA * deltaRA + deltaDEC * deltaDEC);
+
+    sendMessage(QString("Offset: RA=%1\" DEC=%2\" Total=%3\"")
+                .arg(deltaRA, 0, 'f', 3)
+                .arg(deltaDEC, 0, 'f', 3)
+                .arg(distance, 0, 'f', 3));
+
+    // Check tolerance (convert to arcsec from JSON parameter if needed)
+    return (distance <= mToleranceArcsec);
+}
+
+void Navigator::correctOffset(double solvedRA, double solvedDEC)
+{
+    // Calculate correction offset
+    double deltaRA = mTargetRA - solvedRA;  // Hours
+    double deltaDEC = mTargetDEC - solvedDEC; // Degrees
+
+    // Get current mount position
+    QString mount = getString("devices", "mount");
+    INDI::BaseDevice dp = getDevice(mount.toStdString().c_str());
+    if (!dp.isValid())
+    {
+        sendError("Error - unable to find " + mount + " device for correction.");
+        mState = "idle";
+        return;
+    }
+
+    INDI::PropertyNumber prop = dp.getProperty("EQUATORIAL_EOD_COORD");
+    if (!prop.isValid())
+    {
+        sendError("Error - unable to find mount coordinates for correction.");
+        mState = "idle";
+        return;
+    }
+
+    // Read current position
+    double currentRA = prop.findWidgetByName("RA")->value;
+    double currentDEC = prop.findWidgetByName("DEC")->value;
+
+    // Apply correction
+    double newRA = currentRA + deltaRA;
+    double newDEC = currentDEC + deltaDEC;
+    sendMessage("Slewing to " + getString("actions",
+                                          "targetname") + "-" + QString::number(newRA) + "-" + QString::number(newDEC));
+
+    sendMessage(QString("Applying correction: RA %1h → %2h, DEC %3° → %4°")
+                .arg(currentRA, 0, 'f', 4)
+                .arg(newRA, 0, 'f', 4)
+                .arg(currentDEC, 0, 'f', 2)
+                .arg(newDEC, 0, 'f', 2));
+
+    // Send corrected position to mount
+    qDebug() << prop.findWidgetByName("RA")->value << "->" << newRA;
+    qDebug() << prop.findWidgetByName("DEC")->value << "->" << newDEC;
+    prop.findWidgetByName("RA")->value = newRA;
+    prop.findWidgetByName("DEC")->value = newDEC;
+    mWaitingSlew = true;
+    sendNewNumber(prop);
+
+    // Mount will trigger updateProperty when slew is complete
+    // which will call Shoot() again for next iteration
 }

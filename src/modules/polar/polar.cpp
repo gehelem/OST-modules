@@ -1,6 +1,7 @@
 #include "polar.h"
 #include "rotations.h"
 #include <QPainter>
+#include "versionModule.cc"
 
 #define PI 3.14159265
 
@@ -18,6 +19,9 @@ Polar::Polar(QString name, QString label, QString profile, QVariantMap available
 
     setModuleDescription("Polar assistant");
     setModuleVersion("0.1");
+    getEltString("thisGit", "hash")->setValue(QString::fromStdString(VersionModule::GIT_SHA1), true);
+    getEltString("thisGit", "date")->setValue(QString::fromStdString(VersionModule::GIT_DATE), true);
+    getEltString("thisGit", "message")->setValue(QString::fromStdString(VersionModule::GIT_COMMIT_SUBJECT), true);
 
     giveMeADevice("camera", "Camera", INDI::BaseDevice::CCD_INTERFACE);
     giveMeADevice("mount", "Mount", INDI::BaseDevice::TELESCOPE_INTERFACE);

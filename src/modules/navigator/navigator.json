@@ -1,5 +1,43 @@
 {
 "properties":{
+    "centeringparams": {
+        "devcat": "Parameters",
+        "order": "Param0000",
+        "group": "",
+        "permission": 2,
+        "hasprofile":true,
+        "rule":0,
+        "label": "Centering parameters",
+        "elements": {
+            "maxiterations": {
+                "autoupdate":true,
+                "directedit":true,
+                "type": "int",
+                "label": "Max iterations",
+                "order": "1",
+                "value":5,
+                "min":1,
+                "max":10,
+                "step":1,
+                "slider":2,
+                "hint":"Maximum number of centering iterations"
+            },
+            "tolerance": {
+                "autoupdate":true,
+                "directedit":true,
+                "type": "float",
+                "label": "Tolerance (arcsec)",
+                "order": "2",
+                "value":30.0,
+                "min":5.0,
+                "max":300.0,
+                "step":5.0,
+                "slider":2,
+                "format":"%.1f",
+                "hint":"Centering tolerance in arcseconds"
+            }
+        }
+    },
     "search": {
         "devcat": "Control",
         "order": "Control0000",

@@ -11,51 +11,89 @@
                 "type":"int",
                 "label": "Pulse N",
                 "order":"01",
+                "value": 0,
                 "format": "99.99"
             },
             "pulseS": {
                 "type":"int",
                 "label": "Pulse S",
                 "order":"02",
+                "value": 0,
                 "format": "99.99"
             },
             "pulseE": {
                 "type":"int",
                 "label": "Pulse E",
                 "order":"03",
+                "value": 0,
                 "format": "99.99"
             },
             "pulseW": {
                 "type":"int",
                 "label": "Pulse W",
                 "order":"04",
+                "value": 0,
                 "format": "99.99"
             },
+            "rmsRA": {
+                "type":"float",
+                "label": "RMS RA",
+                "order":"05",
+                "value": 0,
+                "format": "99.99"
+            },
+            "rmsDEC": {
+                "type":"float",
+                "label": "RMS DEC",
+                "order":"06",
+                "value": 0,
+                "format": "99.99"
+            },
+            "rmsTotal": {
+                "type":"float",
+                "label": "RMS Total",
+                "order":"07",
+                "value": 0,
+                "format": "99.99"
+            }
+        }
+    },
+    "calibrationvalues": {
+        "devcat": "Control",
+        "group": "",
+        "order":"Control850",
+        "permission": 0,
+        "hasprofile": true,
+        "label": "Calibration Values",
+        "elements": {
             "calPulseN": {
                 "type":"int",
                 "label": "Calibration Pulse N",
-                "order":"91",
+                "order":"01",
+                "value": 0,
                 "format": "99.99"
             },
             "calPulseS": {
                 "type":"int",
                 "label": "Calibration Pulse S",
-                "order":"92",
+                "order":"02",
+                "value": 0,
                 "format": "99.99"
             },
             "calPulseE": {
                 "type":"int",
                 "label": "Calibration Pulse E",
-                "order":"93",
+                "order":"03",
+                "value": 0,
                 "format": "99.99"
             },
             "calPulseW": {
                 "type":"int",
                 "label": "Calibration Pulse W",
-                "order":"94",
+                "order":"04",
+                "value": 0,
                 "format": "99.99"
             }
-
         }
     },
     "drift": {
@@ -65,12 +103,17 @@
         "permission": 0,
         "label": "Drift",
         "hasGrid":true,
+        "showElts":false,
         "showGrid":false,
         "gridLimit":200,
         "graphType":"XY",
         "graphParams":{
             "X":"RA",
-            "Y":"DEC"
+            "Y":"DEC",
+            "Xmin":-5,
+            "Xmax":5,
+            "Ymin":-5,
+            "Ymax":5
         },
         "elements": {
             "RA": {
@@ -94,6 +137,7 @@
         "permission": 0,
         "label": "Guiding graph",
         "hasGrid":true,
+        "showElts":false,
         "showGrid":false,
         "gridLimit":20,
         "graphType":"PHD",
@@ -102,7 +146,9 @@
             "RA":"RA",
             "DE":"DE",
             "pRA":"pRA",
-            "pDE":"pDE"
+            "pDE":"pDE",
+            "RSB":"SNR",
+            "RMS":"RMS"
         },
         "elements": {
             "time": {
@@ -134,39 +180,20 @@
                 "label": "Pulse (DE)",
                 "order":"05",
                 "format": "99.99"
+            },
+            "SNR": {
+                "type": "float",
+                "label": "SNR",
+                "value":0,
+                "order":6
+            },
+            "RMS": {
+                "type": "float",
+                "label": "RMS",
+                "value":0,
+                "order":7
             }
         }
-    },
-    "snr": {
-        "devcat": "Control",
-        "gridLimit":50,
-        "order":"Control300",
-        "rule":0,
-        "hasGrid":true,
-        "showGrid":false,
-        "gridLimit":20,
-        "graphType":"DY",
-        "graphParams":{
-            "D":"time",
-            "Y":"snr"
-        },
-        "elements": {
-                "time": {
-                    "type":"float",
-                    "label": "Time",
-                    "order":"01",
-                    "value":0
-                },
-                "snr": {
-                    "type":"float",
-                    "label": "SNR",
-                    "order":"02",
-                    "value":0
-                }
-        },
-        "group": "",
-        "permission": 0,
-        "label": "SNR"
     },
     "calParams": {
         "devcat": "Parameters",
@@ -241,6 +268,16 @@
                 "order":"04",
                 "value":0.8,
                 "format": "99"
+            },
+            "rmsOver": {
+                "type":"int",
+                "autoupdate":true,
+                "directedit":true,
+                "label": "RMS drift over x",
+                "order":"05",
+                "value":10,
+                "format": "99",
+                "hint": "Number of frames to calculate RMS drift"
             }
         }
     },
