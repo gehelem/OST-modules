@@ -219,6 +219,16 @@ void Navigator::updateProperty(INDI::Property property)
     if (
         (property.getDeviceName() == getString("devices", "mount"))
         &&  (property.getName()   == std::string("EQUATORIAL_EOD_COORD"))
+    )
+    {
+        // Update mount position
+        INDI::PropertyNumber prop = property;
+        getEltFloat("mountposition", "RA")->setValue(prop.findWidgetByName("RA")->value, false);
+        getEltFloat("mountposition", "DEC")->setValue(prop.findWidgetByName("DEC")->value, true);
+    }
+    if (
+        (property.getDeviceName() == getString("devices", "mount"))
+        &&  (property.getName()   == std::string("EQUATORIAL_EOD_COORD"))
         &&  (property.getState() == IPS_OK)
         && mState == "running"
     )
