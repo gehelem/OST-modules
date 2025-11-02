@@ -198,6 +198,28 @@
                 ]
             }
         }
+    },
+    "mountposition": {
+        "devcat": "Control",
+        "order": "Control0000",
+        "group": "",
+        "permission": 0,
+        "rule":0,
+        "label": "Mount position",
+        "elements": {
+            "RA": {
+                "type": "float",
+                "label": "RA",
+                "order": "10",
+                "value": 0.0
+            },
+            "DEC": {
+                "type": "float",
+                "label": "DEC",
+                "order": "20",
+                "value": 0.0
+            }
+        }
     }
 }
 }
