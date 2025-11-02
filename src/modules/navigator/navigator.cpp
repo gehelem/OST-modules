@@ -186,15 +186,15 @@ void Navigator::OnNewImage()
         folders.append("/usr/share/astrometry/");
         stellarSolver.setIndexFolderPaths(folders);
         stellarSolver.setProperty("UseScale", true);
-        stellarSolver.setSearchScale(ech * 0.9, ech * 1.1, ScaleUnits::ARCSEC_PER_PIX);
+        stellarSolver.setSearchScale(ech * 0.8, ech * 1.2, ScaleUnits::ARCSEC_PER_PIX);
         stellarSolver.setProperty("UsePosition", true);
         stellarSolver.setSearchPositionInDegrees(wra, wde);
         stellarSolver.setParameters(StellarSolver::getBuiltInProfiles()[SSolver::Parameters::DEFAULT]);
         stellarSolver.setProperty("ProcessType", SOLVE);
         stellarSolver.setProperty("ExtractorType", EXTRACTOR_INTERNAL);
         stellarSolver.setProperty("SolverType", SOLVER_STELLARSOLVER);
-        stellarSolver.setLogLevel(LOG_ALL);
-        stellarSolver.setSSLogLevel(LOG_VERBOSE);
+        stellarSolver.setLogLevel(LOG_MSG);
+        stellarSolver.setSSLogLevel(LOG_NORMAL);
         stellarSolver.setProperty("LogToFile", true);
         stellarSolver.setProperty("LogFileName", getWebroot() + "/navigator_solver.log");
         stellarSolver.start();
@@ -276,7 +276,7 @@ void Navigator::OnSucessSolve()
 {
     if (stellarSolver.failed())
     {
-        sendError("Image NOT solved - centering aborted");
+        sendError("Image NOT solved - Centering aborted");
         stellarSolver.abort();
         getProperty("actions")->setState(OST::Error);
         mState = "idle";
@@ -303,6 +303,7 @@ void Navigator::OnSucessSolve()
         sendMessage(QString("Centering successful after %1 iteration(s) - within tolerance")
                     .arg(mCurrentIteration));
         getProperty("actions")->setState(OST::Ok);
+        syncMountIfNeeded(solvedRA, solvedDEC);
         mState = "idle";
         mCurrentIteration = 0;
         return;
@@ -475,4 +476,41 @@ void Navigator::correctOffset(double solvedRA, double solvedDEC)
 
     // Mount will trigger updateProperty when slew is complete
     // which will call Shoot() again for next iteration
+}
+void Navigator::syncMountIfNeeded(double solvedRA, double solvedDEC)
+{
+
+    // Get mount device
+    QString mount = getString("devices", "mount");
+    INDI::BaseDevice dp = getDevice(mount.toStdString().c_str());
+    if (!(dp.getDriverInterface() & INDI::BaseDevice::TELESCOPE_INTERFACE))
+    {
+        sendError( "Device " + mount + " has no telescope interface");
+        return;
+    }
+
+    if (!sendModNewSwitch(mount, "ON_COORD_SET", "SYNC", ISS_ON)) return;
+
+    INDI::PropertyNumber prop = dp.getProperty("EQUATORIAL_EOD_COORD");
+    if (!prop.isValid())
+    {
+        sendError("Error - unable to find " + mount + " / EQUATORIAL_EOD_COORD property. Aborting.");
+        return;
+    }
+    double jd = ln_get_julian_from_sys();
+    INDI::IEquatorialCoordinates j2000pos;
+    INDI::IEquatorialCoordinates observed;
+    observed.rightascension = solvedRA;
+    observed.declination = solvedDEC;
+    INDI::ObservedToJ2000(&observed, jd, &j2000pos);
+
+    prop.findWidgetByName("RA")->value = j2000pos.declination;
+    prop.findWidgetByName("DEC")->value = j2000pos.rightascension;
+    sendNewNumber(prop);
+
+    //restore slew
+    if (!sendModNewSwitch(mount, "ON_COORD_SET", "SLEW", ISS_ON)) return;
+
+    sendMessage("Mount successfully synchronized with solved field");
+
 }
