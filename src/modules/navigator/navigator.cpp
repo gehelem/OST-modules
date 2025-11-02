@@ -458,8 +458,6 @@ void Navigator::correctOffset(double solvedRA, double solvedDEC)
                 .arg(newDEC, 0, 'f', 2));
 
     // Send corrected position to mount
-    qDebug() << prop.findWidgetByName("RA")->value << "->" << newRA;
-    qDebug() << prop.findWidgetByName("DEC")->value << "->" << newDEC;
     prop.findWidgetByName("RA")->value = newRA;
     prop.findWidgetByName("DEC")->value = newDEC;
     mWaitingSlew = true;
