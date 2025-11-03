@@ -47,6 +47,7 @@ class MODULE_INIT Navigator : public IndiModule
         void convertSelection(void);
         void correctOffset(double solvedRA, double solvedDEC);
         bool checkCentering(double solvedRA, double solvedDEC, double targetRA, double targetDEC);
+        void syncMountIfNeeded(double solvedRA, double solvedDEC);
 
 
         QString mState = "idle";

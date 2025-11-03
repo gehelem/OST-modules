@@ -6,7 +6,7 @@
         "group": "",
         "permission": 2,
         "hasprofile":true,
-        "rule":0,
+        "rule":2,
         "label": "Centering parameters",
         "elements": {
             "maxiterations": {
@@ -35,7 +35,17 @@
                 "slider":2,
                 "format":"%.1f",
                 "hint":"Centering tolerance in arcseconds"
+            },
+            "syncafter": {
+                "autoupdate":true,
+                "directedit":true,
+                "type": "bool",
+                "label": "Sync mount after sucess",
+                "order": "3",
+                "value":false,
+                "hint":"Synchronise mount coordinates after centering"
             }
+
         }
     },
     "search": {
@@ -196,6 +206,28 @@
                     ["ic","IC"],
                     ["stars","Stars"]
                 ]
+            }
+        }
+    },
+    "mountposition": {
+        "devcat": "Control",
+        "order": "Control0000",
+        "group": "",
+        "permission": 0,
+        "rule":0,
+        "label": "Mount position",
+        "elements": {
+            "RA": {
+                "type": "float",
+                "label": "RA",
+                "order": "10",
+                "value": 0.0
+            },
+            "DEC": {
+                "type": "float",
+                "label": "DEC",
+                "order": "20",
+                "value": 0.0
             }
         }
     }
