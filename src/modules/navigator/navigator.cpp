@@ -31,6 +31,7 @@ Navigator::Navigator(QString name, QString label, QString profile, QVariantMap a
 
     giveMeADevice("camera", "Camera", INDI::BaseDevice::CCD_INTERFACE);
     giveMeADevice("mount", "Mount", INDI::BaseDevice::TELESCOPE_INTERFACE);
+    giveMeADevice("gps", "GPS", INDI::BaseDevice::GPS_INTERFACE);
 
     defineMeAsNavigator();
 
