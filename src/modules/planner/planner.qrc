@@ -1,5 +1,5 @@
 <RCC>
     <qresource prefix="/">
-        <file>template.json</file>
+        <file>planner.json</file>
     </qresource>
 </RCC>
