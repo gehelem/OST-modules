@@ -293,6 +293,24 @@ void Navigator::initIndi()
     }
     enableDirectBlobAccess(getString("devices", "camera").toStdString().c_str(), nullptr);
 
+    // Update GPS Coords
+    INDI::PropertyNumber pn = getDevice(getString("devices", "gps").toStdString().c_str()).getProperty("GEOGRAPHIC_COORD",
+                              INDI_NUMBER);
+    getEltFloat("gpslocation", "alt")->setValue(pn.findWidgetByName("ELEV")->value, false);
+    getEltFloat("gpslocation", "lat")->setValue(pn.findWidgetByName("LAT")->value, false);
+    getEltFloat("gpslocation", "lon")->setValue(pn.findWidgetByName("LONG")->value, true);
+    // Update GPS Time and date
+    INDI::PropertyText pt = getDevice(getString("devices", "gps").toStdString().c_str()).getProperty("TIME_UTC", INDI_TEXT);
+    QDateTime dt;
+    QString strdt = pt.findWidgetByName("UTC")->text;
+    QString offset = pt.findWidgetByName("OFFSET")->text;
+    dt = dt.fromString(strdt, Qt::ISODate);
+    getEltDate("gpstime", "date")->setValue(dt.date(), false);
+    getEltTime("gpstime", "time")->setValue(dt.time(), false);
+    getEltFloat("gpstime", "offset")->setValue(offset.toFloat(), true);
+
+
+
 }
 void Navigator::OnSolverLog(QString text)
 {
