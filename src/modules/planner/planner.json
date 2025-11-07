@@ -1,9 +1,10 @@
 {
+"properties":{
   "moduleInfo": {
     "label": "Module Info",
     "permission": 0,
-    "level1": "Info",
-    "level2": "",
+    "devcat": "Info",
+    "group": "",
     "order": "000",
     "hasprofile": false,
     "elements": {
@@ -36,8 +37,8 @@
   "progress": {
     "label": "Progress",
     "permission": 0,
-    "level1": "Control",
-    "level2": "",
+    "devcat": "Control",
+    "group": "",
     "order": "001",
     "hasprofile": false,
     "elements": {
@@ -53,8 +54,8 @@
   "parameters": {
     "label": "Parameters",
     "permission": 2,
-    "level1": "Parameters",
-    "level2": "",
+    "devcat": "Parameters",
+    "group": "",
     "order": "100",
     "hasprofile": true,
     "elements": {
@@ -69,5 +70,52 @@
           "hint": "Name of the sequencer module INSTANCE to use"
       }
     }
+  },
+  "planning": {
+    "label": "Planning",
+    "permission": 2,
+    "devcat": "Control",
+    "group": "",
+    "order": "050",
+    "hasprofile": true,
+    "showElts":false,
+    "hasGrid": true,
+    "showGrid": true,
+    "elements": {
+      "object": {
+          "type": "string",
+          "label": "Object",
+          "autoupdate": false,
+          "directedit": false,
+          "order": 0,
+          "hint": "Object name"
+      },
+      "ra": {
+          "type": "float",
+          "label": "RA",
+          "autoupdate": false,
+          "directedit": false,
+          "order": 10,
+          "hint": "Object RA"
+      },
+      "dec": {
+          "type": "float",
+          "label": "DEC",
+          "autoupdate": false,
+          "directedit": false,
+          "order": 20,
+          "hint": "Object DEC"
+      },
+      "profile": {
+          "type": "string",
+          "label": "Profile",
+          "autoupdate": false,
+          "directedit": false,
+          "order": 30,
+          "hint": "Sequencer profile"
+      }
+    }
   }
+
+}
 }

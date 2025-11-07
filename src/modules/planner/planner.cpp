@@ -15,6 +15,8 @@ Planner::Planner(QString name, QString label, QString profile, QVariantMap avail
     : IndiModule(name, label, profile, availableModuleLibs),
       mIsRunning(false)
 {
+    Q_INIT_RESOURCE(planner);
+
     // Load properties from JSON file
     loadOstPropertiesFromFile(":planner.json");
 
@@ -83,18 +85,34 @@ void Planner::OnMyExternalEvent(const QString &eventType, const QString &eventMo
                     abortOperation();
                 }
             }
+        }
 
-            // Example: Handle custom property changes
-            if (keyprop == "customProperty")
+        if (keyprop == "planning")
+        {
+            if (eventType == "Fldelete")
             {
-                if (keyelt == "intValue")
-                {
-                    int value = val.toInt();
-                    sendMessage(QString("Integer value changed to: %1").arg(value));
-                    // Do something with the value...
-                }
+                double line = eventData[keyprop].toMap()["line"].toDouble();
+                getProperty(keyprop)->deleteLine(line);
+            }
+            if (eventType == "Flcreate")
+            {
+                QVariantMap m = eventData[keyprop].toMap()["elements"].toMap();
+                getProperty(keyprop)->newLine(m);
+                //getEltPrg(keyprop, "progress")->setPrgValue(0, false);
+                //getEltPrg(keyprop, "progress")->setDynLabel("Added", false);
+                getProperty(keyprop)->updateLine(getProperty(keyprop)->getGrid().count() - 1);
+            }
+            if (eventType == "Flupdate")
+            {
+                double line = eventData[keyprop].toMap()["line"].toDouble();
+                QVariantMap m = eventData[keyprop].toMap()["elements"].toMap();
+                getProperty(keyprop)->updateLine(line, m);
+                //getEltPrg(keyprop, "progress")->setPrgValue(0, false);
+                //getEltPrg(keyprop, "progress")->setDynLabel("Updated", false);
+                getProperty(keyprop)->updateLine(line);
             }
         }
+
     }
 }
 
