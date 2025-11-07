@@ -52,7 +52,7 @@ Navigator::~Navigator()
 void Navigator::OnMyExternalEvent(const QString &pEventType, const QString  &pEventModule, const QString  &pEventKey,
                                   const QVariantMap &pEventData)
 {
-    //sendMessage("OnMyExternalEvent - recv : " + getModuleName() + "-" + eventType + "-" + eventKey);
+    //sendMessage("OnMyExternalEvent - recv : " + getModuleName() + "-" + pEventType + "-" + pEventKey);
     Q_UNUSED(pEventType);
     Q_UNUSED(pEventKey);
 

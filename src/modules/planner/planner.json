@@ -89,6 +89,15 @@
           "directedit": false,
           "order": 30,
           "hint": "Sequencer profile"
+      },
+      "progress": {
+          "type":"prg",
+          "label": "Progress",
+          "prgtype": "spinner",
+          "dynlabel": "",
+          "order":7,
+          "value":"idle",
+          "gridvalues":[]
       }
     }
   }

@@ -67,8 +67,33 @@ class Planner : public IndiModule
          */
         void abortPlanner();
 
+        /**
+         * @brief What to do after sequence is completed
+         */
+        void sequenceComplete();
+
+        /**
+         * @brief What to do after navigator is completed
+         */
+        void navigatorComplete();
+
+        /**
+         * @brief Start current planning line
+         */
+        void startLine();
+
+
         // Example internal state variables
         bool mIsRunning;
+
+        // Waiting sequence
+        bool mWaitingSequence ;
+
+        // Waiting navigator
+        bool mWaitingNavigator;
+
+        // Current line
+        int mCurrentLine;
 
 };
 

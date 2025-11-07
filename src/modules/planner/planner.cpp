@@ -64,6 +64,19 @@ void Planner::OnMyExternalEvent(const QString &eventType, const QString &eventMo
     Q_UNUSED(eventType);
     Q_UNUSED(eventKey);
 
+    // Check if this is a sequence completion event
+    if (eventType == "sequencedone" && mWaitingSequence && getString("parms", "sequencemodule") == eventModule )
+    {
+        sequenceComplete();
+        return;
+    }
+    // Check if this is a navigator completion event
+    if (eventType == "navigatordone" && mWaitingNavigator && getString("parms", "navigatormodule") == eventModule )
+    {
+        navigatorComplete();
+        return;
+    }
+
     // Only handle events for this module
     if (getModuleName() != eventModule)
         return;
@@ -174,18 +187,39 @@ void Planner::startPlanner()
         abortPlanner();
         return;
     }
+    int lineCount = getProperty("planning")->getGrid().count();
+
+    if (lineCount == 0)
+    {
+        sendError("Planning grid is empty");
+        getProperty("actions")->setState(OST::Error);
+        abortPlanner();
+        return;
+    }
+
+
+    mIsRunning = true;
+
+    getProperty("actions")->setState(OST::Busy);
+    sendMessage("Starting planner...");
 
     // Disable properties during operation (optional)
     getProperty("parms")->disable();
     getProperty("devices")->disable();
 
-    mIsRunning = true;
-
-    sendMessage("Starting planner...");
-
     // Update progress
     getEltPrg("progress", "global")->setPrgValue(0, true);
-    //getEltPrg("progress", "global")->setDynLabel("Step 0/" + QString::number(mTotalSteps), true);
+    getEltPrg("progress", "global")->setDynLabel("Step 0/" + QString::number(lineCount), true);
+    for (int i = 0; i < getProperty("planning")->getGrid().count(); i++)
+    {
+        getProperty("planning")->fetchLine(i);
+        getEltPrg("planning", "progress")->setDynLabel("Queued", false);
+        getEltPrg("planning", "progress")->setPrgValue(0, false);
+        getProperty("planning")->updateLine(i);
+    }
+
+    mCurrentLine = 0;
+    startLine();
 
 }
 
@@ -275,4 +309,45 @@ void Planner::removeDevice(INDI::BaseDevice device)
 {
     //QString deviceName = QString(device.getDeviceName());
     //sendMessage("INDI device removed: " + deviceName);
+}
+void Planner::sequenceComplete()
+{
+
+}
+void Planner::navigatorComplete()
+{
+    mWaitingNavigator = false;
+    sendMessage("Navigator went to target, starting sequence");
+
+}
+void Planner::startLine()
+{
+    // update line status
+    getProperty("planning")->fetchLine(mCurrentLine);
+    getEltPrg("planning", "progress")->setDynLabel("Running", false);
+    getEltPrg("planning", "progress")->setPrgValue(0, false);
+    getProperty("planning")->updateLine(mCurrentLine);
+
+    mWaitingNavigator = true;
+    // Send target to navigator
+    QVariantMap eltData;
+    QVariantMap propData;
+    QVariantMap eventData;
+
+    eltData["targetname"] = getString("planning", "object");
+    eltData["targetra"] = getFloat("planning", "ra");
+    eltData["targetde"] = getFloat("planning", "dec");
+    propData["elements"] = eltData;
+    eventData["actions"] = propData;
+    emit moduleEvent("Fsetproperty", getString("parms", "navigatormodule"), "", eventData);
+
+    // Ask navigator to slew to target
+    eltData = QVariantMap();
+    eltData["gototarget"] = true;
+    propData = QVariantMap();
+    propData["elements"] = eltData;
+    eventData = QVariantMap();
+    eventData["actions"] = propData;
+    emit moduleEvent("Fsetproperty", getString("parms", "navigatormodule"), "", eventData);
+
 }
