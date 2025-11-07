@@ -312,12 +312,43 @@ void Planner::removeDevice(INDI::BaseDevice device)
 }
 void Planner::sequenceComplete()
 {
+    mWaitingSequence = false;
+    mWaitingNavigator = false;
+
+
+    getProperty("planning")->fetchLine(mCurrentLine);
+    getEltPrg("planning", "progress")->setDynLabel("Finished", false);
+    getEltPrg("planning", "progress")->setPrgValue(1, false);
+    getProperty("planning")->updateLine(mCurrentLine);
+
+
+    mCurrentLine++;
+    if (getProperty("planning")->getGrid().count() <= mCurrentLine)
+    {
+        sendMessage("Planning complete");
+        mIsRunning = false;
+        return;
+    }
+
+    startLine();
 
 }
 void Planner::navigatorComplete()
 {
     mWaitingNavigator = false;
+
     sendMessage("Navigator went to target, starting sequence");
+
+    // Ask sequence to start
+    QVariantMap eltData;
+    eltData["startsequence"] = true;
+    QVariantMap propData;
+    propData["elements"] = eltData;
+    QVariantMap eventData;
+    eventData["actions"] = propData;
+    emit moduleEvent("Fsetproperty", getString("parms", "sequencemodule"), "", eventData);
+
+    mWaitingSequence = true;
 
 }
 void Planner::startLine()
@@ -328,8 +359,9 @@ void Planner::startLine()
     getEltPrg("planning", "progress")->setPrgValue(0, false);
     getProperty("planning")->updateLine(mCurrentLine);
 
+    mWaitingSequence = false;
     mWaitingNavigator = true;
-    // Send target to navigator
+    // Set navigator's target
     QVariantMap eltData;
     QVariantMap propData;
     QVariantMap eventData;
@@ -340,6 +372,27 @@ void Planner::startLine()
     propData["elements"] = eltData;
     eventData["actions"] = propData;
     emit moduleEvent("Fsetproperty", getString("parms", "navigatormodule"), "", eventData);
+
+    // Set sequencer's profile
+    eltData = QVariantMap();
+    eltData["name"] = getString("planning", "profile");
+    propData = QVariantMap();
+    propData["elements"] = eltData;
+    eventData = QVariantMap();
+    eventData["loadprofile"] = propData;
+    emit moduleEvent("Fsetproperty", getString("parms", "sequencemodule"), "", eventData); // set profile to load
+    emit moduleEvent("Fposticon", getString("parms", "sequencemodule"), "", eventData); // load it
+
+    // Set sequencer's object data
+    eltData = QVariantMap();
+    eltData["label"] = getString("planning", "object");
+    eltData["ra"] = getFloat("planning", "ra");
+    eltData["de"] = getFloat("planning", "dec");
+    propData = QVariantMap();
+    propData["elements"] = eltData;
+    eventData = QVariantMap();
+    eventData["object"] = propData;
+    emit moduleEvent("Fsetproperty", getString("parms", "sequencemodule"), "", eventData);
 
     // Ask navigator to slew to target
     eltData = QVariantMap();
