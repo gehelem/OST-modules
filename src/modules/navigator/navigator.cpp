@@ -333,6 +333,9 @@ void Navigator::OnSucessSolve()
         syncMountIfNeeded(solvedRA, solvedDEC);
         mState = "idle";
         mCurrentIteration = 0;
+        // Emit event to notify other modules that centering is complete
+        emit moduleEvent("navigatordone", getModuleName(), "", QVariantMap());
+
         return;
     }
 
