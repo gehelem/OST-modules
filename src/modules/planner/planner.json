@@ -11,19 +11,19 @@
         "type": "string",
         "label": "Description",
         "order": "01",
-        "value": "Template Module"
+        "value": "Planner Module"
       },
       "moduleLabel": {
         "type": "string",
         "label": "Label",
         "order": "02",
-        "value": "Template"
+        "value": "Planner"
       },
       "moduleName": {
         "type": "string",
         "label": "Name",
         "order": "03",
-        "value": "template"
+        "value": "planner"
       },
       "moduleVersion": {
         "type": "string",
@@ -54,136 +54,19 @@
     "label": "Parameters",
     "permission": 2,
     "level1": "Parameters",
-    "level2": "Main",
+    "level2": "",
     "order": "100",
     "hasprofile": true,
     "elements": {
-      "iterations": {
-        "type": "int",
-        "label": "Iterations",
-        "order": "01",
-        "value": 10,
-        "min": 1,
-        "max": 100,
-        "step": 1,
-        "slider": 2,
-        "hint": "Number of iterations to perform",
-        "directedit": true,
-        "autoupdate": true
-      },
-      "threshold": {
-        "type": "float",
-        "label": "Threshold",
-        "order": "02",
-        "value": 1.5,
-        "min": 0.1,
-        "max": 10.0,
-        "step": 0.1,
-        "slider": 2,
-        "format": "%.2f",
-        "hint": "Detection threshold",
-        "directedit": true,
-        "autoupdate": true
-      },
-      "enableOption": {
-        "type": "bool",
-        "label": "Enable Option",
-        "order": "03",
-        "value": false,
-        "hint": "Enable optional processing",
-        "autoupdate": true
-      }
-    }
-  },
-  "results": {
-    "label": "Results",
-    "permission": 0,
-    "level1": "Results",
-    "level2": "",
-    "order": "200",
-    "hasprofile": false,
-    "showgrid": true,
-    "hasgrid": true,
-    "gridlimits": 50,
-    "gridheaders": ["iteration", "value", "timestamp"],
-    "elements": {
-      "iteration": {
-        "type": "int",
-        "label": "Iteration",
-        "order": "01",
-        "value": 0
-      },
-      "value": {
-        "type": "float",
-        "label": "Value",
-        "order": "02",
-        "value": 0.0,
-        "format": "%.3f"
-      },
-      "timestamp": {
-        "type": "string",
-        "label": "Time",
-        "order": "03",
-        "value": ""
-      }
-    }
-  },
-  "saveprofile": {
-    "label": "Save Profile",
-    "permission": 2,
-    "level1": "Profiles",
-    "level2": "Save",
-    "order": "900",
-    "hasprofile": false,
-    "posticon1": "save",
-    "elements": {
-      "name": {
-        "type": "string",
-        "label": "Profile name",
-        "order": "01",
-        "value": "default",
-        "hint": "Enter profile name and click save icon",
-        "directedit": true,
-        "autoupdate": true
-      }
-    }
-  },
-  "loadprofile": {
-    "label": "Load Profile",
-    "permission": 2,
-    "level1": "Profiles",
-    "level2": "Load",
-    "order": "901",
-    "hasprofile": false,
-    "preicon1": "refresh",
-    "posticon1": "login",
-    "elements": {
-      "name": {
-        "type": "string",
-        "label": "Profile name",
-        "order": "01",
-        "value": "default",
-        "hint": "Select profile, refresh list with left icon, load with right icon",
-        "directedit": false,
-        "autoupdate": false
-      }
-    }
-  },
-  "moduleactions": {
-    "label": "Module Actions",
-    "permission": 2,
-    "level1": "Info",
-    "level2": "",
-    "order": "999",
-    "hasprofile": false,
-    "rule": 2,
-    "elements": {
-      "kill": {
-        "type": "bool",
-        "label": "Delete module",
-        "order": "01",
-        "value": false,
-        "hint": "Permanently delete this module instance"
+      "sequencemodule": {
+          "type": "string",
+          "label": "Sequence module instance",
+          "listOfValues":"loadedModules",
+          "autoupdate": true,
+          "directedit": true,
+          "value": "sequencer",
+          "order": 2,
+          "hint": "Name of the sequencer module INSTANCE to use"
       }
     }
   }
