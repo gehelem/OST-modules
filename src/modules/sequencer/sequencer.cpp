@@ -55,6 +55,13 @@ void Sequencer::OnMyExternalEvent(const QString &eventType, const QString  &even
         {
             foreach(const QString &keyelt, eventData[keyprop].toMap()["elements"].toMap().keys())
             {
+                if (keyprop == "object" )
+                {
+                    QVariant val = eventData[keyprop].toMap()["elements"].toMap()[keyelt];
+                    if (keyelt == "label") getEltString("object", "label")->setValue(val.toString(), true);
+                    if (keyelt == "de") getEltFloat("object", "de")->setValue(val.toFloat(), true);
+                    if (keyelt == "ra") getEltFloat("object", "ra")->setValue(val.toFloat(), true);
+                }
                 if (keyprop == "actions")
                 {
                     if (keyelt == "startsequence")
