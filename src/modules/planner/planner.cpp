@@ -43,8 +43,18 @@ Planner::~Planner()
 void Planner::initProperties()
 {
 
-    // Request INDI devices - examples:
+    // Request INDI devices
     giveMeADevice("gps", "GPS", INDI::BaseDevice::GPS_INTERFACE);
+
+    // Add start and stop buttons
+    OST::PropertyMulti* pm = getProperty("actions");
+    OST::ElementBool* b = new OST::ElementBool("Start", "010", "");
+    b->setValue(false, false);
+    pm->addElt("start", b);
+    b = new OST::ElementBool("Stop", "020", "");
+    b->setValue(false, false);
+    pm->addElt("stop", b);
+
 
 }
 
@@ -73,16 +83,16 @@ void Planner::OnMyExternalEvent(const QString &eventType, const QString &eventMo
                 // Reset button state
                 getEltBool(keyprop, keyelt)->setValue(false, false);
 
-                if (keyelt == "autofocus" || keyelt == "guide" || keyelt == "startsequence" || keyelt == "gototarget")
+                if (keyelt == "start")
                 {
                     getProperty(keyprop)->setState(OST::Busy);
-                    startOperation();
+                    startPlanner();
                 }
 
-                if (keyelt == "abortfocus" || keyelt == "abortguider" || keyelt == "abortsequence" || keyelt == "abortnavigator")
+                if (keyelt == "stop")
                 {
                     getProperty(keyprop)->setState(OST::Ok);
-                    abortOperation();
+                    abortPlanner();
                 }
             }
         }
@@ -116,19 +126,21 @@ void Planner::OnMyExternalEvent(const QString &eventType, const QString &eventMo
     }
 }
 
-void Planner::startOperation()
+void Planner::startPlanner()
 {
     if (mIsRunning)
     {
         sendWarning("Operation already running");
         return;
     }
-
+    getEltBool("actions", "start")->setValue(true, false);
+    getEltBool("actions", "stop")->setValue(false, true);
     // Check INDI server connection
     if (!isServerConnected())
     {
         sendError("INDI server not connected");
         getProperty("actions")->setState(OST::Error);
+        abortPlanner();
         return;
     }
 
@@ -136,14 +148,32 @@ void Planner::startOperation()
     QString g = getString("devices", "gps");
     if (g.isEmpty() || g == "--")
     {
-        sendError("No GPSselected");
+        sendError("No GPS selected");
         getProperty("actions")->setState(OST::Error);
+        abortPlanner();
         return;
     }
 
     // Connect device if not connected
     connectDevice(g);
 
+    // Check slaves modules
+    g = getString("parms", "sequencemodule");
+    if (g.isEmpty() || g == "--")
+    {
+        sendError("No Sequence module selected");
+        getProperty("actions")->setState(OST::Error);
+        abortPlanner();
+        return;
+    }
+    g = getString("parms", "navigatormodule");
+    if (g.isEmpty() || g == "--")
+    {
+        sendError("No Sequence module selected");
+        getProperty("actions")->setState(OST::Error);
+        abortPlanner();
+        return;
+    }
 
     // Disable properties during operation (optional)
     getProperty("parms")->disable();
@@ -151,7 +181,7 @@ void Planner::startOperation()
 
     mIsRunning = true;
 
-    sendMessage("Starting operation...");
+    sendMessage("Starting planner...");
 
     // Update progress
     getEltPrg("progress", "global")->setPrgValue(0, true);
@@ -159,8 +189,11 @@ void Planner::startOperation()
 
 }
 
-void Planner::abortOperation()
+void Planner::abortPlanner()
 {
+    getEltBool("actions", "start")->setValue(false, false);
+    getEltBool("actions", "stop")->setValue(true, true);
+
     if (!mIsRunning)
         return;
 

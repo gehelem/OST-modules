@@ -60,12 +60,12 @@ class Planner : public IndiModule
         /**
          * @brief Start the main operation (adapt to your needs)
          */
-        void startOperation();
+        void startPlanner();
 
         /**
          * @brief Stop/abort the current operation
          */
-        void abortOperation();
+        void abortPlanner();
 
         // Example internal state variables
         bool mIsRunning;

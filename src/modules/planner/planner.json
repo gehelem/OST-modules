@@ -1,39 +1,5 @@
 {
 "properties":{
-  "moduleInfo": {
-    "label": "Module Info",
-    "permission": 0,
-    "devcat": "Info",
-    "group": "",
-    "order": "000",
-    "hasprofile": false,
-    "elements": {
-      "moduleDescription": {
-        "type": "string",
-        "label": "Description",
-        "order": "01",
-        "value": "Planner Module"
-      },
-      "moduleLabel": {
-        "type": "string",
-        "label": "Label",
-        "order": "02",
-        "value": "Planner"
-      },
-      "moduleName": {
-        "type": "string",
-        "label": "Name",
-        "order": "03",
-        "value": "planner"
-      },
-      "moduleVersion": {
-        "type": "string",
-        "label": "Version",
-        "order": "04",
-        "value": "1.0.0"
-      }
-    }
-  },
   "progress": {
     "label": "Progress",
     "permission": 0,
@@ -51,7 +17,7 @@
       }
     }
   },
-  "parameters": {
+  "parms": {
     "label": "Parameters",
     "permission": 2,
     "devcat": "Parameters",
@@ -61,13 +27,23 @@
     "elements": {
       "sequencemodule": {
           "type": "string",
-          "label": "Sequence module instance",
+          "label": "Sequence instance",
           "listOfValues":"loadedModules",
           "autoupdate": true,
           "directedit": true,
-          "value": "sequencer",
+          "value": "Sequencer",
           "order": 2,
           "hint": "Name of the sequencer module INSTANCE to use"
+      },
+      "navigatormodule": {
+          "type": "string",
+          "label": "Navigator instance",
+          "listOfValues":"loadedModules",
+          "autoupdate": true,
+          "directedit": true,
+          "value": "Navigator",
+          "order": 4,
+          "hint": "Name of the navigator module INSTANCE to use"
       }
     }
   },
