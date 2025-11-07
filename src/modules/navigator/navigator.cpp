@@ -31,6 +31,7 @@ Navigator::Navigator(QString name, QString label, QString profile, QVariantMap a
 
     giveMeADevice("camera", "Camera", INDI::BaseDevice::CCD_INTERFACE);
     giveMeADevice("mount", "Mount", INDI::BaseDevice::TELESCOPE_INTERFACE);
+    giveMeADevice("gps", "GPS", INDI::BaseDevice::GPS_INTERFACE);
 
     defineMeAsNavigator();
 
@@ -225,6 +226,32 @@ void Navigator::updateProperty(INDI::Property property)
         INDI::PropertyNumber prop = property;
         getEltFloat("mountposition", "RA")->setValue(prop.findWidgetByName("RA")->value, false);
         getEltFloat("mountposition", "DEC")->setValue(prop.findWidgetByName("DEC")->value, true);
+    }
+    if (
+        (property.getDeviceName() == getString("devices", "gps"))
+        &&  (property.getName()   == std::string("GEOGRAPHIC_COORD"))
+    )
+    {
+        // Update GPS Coords
+        INDI::PropertyNumber prop = property;
+        getEltFloat("gpslocation", "alt")->setValue(prop.findWidgetByName("ELEV")->value, false);
+        getEltFloat("gpslocation", "lat")->setValue(prop.findWidgetByName("LAT")->value, false);
+        getEltFloat("gpslocation", "lon")->setValue(prop.findWidgetByName("LONG")->value, true);
+    }
+    if (
+        (property.getDeviceName() == getString("devices", "gps"))
+        &&  (property.getName()   == std::string("TIME_UTC"))
+    )
+    {
+        // Update GPS Time and date
+        INDI::PropertyText prop = property;
+        QDateTime dt;
+        QString strdt = prop.findWidgetByName("UTC")->text;
+        QString offset = prop.findWidgetByName("OFFSET")->text;
+        dt = dt.fromString(strdt, Qt::ISODate);
+        getEltDate("gpstime", "date")->setValue(dt.date(), false);
+        getEltTime("gpstime", "time")->setValue(dt.time(), false);
+        getEltFloat("gpstime", "offset")->setValue(offset.toFloat(), true);
     }
     if (
         (property.getDeviceName() == getString("devices", "mount"))
