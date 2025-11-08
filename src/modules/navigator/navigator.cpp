@@ -52,7 +52,7 @@ Navigator::~Navigator()
 void Navigator::OnMyExternalEvent(const QString &pEventType, const QString  &pEventModule, const QString  &pEventKey,
                                   const QVariantMap &pEventData)
 {
-    //sendMessage("OnMyExternalEvent - recv : " + getModuleName() + "-" + eventType + "-" + eventKey);
+    //sendMessage("OnMyExternalEvent - recv : " + getModuleName() + "-" + pEventType + "-" + pEventKey);
     Q_UNUSED(pEventType);
     Q_UNUSED(pEventKey);
 
@@ -99,6 +99,7 @@ void Navigator::OnMyExternalEvent(const QString &pEventType, const QString  &pEv
                     {
                         mState = "running";
                         mCurrentIteration = 0;
+                        convertSelection();
                         // Load centering parameters from properties
                         mMaxIterations = getInt("centeringparams", "maxiterations");
                         mToleranceArcsec = getFloat("centeringparams", "tolerance");
@@ -117,6 +118,11 @@ void Navigator::OnMyExternalEvent(const QString &pEventType, const QString  &pEv
                         mCurrentIteration = 0;
                         getProperty(keyprop)->setState(OST::Ok);
                     }
+                    if (keyelt == "addtoplanner")
+                    {
+                        addTargeToPlanner();
+                    }
+
                 }
             }
             if (pEventType == "Flselect")
@@ -293,6 +299,24 @@ void Navigator::initIndi()
     }
     enableDirectBlobAccess(getString("devices", "camera").toStdString().c_str(), nullptr);
 
+    // Update GPS Coords
+    INDI::PropertyNumber pn = getDevice(getString("devices", "gps").toStdString().c_str()).getProperty("GEOGRAPHIC_COORD",
+                              INDI_NUMBER);
+    getEltFloat("gpslocation", "alt")->setValue(pn.findWidgetByName("ELEV")->value, false);
+    getEltFloat("gpslocation", "lat")->setValue(pn.findWidgetByName("LAT")->value, false);
+    getEltFloat("gpslocation", "lon")->setValue(pn.findWidgetByName("LONG")->value, true);
+    // Update GPS Time and date
+    INDI::PropertyText pt = getDevice(getString("devices", "gps").toStdString().c_str()).getProperty("TIME_UTC", INDI_TEXT);
+    QDateTime dt;
+    QString strdt = pt.findWidgetByName("UTC")->text;
+    QString offset = pt.findWidgetByName("OFFSET")->text;
+    dt = dt.fromString(strdt, Qt::ISODate);
+    getEltDate("gpstime", "date")->setValue(dt.date(), false);
+    getEltTime("gpstime", "time")->setValue(dt.time(), false);
+    getEltFloat("gpstime", "offset")->setValue(offset.toFloat(), true);
+
+
+
 }
 void Navigator::OnSolverLog(QString text)
 {
@@ -333,6 +357,9 @@ void Navigator::OnSucessSolve()
         syncMountIfNeeded(solvedRA, solvedDEC);
         mState = "idle";
         mCurrentIteration = 0;
+        // Emit event to notify other modules that centering is complete
+        emit moduleEvent("navigatordone", getModuleName(), "", QVariantMap());
+
         return;
     }
 
@@ -540,4 +567,19 @@ void Navigator::syncMountIfNeeded(double solvedRA, double solvedDEC)
 
     sendMessage("Mount successfully synchronized with solved field");
 
+}
+void Navigator::addTargeToPlanner()
+{
+    //{"evt":"Flcreate","mod":"Planner","dta":{"planning":{"elements":{"object":"TT","ra":10,"dec":20,"profile":"default"}}}}
+    QVariantMap eltData;
+    eltData["object"] = getString("actions", "targetname");
+    eltData["ra"] = getFloat("actions", "targetra");
+    eltData["dec"] = getFloat("actions", "targetde");
+    eltData["profile"] = "default";
+    QVariantMap elts;
+    elts["elements"] = eltData;
+    QVariantMap prop;
+    prop["planning"] = elts;
+    emit moduleEvent("Flcreate", getString("parms", "plannermodule"), "planning", prop);
+    sendMessage("Current target sent to " + getString("parms", "plannermodule"));
 }

@@ -251,6 +251,22 @@ target_link_libraries(ostdarkassist PRIVATE
 )
 target_compile_definitions(ostdarkassist PRIVATE DARKASSIST_MODULE)
 
+# planner module
+add_library(ostplanner SHARED
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/planner/planner.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/planner/planner.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/planner/planner.qrc
+)
+target_link_libraries(ostplanner PRIVATE
+    ${OST_LIBRARY_INDI}
+    Qt${QT_VERSION_MAJOR}::Core
+    Qt${QT_VERSION_MAJOR}::Concurrent
+    Qt${QT_VERSION_MAJOR}::Widgets
+    Threads::Threads
+    z
+)
+target_compile_definitions(ostplanner PRIVATE PLANNER_MODULE)
+
 # template module - skeleton for creating new modules
 add_library(osttemplate SHARED
     ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/template/template.h
@@ -267,7 +283,6 @@ target_link_libraries(osttemplate PRIVATE
 )
 target_compile_definitions(osttemplate PRIVATE TEMPLATE_MODULE)
 
-
 install(TARGETS
     ostallsky
     ostinspector
@@ -279,7 +294,8 @@ install(TARGETS
     ostpolar
     ostblindpec
     ostdarkassist
-    osttemplate
+    ostplanner
+#    osttemplate #don't install template ...
     RUNTIME DESTINATION "/usr/bin"
     LIBRARY DESTINATION "/usr/lib"
 )

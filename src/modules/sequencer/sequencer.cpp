@@ -345,6 +345,10 @@ void Sequencer::StartLine()
         getProperty("actions")->setState(OST::Ok);
         isSequenceRunning = false;
         previousFilter = "";
+
+        // Emit event to notify other modules that sequence is complete
+        emit moduleEvent("sequencedone", getModuleName(), "", QVariantMap());
+
     }
     else
     {
