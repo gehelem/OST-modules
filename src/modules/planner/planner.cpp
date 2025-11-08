@@ -361,13 +361,21 @@ void Planner::startLine()
 
     mWaitingSequence = false;
     mWaitingNavigator = true;
+
     // Set navigator's target
     QVariantMap eltData;
     QVariantMap propData;
     QVariantMap eventData;
-
     eltData["targetname"] = getString("planning", "object");
+    propData["elements"] = eltData;
+    eventData["actions"] = propData;
+    emit moduleEvent("Fsetproperty", getString("parms", "navigatormodule"), "", eventData);
+    eltData = QVariantMap();
     eltData["targetra"] = getFloat("planning", "ra");
+    propData["elements"] = eltData;
+    eventData["actions"] = propData;
+    emit moduleEvent("Fsetproperty", getString("parms", "navigatormodule"), "", eventData);
+    eltData = QVariantMap();
     eltData["targetde"] = getFloat("planning", "dec");
     propData["elements"] = eltData;
     eventData["actions"] = propData;
@@ -386,11 +394,19 @@ void Planner::startLine()
     // Set sequencer's object data
     eltData = QVariantMap();
     eltData["label"] = getString("planning", "object");
-    eltData["ra"] = getFloat("planning", "ra");
-    eltData["de"] = getFloat("planning", "dec");
     propData = QVariantMap();
     propData["elements"] = eltData;
     eventData = QVariantMap();
+    eventData["object"] = propData;
+    emit moduleEvent("Fsetproperty", getString("parms", "sequencemodule"), "", eventData);
+    eventData = QVariantMap();
+    eltData["ra"] = getFloat("planning", "ra");
+    propData["elements"] = eltData;
+    eventData["object"] = propData;
+    emit moduleEvent("Fsetproperty", getString("parms", "sequencemodule"), "", eventData);
+    eventData = QVariantMap();
+    eltData["de"] = getFloat("planning", "dec");
+    propData["elements"] = eltData;
     eventData["object"] = propData;
     emit moduleEvent("Fsetproperty", getString("parms", "sequencemodule"), "", eventData);
 
