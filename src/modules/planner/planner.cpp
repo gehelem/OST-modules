@@ -70,6 +70,18 @@ void Planner::OnMyExternalEvent(const QString &eventType, const QString &eventMo
         sequenceComplete();
         return;
     }
+
+    // Report sequence progress
+    if (eventType == "se" && mWaitingSequence && getString("parms", "sequencemodule") == eventModule
+            && eventKey == "progress" )
+    {
+        int i = eventData["elements"].toMap()["global"].toMap()["value"].toInt();
+        QString s = eventData["elements"].toMap()["global"].toMap()["dynlabel"].toString();
+        getEltPrg("planning", "progress")->setPrgValue(i, false);
+        getEltPrg("planning", "progress")->setDynLabel("Seq " + s, false);
+        getProperty("planning")->updateLine(mCurrentLine);
+    }
+
     // Check if this is a navigator completion event
     if (eventType == "navigatordone" && mWaitingNavigator && getString("parms", "navigatormodule") == eventModule )
     {
@@ -318,7 +330,7 @@ void Planner::sequenceComplete()
 
     getProperty("planning")->fetchLine(mCurrentLine);
     getEltPrg("planning", "progress")->setDynLabel("Finished", false);
-    getEltPrg("planning", "progress")->setPrgValue(1, false);
+    getEltPrg("planning", "progress")->setPrgValue(100, false);
     getProperty("planning")->updateLine(mCurrentLine);
 
 
@@ -355,7 +367,7 @@ void Planner::startLine()
 {
     // update line status
     getProperty("planning")->fetchLine(mCurrentLine);
-    getEltPrg("planning", "progress")->setDynLabel("Running", false);
+    getEltPrg("planning", "progress")->setDynLabel("Slewing", false);
     getEltPrg("planning", "progress")->setPrgValue(0, false);
     getProperty("planning")->updateLine(mCurrentLine);
 
