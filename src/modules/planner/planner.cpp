@@ -133,8 +133,8 @@ void Planner::OnMyExternalEvent(const QString &eventType, const QString &eventMo
             {
                 QVariantMap m = eventData[keyprop].toMap()["elements"].toMap();
                 getProperty(keyprop)->newLine(m);
-                //getEltPrg(keyprop, "progress")->setPrgValue(0, false);
-                //getEltPrg(keyprop, "progress")->setDynLabel("Added", false);
+                getEltPrg(keyprop, "progress")->setPrgValue(0, false);
+                getEltPrg(keyprop, "progress")->setDynLabel("Queued", false);
                 getProperty(keyprop)->updateLine(getProperty(keyprop)->getGrid().count() - 1);
             }
             if (eventType == "Flupdate")
@@ -142,8 +142,8 @@ void Planner::OnMyExternalEvent(const QString &eventType, const QString &eventMo
                 double line = eventData[keyprop].toMap()["line"].toDouble();
                 QVariantMap m = eventData[keyprop].toMap()["elements"].toMap();
                 getProperty(keyprop)->updateLine(line, m);
-                //getEltPrg(keyprop, "progress")->setPrgValue(0, false);
-                //getEltPrg(keyprop, "progress")->setDynLabel("Updated", false);
+                getEltPrg(keyprop, "progress")->setPrgValue(0, false);
+                getEltPrg(keyprop, "progress")->setDynLabel("Updated", false);
                 getProperty(keyprop)->updateLine(line);
             }
         }
@@ -244,6 +244,8 @@ void Planner::abortPlanner()
         return;
 
     mIsRunning = false;
+    mWaitingSequence = false;
+    mWaitingNavigator = false;
 
     sendMessage("Operation aborted");
 
@@ -349,7 +351,9 @@ void Planner::navigatorComplete()
 {
     mWaitingNavigator = false;
 
-    sendMessage("Navigator went to target, starting sequence");
+    sendMessage("Navigator went to target " + getString("planning",
+                "object") + ", starting sequence with profile " + getString("planning",
+                        "profile") );
 
     // Ask sequence to start
     QVariantMap eltData;
@@ -370,6 +374,8 @@ void Planner::startLine()
     getEltPrg("planning", "progress")->setDynLabel("Slewing", false);
     getEltPrg("planning", "progress")->setPrgValue(0, false);
     getProperty("planning")->updateLine(mCurrentLine);
+
+    sendMessage("Navigator is slewing to target " + getString("planning", "object"));
 
     mWaitingSequence = false;
     mWaitingNavigator = true;
