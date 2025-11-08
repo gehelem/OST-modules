@@ -57,6 +57,12 @@ class MODULE_INIT Navigator : public IndiModule
         StellarSolver stellarSolver;
         QList<FITSImage::Star> stars;
 
+        /**
+         * @brief Add current target to planner
+         */
+        void addTargeToPlanner();
+
+
         // Centering iteration parameters
         int mMaxIterations;
         int mCurrentIteration;

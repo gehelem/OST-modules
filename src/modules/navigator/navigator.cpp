@@ -118,6 +118,11 @@ void Navigator::OnMyExternalEvent(const QString &pEventType, const QString  &pEv
                         mCurrentIteration = 0;
                         getProperty(keyprop)->setState(OST::Ok);
                     }
+                    if (keyelt == "addtoplanner")
+                    {
+                        addTargeToPlanner();
+                    }
+
                 }
             }
             if (pEventType == "Flselect")
@@ -562,4 +567,19 @@ void Navigator::syncMountIfNeeded(double solvedRA, double solvedDEC)
 
     sendMessage("Mount successfully synchronized with solved field");
 
+}
+void Navigator::addTargeToPlanner()
+{
+    //{"evt":"Flcreate","mod":"Planner","dta":{"planning":{"elements":{"object":"TT","ra":10,"dec":20,"profile":"default"}}}}
+    QVariantMap eltData;
+    eltData["object"] = getString("actions", "targetname");
+    eltData["ra"] = getFloat("actions", "targetra");
+    eltData["dec"] = getFloat("actions", "targetde");
+    eltData["profile"] = "default";
+    QVariantMap elts;
+    elts["elements"] = eltData;
+    QVariantMap prop;
+    prop["planning"] = elts;
+    emit moduleEvent("Flcreate", getString("parms", "plannermodule"), "planning", prop);
+    sendMessage("Current target sent to " + getString("parms", "plannermodule"));
 }
