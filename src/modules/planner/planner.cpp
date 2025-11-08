@@ -339,7 +339,7 @@ void Planner::sequenceComplete()
     mCurrentLine++;
     if (getProperty("planning")->getGrid().count() <= mCurrentLine)
     {
-        sendMessage("Planning complete");
+        sendMessage("Planning completed");
         mIsRunning = false;
         return;
     }
