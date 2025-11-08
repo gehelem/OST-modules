@@ -99,6 +99,7 @@ void Navigator::OnMyExternalEvent(const QString &pEventType, const QString  &pEv
                     {
                         mState = "running";
                         mCurrentIteration = 0;
+                        convertSelection();
                         // Load centering parameters from properties
                         mMaxIterations = getInt("centeringparams", "maxiterations");
                         mToleranceArcsec = getFloat("centeringparams", "tolerance");
