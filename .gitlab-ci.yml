@@ -19,7 +19,9 @@ build-job:
     - export OST_PROJECT_ID="2"
     - export LATEST_PIPELINE=$(curl --silent --header "PRIVATE-TOKEN:${CI_JOB_TOKEN}" "https://gitlab.ostserver.fr/api/v4/projects/${OST_PROJECT_ID}/pipelines?per_page=1&order_by=updated_at&sort=desc" | jq -r '.[0].id')
     - echo 'Latest pipeline ID:' $LATEST_PIPELINE
-    - export PACKAGE_JOB=$(curl --silent --header "PRIVATE-TOKEN:${CI_JOB_TOKEN}" "https://gitlab.ostserver.fr/api/v4/projects/${OST_PROJECT_ID}/pipelines/${LATEST_PIPELINE}/jobs?per_page=100" | jq -r '.[] | select(.name=="package-deb" and .status=="success") | .id' | head -1)
+    - echo "All jobs in pipeline:"
+    - curl --silent --header "PRIVATE-TOKEN:${CI_JOB_TOKEN}" "https://gitlab.ostserver.fr/api/v4/projects/${OST_PROJECT_ID}/pipelines/${LATEST_PIPELINE}/jobs?per_page=100" | jq '.[] | {name, id, status}'
+    - export PACKAGE_JOB=$(curl --silent --header "PRIVATE-TOKEN:${CI_JOB_TOKEN}" "https://gitlab.ostserver.fr/api/v4/projects/${OST_PROJECT_ID}/pipelines/${LATEST_PIPELINE}/jobs?per_page=100" | jq -r '.[] | select(.name=="package-deb") | .id' | head -1)
     - echo 'Package job ID:' $PACKAGE_JOB
     - curl --location --header "PRIVATE-TOKEN:${CI_JOB_TOKEN}" "https://gitlab.ostserver.fr/api/v4/projects/${OST_PROJECT_ID}/jobs/${PACKAGE_JOB}/artifacts?job_token=${CI_JOB_TOKEN}" -o artifacts.zip
     - unzip -l artifacts.zip
@@ -54,7 +56,9 @@ test-job:
     - export OST_PROJECT_ID="2"
     - export LATEST_PIPELINE=$(curl --silent --header "PRIVATE-TOKEN:${CI_JOB_TOKEN}" "https://gitlab.ostserver.fr/api/v4/projects/${OST_PROJECT_ID}/pipelines?per_page=1&order_by=updated_at&sort=desc" | jq -r '.[0].id')
     - echo 'Latest pipeline ID:' $LATEST_PIPELINE
-    - export PACKAGE_JOB=$(curl --silent --header "PRIVATE-TOKEN:${CI_JOB_TOKEN}" "https://gitlab.ostserver.fr/api/v4/projects/${OST_PROJECT_ID}/pipelines/${LATEST_PIPELINE}/jobs?per_page=100" | jq -r '.[] | select(.name=="package-deb" and .status=="success") | .id' | head -1)
+    - echo "All jobs in pipeline:"
+    - curl --silent --header "PRIVATE-TOKEN:${CI_JOB_TOKEN}" "https://gitlab.ostserver.fr/api/v4/projects/${OST_PROJECT_ID}/pipelines/${LATEST_PIPELINE}/jobs?per_page=100" | jq '.[] | {name, id, status}'
+    - export PACKAGE_JOB=$(curl --silent --header "PRIVATE-TOKEN:${CI_JOB_TOKEN}" "https://gitlab.ostserver.fr/api/v4/projects/${OST_PROJECT_ID}/pipelines/${LATEST_PIPELINE}/jobs?per_page=100" | jq -r '.[] | select(.name=="package-deb") | .id' | head -1)
     - echo 'Package job ID:' $PACKAGE_JOB
     - curl --location --header "PRIVATE-TOKEN:${CI_JOB_TOKEN}" "https://gitlab.ostserver.fr/api/v4/projects/${OST_PROJECT_ID}/jobs/${PACKAGE_JOB}/artifacts?job_token=${CI_JOB_TOKEN}" -o artifacts.zip
     - unzip -l artifacts.zip
