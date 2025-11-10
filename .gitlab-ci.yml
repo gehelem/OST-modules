@@ -16,7 +16,8 @@ build-job:
     - apt-add-repository ppa:mutlaqja/ppa
     - apt-get install -y build-essential cmake git npm qtbase5-dev libqt5websockets5-dev libindi-dev libstellarsolver-dev libnova-dev libgsl-dev wcslib-dev libcfitsio-dev libavahi-client-dev libavahi-common-dev zlib1g-dev dpkg-dev debhelper devscripts libopencv-dev qtmultimedia5-dev libqt5scxml5-dev libqt5qml5
     - echo "Downloading ostserver from OST project artifacts..."
-    - export OST_PROJECT_ID="2"
+    - export OST_PROJECT_ID=$(curl --silent --header "PRIVATE-TOKEN:${CI_JOB_TOKEN}" "https://gitlab.ostserver.fr/api/v4/projects?search=OST" | jq -r '.[] | select(.name=="OST") | .id')
+    - echo "OST Project ID:" $OST_PROJECT_ID
     - export LATEST_PIPELINE=$(curl --silent --header "PRIVATE-TOKEN:${CI_JOB_TOKEN}" "https://gitlab.ostserver.fr/api/v4/projects/${OST_PROJECT_ID}/pipelines?per_page=1&order_by=updated_at&sort=desc" | jq -r '.[0].id')
     - echo 'Latest pipeline ID:' $LATEST_PIPELINE
     - echo "All jobs in pipeline:"
@@ -53,7 +54,8 @@ test-job:
     - apt-get install -y npm qtbase5-dev libqt5websockets5-dev libindi-dev libstellarsolver-dev libnova-dev libgsl-dev wcslib-dev libcfitsio-dev libavahi-client-dev libavahi-common-dev zlib1g-dev dpkg-dev debhelper devscripts libopencv-dev qtmultimedia5-dev libqt5scxml5-dev libqt5qml5
     - npm install ws
     - echo "Downloading ostserver from OST project artifacts..."
-    - export OST_PROJECT_ID="2"
+    - export OST_PROJECT_ID=$(curl --silent --header "PRIVATE-TOKEN:${CI_JOB_TOKEN}" "https://gitlab.ostserver.fr/api/v4/projects?search=OST" | jq -r '.[] | select(.name=="OST") | .id')
+    - echo "OST Project ID:" $OST_PROJECT_ID
     - export LATEST_PIPELINE=$(curl --silent --header "PRIVATE-TOKEN:${CI_JOB_TOKEN}" "https://gitlab.ostserver.fr/api/v4/projects/${OST_PROJECT_ID}/pipelines?per_page=1&order_by=updated_at&sort=desc" | jq -r '.[0].id')
     - echo 'Latest pipeline ID:' $LATEST_PIPELINE
     - echo "All jobs in pipeline:"
