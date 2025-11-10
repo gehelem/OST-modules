@@ -11,6 +11,7 @@ build-job:
     - cmake
   before_script:
     - apt-get update
+    - apt-get clean
     - apt-get install -y software-properties-common curl jq unzip wget
     - apt-add-repository ppa:mutlaqja/ppa
     - apt-get update
@@ -49,6 +50,7 @@ test-job:
     - build-job
   before_script:
     - apt-get update
+    - apt-get clean
     - apt-get install -y software-properties-common curl jq unzip wget
     - apt-add-repository ppa:mutlaqja/ppa
     - apt-get update
