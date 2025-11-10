@@ -16,9 +16,10 @@ build-job:
     - apt-get install -y build-essential cmake git npm qtbase5-dev libqt5websockets5-dev libindi-dev libstellarsolver-dev libnova-dev libgsl-dev wcslib-dev libcfitsio-dev libavahi-client-dev libavahi-common-dev zlib1g-dev dpkg-dev debhelper devscripts libopencv-dev qtmultimedia5-dev libqt5scxml5-dev libqt5qml5
     - echo "Downloading ostserver from OST project artifacts..."
     - curl -s https://gitlab.ostserver.fr/gilles/OST/-/jobs > jobs.html
-    - echo "=== Sample of HTML ===" && head -100 jobs.html | tail -50
-    - echo "=== Looking for jobs ===" && grep -i "job" jobs.html | grep -E "(class|href|data)" | head -10
-    - export LAST_JOB=$(grep -oE '/gilles/OST/-/jobs/[0-9]+' jobs.html | tail -1 | cut -d'/' -f5)
+    - echo "=== HTML file size ===" && ls -lh jobs.html
+    - echo "=== First 200 chars ===" && head -c 200 jobs.html
+    - echo -e "\n=== Searching for patterns ===" && grep -o 'href="[^"]*' jobs.html | head -20
+    - export LAST_JOB=$(grep -oE 'href="/gilles/OST/-/jobs/[0-9]+' jobs.html | tail -1 | grep -oE '[0-9]+$')
     - echo "Last job extracted:" $LAST_JOB
     - wget --user-agent="Mozilla/5.0" "https://gitlab.ostserver.fr/gilles/OST/-/jobs/${LAST_JOB}/artifacts/download?file_type=archive" -O artifacts.zip
     - unzip -l artifacts.zip
@@ -51,9 +52,10 @@ test-job:
     - npm install ws
     - echo "Downloading ostserver from OST project artifacts..."
     - curl -s https://gitlab.ostserver.fr/gilles/OST/-/jobs > jobs.html
-    - echo "=== Sample of HTML ===" && head -100 jobs.html | tail -50
-    - echo "=== Looking for jobs ===" && grep -i "job" jobs.html | grep -E "(class|href|data)" | head -10
-    - export LAST_JOB=$(grep -oE '/gilles/OST/-/jobs/[0-9]+' jobs.html | tail -1 | cut -d'/' -f5)
+    - echo "=== HTML file size ===" && ls -lh jobs.html
+    - echo "=== First 200 chars ===" && head -c 200 jobs.html
+    - echo -e "\n=== Searching for patterns ===" && grep -o 'href="[^"]*' jobs.html | head -20
+    - export LAST_JOB=$(grep -oE 'href="/gilles/OST/-/jobs/[0-9]+' jobs.html | tail -1 | grep -oE '[0-9]+$')
     - echo "Last job extracted:" $LAST_JOB
     - wget --user-agent="Mozilla/5.0" "https://gitlab.ostserver.fr/gilles/OST/-/jobs/${LAST_JOB}/artifacts/download?file_type=archive" -O artifacts.zip
     - unzip -l artifacts.zip
