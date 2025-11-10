@@ -81,6 +81,7 @@ test-job:
   only:
     - master
     - tags
+    - gitlab-ci
 
 package-deb:
   stage: package
@@ -121,6 +122,7 @@ package-deb:
   only:
     - master
     - tags
+    - gitlab-ci
 
 release-assets:
   stage: release
@@ -136,3 +138,4 @@ release-assets:
     - curl --header "JOB-TOKEN:${CI_JOB_TOKEN}" --upload-file "packages/${PACKAGE_NAME}" "${CI_API_V4_URL}/projects/${PROJECT_ID}/packages/generic/ostmodules/${PACKAGE_VERSION}/${PACKAGE_NAME}"
   only:
     - tags
+    - gitlab-ci
