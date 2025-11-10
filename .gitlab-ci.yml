@@ -1,78 +1,138 @@
-# This file is a template, and might need editing before it works on your project.
-# This is a sample Gi tLab CI/CD configuration file that should run without any modifications.
-# It demonstrates a basic 3 stage CI/CD pipeline. Instead of real tests or scripts,
-# it uses echo commands to simulate the pipeline execution. 
-#
-# A pipeline is composed of independent jobs that run scripts, grouped into stages.
-# Stages run in sequential order, but jobs within stages run in parallel.
-#
-# For more information, see: https://docs.gitlab.com/ee/ci/yaml/#stages
-#
-# You can copy and paste this template into a new `.gitlab-ci.yml` file.
-# You should not add this template to an existing `.gitlab-ci.yml` file by using the `include:` keyword.
-#
-# To contribute improvements to CI/CD t emplates, please follow the Development guide at:
-# https://docs.gitlab.com/development/cicd/templates/
-# This specific template is located at:
-# https://gitlab.com/gitlab-org/gitlab/-/blob/master/lib/gitlab/ci/templates/Getting-Started.gitlab-ci.yml 
-default:
-#  image: rabits/qt:5.14-desktop
-  image: ubuntu:24.04
-  before_script:
-    - apt-get update 
-    - apt-get clean
-    - apt-get install -y software-properties-common
-    - apt-add-repository ppa:mutlaqja/ppa
-    - apt-add-repository ppa:gehelem/ostserver-daily
-    - apt-get install -y ostserver build-essential software-properties-common cmake git npm qtbase5-dev libqt5websockets5-dev libindi-dev indi-dbg libstellarsolver-dev libnova-dev libgsl-dev wcslib-dev libcfitsio-dev libavahi-client-dev libavahi-common-dev zlib1g-dev libopencv-dev qtmultimedia5-dev libqt5scxml5-dev libqt5qml5
-stages:          # List of stages for jobs, and their order of execution
+stages:
   - build
-#  - test
-#  - deploy
-build-job:       # This job runs in the build stage, which runs first.
+  - test
+  - package
+  - release
+
+build-job:
   stage: build
+  image: ubuntu:24.04
   tags:
     - cmake
+  before_script:
+    - apt-get update
+    - apt-get install -y software-properties-common curl jq unzip wget
+    - apt-add-repository ppa:mutlaqja/ppa
+    - apt-get update
+    - apt-get install -y build-essential cmake git npm qtbase5-dev libqt5websockets5-dev libindi-dev libstellarsolver-dev libnova-dev libgsl-dev wcslib-dev libcfitsio-dev libavahi-client-dev libavahi-common-dev zlib1g-dev dpkg-dev debhelper devscripts libopencv-dev qtmultimedia5-dev libqt5scxml5-dev qtdeclarative5-dev
+    - echo "Downloading ostserver from OST project artifacts..."
+    - export LAST_JOB=$(curl -s "https://gitlab.ostserver.fr/api/v4/projects/1/pipelines" | jq -r '.[] | select(.status=="success") | .id' | head -1)
+    - echo "Last success pipeline:" $LAST_JOB
+    - export PACKAGE_JOB=$(curl -s "https://gitlab.ostserver.fr/api/v4/projects/1/pipelines/${LAST_JOB}/jobs" | jq -r '.[] | select(.name=="package-deb" and .status=="success") | .id' | head -1)
+    - echo "Package job ID:" $PACKAGE_JOB
+    - wget --user-agent="Mozilla/5.0" "https://gitlab.ostserver.fr/gilles/OST/-/jobs/${PACKAGE_JOB}/artifacts/download?file_type=archive" -O artifacts.zip
+    - unzip -l artifacts.zip
+    - unzip artifacts.zip -d /tmp/
+    - apt-get install -y /tmp/packages/ostserver_*_amd64.deb
   script:
-    - echo "Running build..."
-    - mkdir build
+    - mkdir build install
     - cd build
     - cmake ..
     - make -j4
-    - cmake --install .    
-    - export QT_QPA_PLATFORM=offscreen
-    - mkdir media
-    - pwd
-    - ls -l
-    - npm install -g wscat
-    - ostserver  --webroot=media &
-    - sleep 30
-    - wscat -c ws://127.0.0.1:9624 > stdout &
-    - sleep 30
-    - echo "build finished"
+    - cmake --install . --prefix=../install
+    - cd ..
+  artifacts:
+    paths:
+      - install/
+    expire_in: 1 hour
 
-#unit-test-job:   # This job runs in the test stage.
-#  stage: test    # It only starts when the job in the build stage completes successfully.
-#  tags:
-#    - cmake
-#  script:
-#    - echo "Running unit tests... "
-#    - echo "test finished"
-#
-#lint-test-job:   # This job also runs in the test stage.
-#  stage: test    # It can run at the same time as unit-test-job (in parallel).
-#  tags:
-#    - cmake
-#  script:
-#    - echo "Linting code... This will take about 10 second s."
-#    - sleep 2
-#    - echo "No lint issues found."
-#
-#deploy-job:      # This job runs in the deploy stage.
-#  stage: deploy  # It only runs when *both* jobs in the test stage complete successfully.
-#  tags:
-#    - cmake
-#  environment: production
-#  script:
-#    - echo "Deploying application..."
-#    - echo "Application successfully deployed."
+test-job:
+  stage: test
+  image: ubuntu:24.04
+  tags:
+    - cmake
+  dependencies:
+    - build-job
+  before_script:
+    - apt-get update
+    - apt-get install -y software-properties-common curl jq unzip wget
+    - apt-add-repository ppa:mutlaqja/ppa
+    - apt-get update
+    - apt-get install -y npm qtbase5-dev libqt5websockets5-dev libindi-dev libstellarsolver-dev libnova-dev libgsl-dev wcslib-dev libcfitsio-dev libavahi-client-dev libavahi-common-dev zlib1g-dev dpkg-dev debhelper devscripts libopencv-dev qtmultimedia5-dev libqt5scxml5-dev libqt5qml5-dev
+    - npm install ws
+    - echo "Downloading ostserver from OST project artifacts..."
+    - export LAST_JOB=$(curl -s "https://gitlab.ostserver.fr/api/v4/projects/1/pipelines" | jq -r '.[] | select(.status=="success") | .id' | head -1)
+    - echo "Last success pipeline:" $LAST_JOB
+    - export PACKAGE_JOB=$(curl -s "https://gitlab.ostserver.fr/api/v4/projects/1/pipelines/${LAST_JOB}/jobs" | jq -r '.[] | select(.name=="package-deb" and .status=="success") | .id' | head -1)
+    - echo "Package job ID:" $PACKAGE_JOB
+    - wget --user-agent="Mozilla/5.0" "https://gitlab.ostserver.fr/gilles/OST/-/jobs/${PACKAGE_JOB}/artifacts/download?file_type=archive" -O artifacts.zip
+    - unzip -l artifacts.zip
+    - unzip artifacts.zip -d /tmp/
+    - apt-get install -y /tmp/packages/ostserver_*_amd64.deb
+  script:
+    - mkdir media
+    - export QT_QPA_PLATFORM=offscreen
+    - export PATH="./install/usr/bin:$PATH"
+    - export LD_LIBRARY_PATH="./install/usr/lib:$LD_LIBRARY_PATH"
+    - ostserver --webroot=media --libpath=./install/usr/lib > server.log 2>&1 &
+    - SERVER_PID=$!
+    - sleep 30
+    - ps aux | grep ostserver | grep -v grep
+    - echo "Testing server with modules..."
+    - node test-ws.js 2>&1 | tee ws.log
+    - echo "Server logs:"
+    - tail -50 server.log
+    - kill $SERVER_PID || true
+  artifacts:
+    paths:
+      - server.log
+      - ws.log
+    expire_in: 1 week
+  only:
+    - master
+    - tags
+
+package-deb:
+  stage: package
+  image: ubuntu:24.04
+  tags:
+    - cmake
+  dependencies:
+    - build-job
+  before_script:
+    - apt-get update
+    - apt-get install -y dpkg-dev debhelper devscripts lintian
+  script:
+    - export PACKAGE_NAME="ostmodules"
+    - export PACKAGE_VERSION=$([ -n "$CI_COMMIT_TAG" ] && echo "$CI_COMMIT_TAG" || echo "1.0.0-${CI_COMMIT_SHORT_SHA}")
+    - export PACKAGE_ARCH="amd64"
+    - export DEB_NAME="${PACKAGE_NAME}_${PACKAGE_VERSION}_${PACKAGE_ARCH}"
+    - mkdir -p "${DEB_NAME}/DEBIAN" "${DEB_NAME}/usr" "${DEB_NAME}/usr/share/doc/${PACKAGE_NAME}"
+    - cp -r install/* "${DEB_NAME}/usr/"
+    - echo "Package:${PACKAGE_NAME}" > "${DEB_NAME}/DEBIAN/control"
+    - echo "Version:${PACKAGE_VERSION}" >> "${DEB_NAME}/DEBIAN/control"
+    - echo "Section:misc" >> "${DEB_NAME}/DEBIAN/control"
+    - echo "Priority:optional" >> "${DEB_NAME}/DEBIAN/control"
+    - echo "Architecture:${PACKAGE_ARCH}" >> "${DEB_NAME}/DEBIAN/control"
+    - echo "Maintainer:Gilles <gilles@ostserver.fr>" >> "${DEB_NAME}/DEBIAN/control"
+    - echo "Depends:ostserver, libqt5core5a, libqt5gui5, libindi1, libstellarsolver, libnova-0.16-0, libgsl27, libcfitsio10, libavahi-client3, zlib1g, libopencv-core4.5d, libqt5multimedia5, libqt5scxml5" >> "${DEB_NAME}/DEBIAN/control"
+    - echo "Description:OST Modules - Collection of modules for OST Server" >> "${DEB_NAME}/DEBIAN/control"
+    - echo "#!/bin/bash" > "${DEB_NAME}/DEBIAN/postinst"
+    - echo "set -e" >> "${DEB_NAME}/DEBIAN/postinst"
+    - echo "exit 0" >> "${DEB_NAME}/DEBIAN/postinst"
+    - chmod 755 "${DEB_NAME}/DEBIAN/postinst"
+    - mkdir -p packages
+    - dpkg-deb --build "${DEB_NAME}" packages/
+    - lintian packages/"${DEB_NAME}.deb" || true
+  artifacts:
+    paths:
+      - packages/*.deb
+    expire_in: 1 week
+  only:
+    - master
+    - tags
+
+release-assets:
+  stage: release
+  image: curlimages/curl:latest
+  tags:
+    - cmake
+  dependencies:
+    - package-deb
+  script:
+    - export PACKAGE_VERSION="${CI_COMMIT_TAG}"
+    - export PROJECT_ID="${CI_PROJECT_ID}"
+    - export PACKAGE_NAME="ostmodules_${PACKAGE_VERSION}_amd64.deb"
+    - curl --header "JOB-TOKEN:${CI_JOB_TOKEN}" --upload-file "packages/${PACKAGE_NAME}" "${CI_API_V4_URL}/projects/${PROJECT_ID}/packages/generic/ostmodules/${PACKAGE_VERSION}/${PACKAGE_NAME}"
+  only:
+    - tags

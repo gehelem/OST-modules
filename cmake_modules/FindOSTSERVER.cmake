@@ -1,6 +1,6 @@
 FIND_PATH(OST_INCLUDE_DIR ost/indimodule.h)
-FIND_LIBRARY(OST_LIBRARY_BASE NAMES libostbasemodule.so PATHS /usr/lib/ost)
-FIND_LIBRARY(OST_LIBRARY_INDI NAMES libostindimodule.so PATHS /usr/lib/ost)
+FIND_LIBRARY(OST_LIBRARY_BASE NAMES libostbasemodule.so PATHS /usr/lib/ost /usr/lib /usr/lib/x86_64-linux-gnu)
+FIND_LIBRARY(OST_LIBRARY_INDI NAMES libostindimodule.so PATHS /usr/lib/ost /usr/lib /usr/lib/x86_64-linux-gnu)
 
 # handle the QUIETLY and REQUIRED arguments and set OST_FOUND to TRUE if 
 # all listed variables are TRUE
