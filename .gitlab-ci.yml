@@ -22,9 +22,9 @@ build-job:
     - export PACKAGE_JOB=$(curl --silent --header "PRIVATE-TOKEN:${CI_JOB_TOKEN}" "https://gitlab.ostserver.fr/api/v4/projects/${OST_PROJECT_ID}/pipelines/${LATEST_PIPELINE}/jobs?per_page=100" | jq -r '.[] | select(.name=="package-deb" and .status=="success") | .id' | head -1)
     - echo 'Package job ID:' $PACKAGE_JOB
     - curl --location --header "PRIVATE-TOKEN:${CI_JOB_TOKEN}" "https://gitlab.ostserver.fr/api/v4/projects/${OST_PROJECT_ID}/jobs/${PACKAGE_JOB}/artifacts?job_token=${CI_JOB_TOKEN}" -o artifacts.zip
-    - unzip -l artifacts.zip | grep ostserver_.*_amd64.deb
-    - unzip -j artifacts.zip "packages/ostserver_*_amd64.deb" -d /tmp/
-    - apt-get install -y /tmp/ostserver_*_amd64.deb
+    - unzip -l artifacts.zip
+    - unzip artifacts.zip -d /tmp/
+    - apt-get install -y /tmp/packages/ostserver_*_amd64.deb
   script:
     - mkdir build install
     - cd build
@@ -57,9 +57,9 @@ test-job:
     - export PACKAGE_JOB=$(curl --silent --header "PRIVATE-TOKEN:${CI_JOB_TOKEN}" "https://gitlab.ostserver.fr/api/v4/projects/${OST_PROJECT_ID}/pipelines/${LATEST_PIPELINE}/jobs?per_page=100" | jq -r '.[] | select(.name=="package-deb" and .status=="success") | .id' | head -1)
     - echo 'Package job ID:' $PACKAGE_JOB
     - curl --location --header "PRIVATE-TOKEN:${CI_JOB_TOKEN}" "https://gitlab.ostserver.fr/api/v4/projects/${OST_PROJECT_ID}/jobs/${PACKAGE_JOB}/artifacts?job_token=${CI_JOB_TOKEN}" -o artifacts.zip
-    - unzip -l artifacts.zip | grep ostserver_.*_amd64.deb
-    - unzip -j artifacts.zip "packages/ostserver_*_amd64.deb" -d /tmp/
-    - apt-get install -y /tmp/ostserver_*_amd64.deb
+    - unzip -l artifacts.zip
+    - unzip artifacts.zip -d /tmp/
+    - apt-get install -y /tmp/packages/ostserver_*_amd64.deb
   script:
     - mkdir media
     - export QT_QPA_PLATFORM=offscreen
