@@ -23,6 +23,7 @@ build-job:
     - wget --user-agent="Mozilla/5.0" "https://gitlab.ostserver.fr/gilles/OST/-/jobs/${PACKAGE_JOB}/artifacts/download?file_type=archive" -O artifacts.zip
     - unzip -l artifacts.zip
     - unzip artifacts.zip -d /tmp/
+    - apt-get install -y libwcs7
     - apt-get install -y /tmp/packages/ostserver_*_amd64.deb
   script:
     - mkdir build install
@@ -58,6 +59,7 @@ test-job:
     - wget --user-agent="Mozilla/5.0" "https://gitlab.ostserver.fr/gilles/OST/-/jobs/${PACKAGE_JOB}/artifacts/download?file_type=archive" -O artifacts.zip
     - unzip -l artifacts.zip
     - unzip artifacts.zip -d /tmp/
+    - apt-get install -y libwcs7
     - apt-get install -y /tmp/packages/ostserver_*_amd64.deb
   script:
     - mkdir media
