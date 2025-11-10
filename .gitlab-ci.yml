@@ -14,7 +14,7 @@ build-job:
     - apt-get install -y software-properties-common curl jq unzip wget
     - apt-add-repository ppa:mutlaqja/ppa
     - apt-get update
-    - apt-get install -y build-essential cmake git npm qtbase5-dev libqt5websockets5-dev libindi-dev libstellarsolver-dev libnova-dev libgsl-dev wcslib-dev libcfitsio-dev libavahi-client-dev libavahi-common-dev zlib1g-dev dpkg-dev debhelper devscripts libopencv-dev qtmultimedia5-dev libqt5scxml5-dev libqt5qml5
+    - apt-get install -y build-essential cmake git npm qtbase5-dev libqt5websockets5-dev libindi-dev libstellarsolver-dev libnova-dev libgsl-dev wcslib-dev libcfitsio-dev libavahi-client-dev libavahi-common-dev zlib1g-dev dpkg-dev debhelper devscripts libopencv-dev qtmultimedia5-dev libqt5scxml5-dev libqt5qml5 libwcs8
     - echo "Downloading ostserver from OST project artifacts..."
     - export LAST_JOB=$(curl -s "https://gitlab.ostserver.fr/api/v4/projects/1/pipelines" | jq -r '.[] | select(.status=="success") | .id' | head -1)
     - echo "Last success pipeline:" $LAST_JOB
@@ -23,7 +23,6 @@ build-job:
     - wget --user-agent="Mozilla/5.0" "https://gitlab.ostserver.fr/gilles/OST/-/jobs/${PACKAGE_JOB}/artifacts/download?file_type=archive" -O artifacts.zip
     - unzip -l artifacts.zip
     - unzip artifacts.zip -d /tmp/
-    - apt-get install -y libwcs7
     - apt-get install -y /tmp/packages/ostserver_*_amd64.deb
   script:
     - mkdir build install
@@ -49,7 +48,7 @@ test-job:
     - apt-get install -y software-properties-common curl jq unzip wget
     - apt-add-repository ppa:mutlaqja/ppa
     - apt-get update
-    - apt-get install -y npm qtbase5-dev libqt5websockets5-dev libindi-dev libstellarsolver-dev libnova-dev libgsl-dev wcslib-dev libcfitsio-dev libavahi-client-dev libavahi-common-dev zlib1g-dev dpkg-dev debhelper devscripts libopencv-dev qtmultimedia5-dev libqt5scxml5-dev libqt5qml5
+    - apt-get install -y npm qtbase5-dev libqt5websockets5-dev libindi-dev libstellarsolver-dev libnova-dev libgsl-dev wcslib-dev libcfitsio-dev libavahi-client-dev libavahi-common-dev zlib1g-dev dpkg-dev debhelper devscripts libopencv-dev qtmultimedia5-dev libqt5scxml5-dev libqt5qml5 libwcs8
     - npm install ws
     - echo "Downloading ostserver from OST project artifacts..."
     - export LAST_JOB=$(curl -s "https://gitlab.ostserver.fr/api/v4/projects/1/pipelines" | jq -r '.[] | select(.status=="success") | .id' | head -1)
@@ -59,7 +58,6 @@ test-job:
     - wget --user-agent="Mozilla/5.0" "https://gitlab.ostserver.fr/gilles/OST/-/jobs/${PACKAGE_JOB}/artifacts/download?file_type=archive" -O artifacts.zip
     - unzip -l artifacts.zip
     - unzip artifacts.zip -d /tmp/
-    - apt-get install -y libwcs7
     - apt-get install -y /tmp/packages/ostserver_*_amd64.deb
   script:
     - mkdir media
