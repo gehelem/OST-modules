@@ -15,8 +15,10 @@ build-job:
     - apt-add-repository ppa:mutlaqja/ppa
     - apt-get install -y build-essential cmake git npm qtbase5-dev libqt5websockets5-dev libindi-dev libstellarsolver-dev libnova-dev libgsl-dev wcslib-dev libcfitsio-dev libavahi-client-dev libavahi-common-dev zlib1g-dev dpkg-dev debhelper devscripts libopencv-dev qtmultimedia5-dev libqt5scxml5-dev libqt5qml5
     - echo "Downloading ostserver from OST project artifacts..."
-    - curl -s https://gitlab.ostserver.fr/gilles/OST/-/jobs | grep "package-deb" | head -5
-    - export LAST_JOB=$(curl -s https://gitlab.ostserver.fr/gilles/OST/-/jobs | grep "package-deb" | grep -oE '/jobs/[0-9]+' | head -1 | cut -d'/' -f3)
+    - curl -s https://gitlab.ostserver.fr/gilles/OST/-/jobs > jobs.html
+    - wc -l jobs.html
+    - grep "package-deb" jobs.html | head -5 || echo "No package-deb found"
+    - export LAST_JOB=$(grep "package-deb" jobs.html | grep -oE '/jobs/[0-9]+' | head -1 | cut -d'/' -f3)
     - echo "Last package-deb job:" $LAST_JOB
     - wget --user-agent="Mozilla/5.0" "https://gitlab.ostserver.fr/gilles/OST/-/jobs/${LAST_JOB}/artifacts/download?file_type=archive" -O artifacts.zip
     - unzip -l artifacts.zip
@@ -48,8 +50,10 @@ test-job:
     - apt-get install -y npm qtbase5-dev libqt5websockets5-dev libindi-dev libstellarsolver-dev libnova-dev libgsl-dev wcslib-dev libcfitsio-dev libavahi-client-dev libavahi-common-dev zlib1g-dev dpkg-dev debhelper devscripts libopencv-dev qtmultimedia5-dev libqt5scxml5-dev libqt5qml5
     - npm install ws
     - echo "Downloading ostserver from OST project artifacts..."
-    - curl -s https://gitlab.ostserver.fr/gilles/OST/-/jobs | grep "package-deb" | head -5
-    - export LAST_JOB=$(curl -s https://gitlab.ostserver.fr/gilles/OST/-/jobs | grep "package-deb" | grep -oE '/jobs/[0-9]+' | head -1 | cut -d'/' -f3)
+    - curl -s https://gitlab.ostserver.fr/gilles/OST/-/jobs > jobs.html
+    - wc -l jobs.html
+    - grep "package-deb" jobs.html | head -5 || echo "No package-deb found"
+    - export LAST_JOB=$(grep "package-deb" jobs.html | grep -oE '/jobs/[0-9]+' | head -1 | cut -d'/' -f3)
     - echo "Last package-deb job:" $LAST_JOB
     - wget --user-agent="Mozilla/5.0" "https://gitlab.ostserver.fr/gilles/OST/-/jobs/${LAST_JOB}/artifacts/download?file_type=archive" -O artifacts.zip
     - unzip -l artifacts.zip
