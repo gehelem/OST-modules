@@ -31,6 +31,8 @@ build-job:
     - make -j4
     - cmake --install . --prefix=../install
     - cd ..
+    - echo "Contents of install directory:"
+    - ls -la install/
   artifacts:
     paths:
       - install/
@@ -94,6 +96,7 @@ package-deb:
     - apt-get update
     - apt-get install -y dpkg-dev debhelper devscripts lintian
   script:
+    - ls -la
     - export PACKAGE_NAME="ostmodules"
     - export PACKAGE_VERSION=$([ -n "$CI_COMMIT_TAG" ] && echo "$CI_COMMIT_TAG" || echo "1.0.0-${CI_COMMIT_SHORT_SHA}")
     - export PACKAGE_ARCH="amd64"
