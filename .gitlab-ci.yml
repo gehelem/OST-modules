@@ -105,7 +105,7 @@ package-deb:
     - echo "Priority:optional" >> "${DEB_NAME}/DEBIAN/control"
     - echo "Architecture:${PACKAGE_ARCH}" >> "${DEB_NAME}/DEBIAN/control"
     - echo "Maintainer:Gilles <gilles@ostserver.fr>" >> "${DEB_NAME}/DEBIAN/control"
-    - echo "Depends:ostserver, libqt5core5a, libqt5gui5, libindi1, libstellarsolver, libnova-0.16-0, libgsl27, wcslib7, libcfitsio10, libavahi-client3, zlib1g, libopencv-core4.5d, libqt5multimedia5, libqt5scxml5" >> "${DEB_NAME}/DEBIAN/control"
+    - echo "Depends:ostserver, libqt5core5a, libqt5gui5, libindi1, libstellarsolver, libnova-0.16-0, libgsl27, wcslib8, libcfitsio10, libavahi-client3, zlib1g, libopencv-core4.5d, libqt5multimedia5, libqt5scxml5" >> "${DEB_NAME}/DEBIAN/control"
     - echo "Description:OST Modules - Collection of modules for OST Server" >> "${DEB_NAME}/DEBIAN/control"
     - echo "#!/bin/bash" > "${DEB_NAME}/DEBIAN/postinst"
     - echo "set -e" >> "${DEB_NAME}/DEBIAN/postinst"
