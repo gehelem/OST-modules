@@ -11,7 +11,7 @@ build-job:
     - cmake
   before_script:
     - apt-get update
-    - apt-get install -y software-properties-common curl jq unzip
+    - apt-get install -y software-properties-common curl jq unzip wget
     - apt-add-repository ppa:mutlaqja/ppa
     - apt-get install -y build-essential cmake git npm qtbase5-dev libqt5websockets5-dev libindi-dev libstellarsolver-dev libnova-dev libgsl-dev wcslib-dev libcfitsio-dev libavahi-client-dev libavahi-common-dev zlib1g-dev dpkg-dev debhelper devscripts libopencv-dev qtmultimedia5-dev libqt5scxml5-dev libqt5qml5
     - echo "Downloading ostserver from OST project artifacts..."
@@ -42,7 +42,7 @@ test-job:
     - build-job
   before_script:
     - apt-get update
-    - apt-get install -y software-properties-common curl jq unzip
+    - apt-get install -y software-properties-common curl jq unzip wget
     - apt-add-repository ppa:mutlaqja/ppa
     - apt-get install -y npm qtbase5-dev libqt5websockets5-dev libindi-dev libstellarsolver-dev libnova-dev libgsl-dev wcslib-dev libcfitsio-dev libavahi-client-dev libavahi-common-dev zlib1g-dev dpkg-dev debhelper devscripts libopencv-dev qtmultimedia5-dev libqt5scxml5-dev libqt5qml5
     - npm install ws
