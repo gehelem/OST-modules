@@ -294,8 +294,8 @@ install(TARGETS
     ostdarkassist
     ostplanner
 #    osttemplate #don't install template ...
-    RUNTIME DESTINATION "/usr/bin"
-    LIBRARY DESTINATION "/usr/lib"
+    RUNTIME DESTINATION "bin"
+    LIBRARY DESTINATION "lib"
 )
 
 #get_cmake_property(_variableNames VARIABLES)
