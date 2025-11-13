@@ -93,6 +93,13 @@
                 "order":"04",
                 "value": 0,
                 "format": "99.99"
+            },
+            "calPier": {
+                "type":"bool",
+                "label": "Calibration Pier Side",
+                "order":"05",
+                "value": false,
+                "hint": "True = West, False = East (pier side at time of calibration)"
             }
         }
     },

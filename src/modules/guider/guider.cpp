@@ -1,18 +1,60 @@
+/**
+ * @file guider.cpp
+ * @brief Autoguiding module for OST - Corrects telescope tracking drift
+ *
+ * This module implements a complete autoguiding system with three phases:
+ *   1. INITIALIZATION: Connect devices, capture reference star field
+ *   2. CALIBRATION: Measure how many pixels correspond to 1ms pulse in each direction
+ *   3. GUIDING: Continuous loop - detect drift, send correcting pulses
+ *
+ * Algorithm: Trigonometric matching uses triangle indices from star triangles.
+ * Triangles are invariant under translation/rotation/scaling, making them robust.
+ *
+ * Workflow:
+ *   User clicks "Calibrate & Guide" → SMInit → SMCalibration → SMGuide (loops)
+ *
+ * Key compensation:
+ *   - DEC compensation: RA pulses scaled by cos(mount_DEC) (critical at high latitudes!)
+ *   - Pier-side: May require CCD orientation rotation (NOT IMPLEMENTED)
+ *
+ * @note Memory leak risk: _dRAvector, _dDEvector grow unbounded over long sessions
+ * @todo Implement PID controller (currently P only)
+ * @todo Add timeout/retry on INDI commands
+ * @todo Implement pier-side compensation
+ */
+
 #include "guider.h"
 #include "versionModule.cc"
 //#include "polynomialfit.h"
 #define PI 3.14159265
 
+/**
+ * @brief Plugin entry point - called by OST to load module
+ * @return New Guider instance
+ */
 Guider *initialize(QString name, QString label, QString profile, QVariantMap availableModuleLibs)
 {
     Guider *basemodule = new Guider(name, label, profile, availableModuleLibs);
     return basemodule;
 }
+
+/**
+ * @brief Constructor - Initialize guider module
+ *
+ * Sets up:
+ *   - Properties from guider.json (parameters, results, grids)
+ *   - Three state machines (Init, Calibration, Guide)
+ *   - INDI device requirements (camera, guider mount interface)
+ *   - Module role declaration (defineMeAsGuider)
+ *   - Custom "Reset calibration" button
+ */
 Guider::Guider(QString name, QString label, QString profile, QVariantMap availableModuleLibs)
     : IndiModule(name, label, profile, availableModuleLibs)
 {
-
+    // Load property definitions from guider.json
     loadOstPropertiesFromFile(":guider.json");
+
+    // Set module metadata
     setClassName(QString(metaObject()->className()).toLower());
     setModuleDescription("Guider module - work in progress");
     setModuleVersion("0.1");
@@ -20,47 +62,68 @@ Guider::Guider(QString name, QString label, QString profile, QVariantMap availab
     getEltString("thisGit", "date")->setValue(QString::fromStdString(VersionModule::GIT_DATE), true);
     getEltString("thisGit", "message")->setValue(QString::fromStdString(VersionModule::GIT_COMMIT_SUBJECT), true);
 
+    // Build the three state machines that orchestrate the guiding workflow
     buildInitStateMachines();
     buildCalStateMachines();
     buildGuideStateMachines();
 
-    giveMeADevice("camera", "Camera", INDI::BaseDevice::CCD_INTERFACE);
-    giveMeADevice("guider", "Guide via", INDI::BaseDevice::GUIDER_INTERFACE);
+    // Declare required INDI devices
+    giveMeADevice("camera", "Camera", INDI::BaseDevice::CCD_INTERFACE);      // Guiding camera
+    giveMeADevice("guider", "Guide via", INDI::BaseDevice::GUIDER_INTERFACE); // Mount guide interface
 
+    // Register this module as the guider
     defineMeAsGuider();
 
-    // Add reset calibration button to actions
+    // Add custom "Reset calibration" button to actions (not defined in JSON)
     OST::PropertyMulti* pm = getProperty("actions");
     OST::ElementBool* b = new OST::ElementBool("Reset calibration", "guid10", "");
     b->setValue(false, false);
     pm->addElt("resetcalibration", b);
-
 }
 
+/**
+ * @brief Destructor
+ */
 Guider::~Guider()
 {
-
+    // Cleanup (if needed)
 }
+/**
+ * @brief Handle external events from other modules (mainly sequencer)
+ *
+ * Two main types of events:
+ *   1. Suspend/Resume guiding - from sequencer during autofocus
+ *   2. Action buttons - from UI (calguide, calibrate, guide, abortguider, resetcalibration)
+ *
+ * State machine orchestration:
+ *   calguide:   Init → Calibration → Guide (full workflow)
+ *   calibrate:  Init → Calibration only
+ *   guide:      Init → Guide (or Init → Calibration → Guide if no prior calib)
+ *   abortguider: Stop all state machines
+ *   resetcalibration: Clear calibration data (forces recalibration)
+ */
 void Guider::OnMyExternalEvent(const QString &eventType, const QString  &eventModule, const QString  &eventKey,
                                const QVariantMap &eventData)
 {
     Q_UNUSED(eventKey);
 
-    //BOOST_LOG_TRIVIAL(debug) << "OnMyExternalEvent - recv : " << getName().toStdString() << "-" << eventType.toStdString() << "-" << eventKey.toStdString();
+    // === EVENTS FROM SEQUENCER ===
 
-    // Handle suspend/resume guiding events from sequencer
+    // When sequencer starts autofocus, request guiding suspension
+    // This prevents focus movement from corrupting guidng measurements
     if (eventType == "suspendguiding" && getModuleName() == eventModule)
     {
         sendMessage("Guiding suspended by external request (focus in progress)");
-        // Stop the guiding state machine
-        _SMGuide.stop();
+        _SMGuide.stop();  // Pause the guiding loop
         return;
     }
 
+    // When sequencer finishes autofocus, resume guiding
+    // Restart from initialization to redetect guide star and recompute reference
     if (eventType == "resumeguiding" && getModuleName() == eventModule)
     {
         sendMessage("Resuming guiding after external suspension (focus completed)");
-        // Restart the guiding state machine
+        // Reconnect state machines: Init → Guide
         disconnect(&_SMInit,        &QStateMachine::finished, nullptr, nullptr);
         disconnect(&_SMCalibration, &QStateMachine::finished, nullptr, nullptr);
         connect(&_SMInit,           &QStateMachine::finished, &_SMGuide, &QStateMachine::start);
@@ -68,6 +131,9 @@ void Guider::OnMyExternalEvent(const QString &eventType, const QString  &eventMo
         return;
     }
 
+    // === ACTION BUTTONS ===
+
+    // Only process if event is addressed to this module
     if (getModuleName() == eventModule)
     {
         foreach(const QString &keyprop, eventData.keys())
@@ -75,47 +141,60 @@ void Guider::OnMyExternalEvent(const QString &eventType, const QString  &eventMo
             foreach(const QString &keyelt, eventData[keyprop].toMap()["elements"].toMap().keys())
             {
                 QVariant val = eventData[keyprop].toMap()["elements"].toMap()[keyelt].toMap()["value"];
+
                 if (keyprop == "actions")
                 {
+                    // ===== BUTTON: Calibrate & Guide =====
                     if (keyelt == "calguide")
                     {
                         if (getEltBool(keyprop, keyelt)->setValue(false))
                         {
                             getProperty(keyprop)->setState(OST::Busy);
+                            sendMessage("Starting full calibration and guiding");
 
+                            // Wire state machines: Init → Calibration → Guide
                             disconnect(&_SMInit,        &QStateMachine::finished, nullptr, nullptr);
                             disconnect(&_SMCalibration, &QStateMachine::finished, nullptr, nullptr);
-                            connect(&_SMInit,           &QStateMachine::finished, &_SMCalibration, &QStateMachine::start) ;
-                            connect(&_SMCalibration,    &QStateMachine::finished, &_SMGuide,      &QStateMachine::start) ;
+                            connect(&_SMInit,           &QStateMachine::finished, &_SMCalibration, &QStateMachine::start);
+                            connect(&_SMCalibration,    &QStateMachine::finished, &_SMGuide, &QStateMachine::start);
                             _SMInit.start();
                         }
                     }
-                    if (keyelt == "abortguider")
+
+                    // ===== BUTTON: Abort Guider =====
+                    else if (keyelt == "abortguider")
                     {
                         if (getEltBool(keyprop, keyelt)->setValue(false))
                         {
                             getProperty(keyprop)->setState(OST::Ok);
-
-                            emit Abort();
+                            sendMessage("Aborting guiding");
+                            emit Abort();  // Triggers all state machines to abort state
                         }
                     }
-                    if (keyelt == "calibrate")
+
+                    // ===== BUTTON: Calibrate Only =====
+                    else if (keyelt == "calibrate")
                     {
                         if (getEltBool(keyprop, keyelt)->setValue(false))
                         {
                             getProperty(keyprop)->setState(OST::Ok);
+                            sendMessage("Starting calibration only");
+
+                            // Wire state machines: Init → Calibration (no Guide)
                             disconnect(&_SMInit,        &QStateMachine::finished, nullptr, nullptr);
                             disconnect(&_SMCalibration, &QStateMachine::finished, nullptr, nullptr);
-                            connect(&_SMInit,           &QStateMachine::finished, &_SMCalibration, &QStateMachine::start) ;
+                            connect(&_SMInit,           &QStateMachine::finished, &_SMCalibration, &QStateMachine::start);
                             _SMInit.start();
-
                         }
                     }
-                    if (keyelt == "guide")
+
+                    // ===== BUTTON: Guide Only =====
+                    else if (keyelt == "guide")
                     {
                         if (getEltBool(keyprop, keyelt)->setValue(false))
                         {
                             getProperty(keyprop)->setState(OST::Ok);
+                            sendMessage("Starting guiding");
 
                             // Check if calibration data exists
                             int calN = getInt("calibrationvalues", "calPulseN");
@@ -123,40 +202,44 @@ void Guider::OnMyExternalEvent(const QString &eventType, const QString  &eventMo
                             int calE = getInt("calibrationvalues", "calPulseE");
                             int calW = getInt("calibrationvalues", "calPulseW");
 
+                            // If no calibration, must do it first
                             if (calN == 0 || calS == 0 || calE == 0 || calW == 0)
                             {
                                 sendMessage("No calibration data found - starting calibration first");
                                 disconnect(&_SMInit,        &QStateMachine::finished, nullptr, nullptr);
                                 disconnect(&_SMCalibration, &QStateMachine::finished, nullptr, nullptr);
-                                connect(&_SMInit,           &QStateMachine::finished, &_SMCalibration, &QStateMachine::start) ;
-                                connect(&_SMCalibration,    &QStateMachine::finished, &_SMGuide,      &QStateMachine::start) ;
+                                connect(&_SMInit,           &QStateMachine::finished, &_SMCalibration, &QStateMachine::start);
+                                connect(&_SMCalibration,    &QStateMachine::finished, &_SMGuide, &QStateMachine::start);
                                 _SMInit.start();
                             }
                             else
                             {
+                                // Wire: Init → Guide (skip Calibration)
                                 disconnect(&_SMInit,        &QStateMachine::finished, nullptr, nullptr);
                                 disconnect(&_SMCalibration, &QStateMachine::finished, nullptr, nullptr);
-                                connect(&_SMInit,           &QStateMachine::finished, &_SMGuide, &QStateMachine::start) ;
+                                connect(&_SMInit,           &QStateMachine::finished, &_SMGuide, &QStateMachine::start);
                                 _SMInit.start();
                             }
                         }
                     }
-                    if (keyelt == "resetcalibration")
+
+                    // ===== BUTTON: Reset Calibration =====
+                    else if (keyelt == "resetcalibration")
                     {
                         if (getEltBool(keyprop, keyelt)->setValue(false))
                         {
                             getProperty(keyprop)->setState(OST::Ok);
+                            sendMessage("Resetting calibration data");
 
-                            // Reset all calibration values to 0
+                            // Clear all calibration values to force recalibration
                             getEltInt("calibrationvalues", "calPulseN")->setValue(0);
                             getEltInt("calibrationvalues", "calPulseS")->setValue(0);
                             getEltInt("calibrationvalues", "calPulseE")->setValue(0);
                             getEltInt("calibrationvalues", "calPulseW")->setValue(0, true);
 
-                            sendMessage("Calibration data reset");
+                            sendMessage("Calibration data reset - recalibration required before guiding");
                         }
                     }
-
                 }
             }
         }
@@ -369,127 +452,215 @@ void Guider::buildGuideStateMachines(void)
 
 
 }
+/**
+ * @brief PHASE 1: Initialization - Connect to devices and capture reference stars
+ *
+ * Steps:
+ *  1. Connect to camera (CCD) and guider mount device via INDI
+ *  2. Configure camera (BLOB mode, direct access, frame reset)
+ *  3. Query mount position (RA, DEC) for compensation calculations
+ *  4. Query pier side (West/East) for CCD orientation determination
+ *  5. Clear history grids (drift and guiding)
+ *
+ * After this handler completes, SMInit transitions to SMRequestFrameReset
+ * which will trigger a CCD exposure to capture the reference star field.
+ */
 void Guider::SMInitInit()
 {
-    //sendMessage("SMInitInit");
+    // Connect camera device (required)
     if (connectDevice(getString("devices", "camera")))
     {
+        // Initialize INDI connection
         connectIndi();
-        connectDevice(getString("devices", "camera"));
-        connectDevice(getString("devices", "guider"));
-        setBLOBMode(B_ALSO, getString("devices", "camera").toStdString().c_str(), nullptr);
-        enableDirectBlobAccess(getString("devices", "camera").toStdString().c_str(), nullptr);
-        frameReset(getString("devices", "camera"));
+
+        // Connect both required devices
+        connectDevice(getString("devices", "camera"));        // CCD camera
+        connectDevice(getString("devices", "guider"));         // Guider mount interface
+
+        // Configure CCD for image streaming
+        setBLOBMode(B_ALSO, getString("devices", "camera").toStdString().c_str(), nullptr);  // Receive BLOBs
+        enableDirectBlobAccess(getString("devices", "camera").toStdString().c_str(), nullptr); // Direct access
+        frameReset(getString("devices", "camera"));  // Reset frame to clear any previous capture
+
+        // For simulator, speed up exposure time
         if (getString("devices", "camera") == "CCD Simulator")
         {
-            sendModNewNumber(getString("devices", "camera"), "SIMULATOR_SETTINGS", "SIM_TIME_FACTOR", 0.01 );
+            sendModNewNumber(getString("devices", "camera"), "SIMULATOR_SETTINGS", "SIM_TIME_FACTOR", 0.01);
         }
+
+        // Set UI state to "busy"
         getProperty("actions")->setState(OST::Busy);
+
+        // Clear history from previous sessions
         getProperty("drift")->clearGrid();
         getProperty("guiding")->clearGrid();
     }
-
     else
     {
+        // Failed to connect camera
         getProperty("actions")->setState(OST::Error);
+        sendError("Failed to connect camera device");
         emit Abort();
         return;
     }
 
-    /* get mount DEC */
-    if (!getModNumber(getString("devices", "guider"), "EQUATORIAL_EOD_COORD", "DEC",
-                      _mountDEC))
+    // === Query Mount Position (for DEC compensation) ===
+
+    // Get current DEC (critical for RA pulse compensation)
+    // At DEC=90° (north pole), RA pulses are ineffective (cos(90°)=0)
+    // At DEC=0° (equator), RA pulses are full strength (cos(0°)=1)
+    if (!getModNumber(getString("devices", "guider"), "EQUATORIAL_EOD_COORD", "DEC", _mountDEC))
     {
+        sendError("Failed to read mount DEC position");
         emit Abort();
         return;
     }
-    /* get mount RA */
-    if (!getModNumber(getString("devices", "guider"), "EQUATORIAL_EOD_COORD", "RA",
-                      _mountRA))
+
+    // Get current RA (stored but not currently used in compensation)
+    if (!getModNumber(getString("devices", "guider"), "EQUATORIAL_EOD_COORD", "RA", _mountRA))
     {
+        sendError("Failed to read mount RA position");
         emit Abort();
         return;
     }
-    /* get mount Pier position  */
-    if (!getModSwitch(getString("devices", "guider"), "TELESCOPE_PIER_SIDE", "PIER_WEST",
-                      _mountPointingWest))
+
+    // Get pier side (West or East of pier)
+    // Affects CCD orientation if optical tube is flipped
+    if (!getModSwitch(getString("devices", "guider"), "TELESCOPE_PIER_SIDE", "PIER_WEST", _mountPointingWest))
     {
+        sendError("Failed to read mount pier side");
         emit Abort();
         return;
     }
-    //_grid->clear();
-    //_propertyStore.update(_grid);
-    //emit propertyUpdated(_grid,&_modulename);
-    //BOOST_LOG_TRIVIAL(debug) << "SMInitInitDone";
+
+    sendMessage(QString("Mount position: RA=%1, DEC=%2, Pier=%3")
+                .arg(_mountRA, 0, 'f', 1)
+                .arg(_mountDEC, 0, 'f', 1)
+                .arg(_mountPointingWest ? "West" : "East"));
+
+    // Initialization complete - transition to exposure
     emit InitDone();
 }
+/**
+ * @brief PHASE 2: Calibration initialization - Prepare for pulse measurement
+ *
+ * Calibration workflow:
+ *  - Send test pulse N (1000ms) → measure drift → store N offset
+ *  - Send test pulse S (1000ms) → measure drift → store S offset
+ *  - Send test pulse E (1000ms) → measure drift → store E offset
+ *  - Send test pulse W (1000ms) → measure drift → store W offset
+ *  - Repeat for 2 iterations (parameter: calsteps)
+ *
+ * Results stored in calibrationvalues:
+ *  calPulseN, calPulseS, calPulseE, calPulseW = pixels moved per ms of pulse
+ *  These are used to convert pixel drift → pulse duration in guiding phase
+ *
+ * This handler initializes counters and loads the reference star field (_trigFirst)
+ * from the initialization phase.
+ */
 void Guider::SMInitCal()
 {
-    //sendMessage("SMInitCal");
-    //_states->addLight(new LightValue("idle"  ,"Idle","hint",0));
-    //_states->addLight(new LightValue("cal"   ,"Calibrating","hint",2));
-    //_states->addLight(new LightValue("guide" ,"Guiding","hint",0));
-    //_states->addLight(new LightValue("error" ,"Error","hint",0));
-    //emit propertyUpdated(_states,&_modulename);
-    //_propertyStore.update(_states);
+    sendMessage("Initializing calibration sequence");
 
-    sendMessage("Starting calibration...");
-    _calState = 0;
-    _calStep = 0;
-    _calPulseN = 0;
+    // Reset calibration loop counters
+    _calState = 0;   // Calibration phase (0-2)
+    _calStep = 0;    // Pulse direction counter (0-7 for 4 directions × 2 iterations)
+
+    // Clear previous calibration results
+    _calPulseN = 0;  // Will be filled by calibration
     _calPulseS = 0;
     _calPulseE = 0;
     _calPulseW = 0;
+
+    // Update UI with current (empty) calibration values
     getEltInt("calibrationvalues", "calPulseN")->setValue(_calPulseN);
     getEltInt("calibrationvalues", "calPulseS")->setValue(_calPulseS);
     getEltInt("calibrationvalues", "calPulseE")->setValue(_calPulseE);
     getEltInt("calibrationvalues", "calPulseW")->setValue(_calPulseW, true);
+
+    // Reset pulse tracking (used in SMRequestPulses)
     _pulseN = 0;
     _pulseS = 0;
     _pulseE = 0;
-    _pulseW = getInt("calParams", "pulse");
-    _trigCurrent.clear();
-    _trigPrev = _trigFirst;
+    _pulseW = getInt("calParams", "pulse");  // Load calibration pulse duration (default 1000ms)
+
+    // Prepare triangle indices for matching
+    _trigCurrent.clear();  // Will be filled as we take exposures
+    _trigPrev = _trigFirst; // Use reference from initialization phase
+
+    // Clear polynomial fitting data (for CCD orientation calculation - currently unused)
     _dxvector.clear();
     _dyvector.clear();
     _coefficients.clear();
+
+    // Reset flags
     _itt = 0;
-    _pulseDECfinished = true;
+    _pulseDECfinished = true;   // Mark pulses as done (ready for next)
     _pulseRAfinished = true;
 
+    sendMessage("Calibration ready - sending test pulses");
     emit InitCalDone();
 }
+/**
+ * @brief PHASE 3: Guiding initialization - Load calibration and setup DEC compensation
+ *
+ * CRITICAL COMPENSATION: RA pulses must be scaled by cos(mount_DEC)
+ *
+ * Why?
+ * - At equator (DEC=0°): RA and DEC axes are orthogonal, pulses work 1:1
+ * - At high latitude (DEC=60°): RA lines converge, need cos(60°)=0.5 scaling
+ * - At pole (DEC=90°): RA lines are parallel, RA pulses have NO effect (cos(90°)=0)
+ *
+ * Example: Telescope at DEC=+45° (mid-north)
+ *  - Calibration measured: East pulse = 100 px/sec
+ *  - Current DEC = +45°
+ *  - cos(45°) = 0.707
+ *  - Compensated East = 100 × 0.707 = 70.7 px/sec
+ *  - If measured drift = 1 pixel RA, send pulse = 1 / 70.7 = 14.1 ms (not 10 ms)
+ *
+ * This compensation is essential for multi-latitude observation sites!
+ */
 void Guider::SMInitGuide()
 {
-    //sendMessage("SMInitGuide");
-    getProperty("drift")->clearGrid();;
+    // Clear drift history from calibration phase
+    getProperty("drift")->clearGrid();
+
+    // Load calibration results from database
     _calPulseN = getInt("calibrationvalues", "calPulseN");
     _calPulseS = getInt("calibrationvalues", "calPulseS");
     _calPulseE = getInt("calibrationvalues", "calPulseE");
     _calPulseW = getInt("calibrationvalues", "calPulseW");
 
-    // Get current mount DEC for compensation
+    // Get CURRENT mount DEC (may differ from calibration time!)
+    // This is needed because target position may have changed since calibration
     if (!getModNumber(getString("devices", "guider"), "EQUATORIAL_EOD_COORD", "DEC", _mountDEC))
     {
-        sendWarning("Could not read mount DEC, using DEC=0 for compensation");
-        _mountDEC = 0;
+        sendWarning("Could not read mount DEC, assuming DEC=0 (use with caution at high latitudes!)");
+        _mountDEC = 0;  // Fallback - assumes equator
     }
 
-    // Display guiding start message with compensation info
-    sendMessage("Starting guiding session...");
+    // === DEC COMPENSATION (most critical code!) ===
+
+    sendMessage("Starting guiding session");
     sendMessage("Current DEC: " + QString::number(_mountDEC, 'f', 1) + "°");
 
+    // Calculate compensation factor: cos(DEC in radians)
+    // This scales RA pulses for current latitude
     double currentDecCompensation = cos(_mountDEC * PI / 180.0);
+
+    // Show what the compensation does
     double calPulseECompensated = _calPulseE * currentDecCompensation;
     double calPulseWCompensated = _calPulseW * currentDecCompensation;
 
-    sendMessage("RA compensation factor: " + QString::number(currentDecCompensation, 'f', 3));
-    sendMessage("Adjusted calibration: W=" + QString::number(calPulseWCompensated, 'f', 2) +
-                " E=" + QString::number(calPulseECompensated, 'f', 2) +
+    sendMessage("RA compensation factor: " + QString::number(currentDecCompensation, 'f', 3) +
+                " (cos(" + QString::number(_mountDEC, 'f', 1) + "°))");
+    sendMessage("Adjusted calibration: E=" + QString::number(calPulseECompensated, 'f', 2) +
+                " W=" + QString::number(calPulseWCompensated, 'f', 2) +
                 " N=" + QString::number(_calPulseN, 'f', 2) +
-                " S=" + QString::number(_calPulseS, 'f', 2) + " ms/px");
+                " S=" + QString::number(_calPulseS, 'f', 2) + " (pixels/sec)");
 
-    // Clear RMS drift history when starting guide
+    // Clear RMS drift history from previous guiding sessions
+    // These will accumulate as new measurements come in
     _dRAvector.clear();
     _dDEvector.clear();
 
