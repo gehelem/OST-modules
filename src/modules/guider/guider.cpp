@@ -56,7 +56,7 @@ Guider::Guider(QString name, QString label, QString profile, QVariantMap availab
 
     // Set module metadata
     setClassName(QString(metaObject()->className()).toLower());
-    setModuleDescription("Guider module - work in progress");
+    setModuleDescription("Guider module");
     setModuleVersion("0.1");
     getEltString("thisGit", "hash")->setValue(QString::fromStdString(VersionModule::GIT_SHA1), true);
     getEltString("thisGit", "date")->setValue(QString::fromStdString(VersionModule::GIT_DATE), true);
