@@ -644,6 +644,24 @@ void Guider::SMInitGuide()
         _mountDEC = 0;  // Fallback - assumes equator
     }
 
+    // === PIER SIDE COMPENSATION CHECK ===
+
+    // Re-read current pier side from mount (may have flipped since initialization)
+    bool currentPierWest = _mountPointingWest;
+    if (!getModSwitch(getString("devices", "guider"), "TELESCOPE_PIER_SIDE", "PIER_WEST", currentPierWest))
+    {
+        sendWarning("Could not read current pier side position");
+    }
+
+    // Check if pier side has changed since calibration
+    bool enablePierSideReverse = getBool("guideParams", "enablepiersidereverse");
+    bool calibrationPierWest = getBool("calibrationvalues", "calPier");
+
+    if (enablePierSideReverse && (currentPierWest != calibrationPierWest))
+    {
+        sendMessage("Pier side calibration differs from actual position, reversing RA/DEC");
+    }
+
     // === DEC COMPENSATION (most critical code!) ===
 
     sendMessage("Starting guiding session");
