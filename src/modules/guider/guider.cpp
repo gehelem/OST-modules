@@ -631,6 +631,13 @@ void Guider::SMInitGuide()
 {
     // Clear drift history from calibration phase
     getProperty("drift")->clearGrid();
+    getProperty("guiding")->clearGrid();
+
+    // Set grid limits to match RMS buffer size for consistent visualization
+    int rmsOver = getInt("guideParams", "rmsOver");
+    getProperty("drift")->setGridLimit(rmsOver);
+    getProperty("guiding")->setGridLimit(rmsOver);
+    sendMessage("Grid limits set to " + QString::number(rmsOver) + " frames (rmsOver parameter)");
 
     // Load calibration results from database
     _calPulseN = getInt("calibrationvalues", "calPulseN");
