@@ -314,6 +314,8 @@
                 "order":"05",
                 "value":10,
                 "format": "99",
+                "min":2,
+                "max":100,
                 "hint": "Number of frames to calculate RMS drift"
             },
             "enablepiersidereverse": {

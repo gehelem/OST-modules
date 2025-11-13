@@ -1049,6 +1049,9 @@ void Guider::SMComputeGuide()
         rmsTotal = sqrt(square(rmsRA) + square(rmsDEC));
     }
 
+    getProperty("drift")->setGridLimit(rmsOver);
+    getProperty("guiding")->setGridLimit(rmsOver);
+
     getEltInt("values", "pulseN")->setValue(_pulseN);
     getEltInt("values", "pulseS")->setValue(_pulseS);
     getEltInt("values", "pulseE")->setValue(_pulseE);
