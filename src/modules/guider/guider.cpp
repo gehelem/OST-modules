@@ -235,7 +235,11 @@ void Guider::OnMyExternalEvent(const QString &eventType, const QString  &eventMo
                             getEltInt("calibrationvalues", "calPulseN")->setValue(0);
                             getEltInt("calibrationvalues", "calPulseS")->setValue(0);
                             getEltInt("calibrationvalues", "calPulseE")->setValue(0);
-                            getEltInt("calibrationvalues", "calPulseW")->setValue(0, true);
+                            getEltInt("calibrationvalues", "calPulseW")->setValue(0);
+                            getEltFloat("calibrationvalues", "ccdOrientation")->setValue(0);
+                            getEltFloat("calibrationvalues", "calMountDEC")->setValue(0);
+                            getEltBool("calibrationvalues", "revRA")->setValue(false);
+                            getEltBool("calibrationvalues", "revDE")->setValue(false, true);
 
                             sendMessage("Calibration data reset - recalibration required before guiding");
                         }
