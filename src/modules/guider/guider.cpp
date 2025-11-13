@@ -657,9 +657,33 @@ void Guider::SMInitGuide()
     bool enablePierSideReverse = getBool("guideParams", "enablepiersidereverse");
     bool calibrationPierWest = getBool("calibrationvalues", "calPier");
 
-    if (enablePierSideReverse && (currentPierWest != calibrationPierWest))
+    if (enablePierSideReverse)
     {
-        sendMessage("Pier side calibration differs from actual position, reversing RA/DEC");
+        if (currentPierWest != calibrationPierWest)
+        {
+            // Pier side has flipped - invert RA/DEC corrections
+            sendMessage("Pier side calibration differs from actual position, reversing RA/DEC");
+
+            // Read current correction states
+            bool revRA = getBool("revCorrections", "revRA");
+            bool revDE = getBool("revCorrections", "revDE");
+
+            // Invert them
+            revRA = !revRA;
+            revDE = !revDE;
+
+            // Write inverted values back
+            getEltBool("revCorrections", "revRA")->setValue(revRA);
+            getEltBool("revCorrections", "revDE")->setValue(revDE, true);
+
+            sendMessage("RA reverse: " + QString(revRA ? "true" : "false") +
+                        ", DEC reverse: " + QString(revDE ? "true" : "false"));
+        }
+        else
+        {
+            // Pier side matches calibration - leave corrections as they are
+            // (no action needed)
+        }
     }
 
     // === DEC COMPENSATION (most critical code!) ===
