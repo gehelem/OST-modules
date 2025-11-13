@@ -15,12 +15,11 @@
  *
  * Key compensation:
  *   - DEC compensation: RA pulses scaled by cos(mount_DEC) (critical at high latitudes!)
- *   - Pier-side: May require CCD orientation rotation (NOT IMPLEMENTED)
+ *   - Pier-side: Optionally reverses RA/DEC corrections when mount flips (configurable)
  *
- * @note Memory leak risk: _dRAvector, _dDEvector grow unbounded over long sessions
- * @todo Implement PID controller (currently P only)
- * @todo Add timeout/retry on INDI commands
- * @todo Implement pier-side compensation
+ * @note RMS buffers (_dRAvector, _dDEvector) are bounded by rmsOver parameter from guideParams
+ * @todo Implement full PID controller (currently P only - good enough for most mounts)
+ * @todo Add timeout/retry mechanism for INDI command failures
  */
 
 #include "guider.h"

@@ -153,8 +153,8 @@ class MODULE_INIT Guider  : public IndiModule
         std::vector<double> _coefficients; ///< Polynomial coefficients (for CCD orientation)
 
         // ==================== RMS Tracking (for statistics) ====================
-        std::vector<double> _dRAvector;    ///< RMS history of RA drifts (WARNING: unbounded, memory leak risk)
-        std::vector<double> _dDEvector;    ///< RMS history of DEC drifts (WARNING: unbounded, memory leak risk)
+        std::vector<double> _dRAvector;    ///< RMS history of RA drifts (bounded by rmsOver parameter from guideParams)
+        std::vector<double> _dDEvector;    ///< RMS history of DEC drifts (bounded by rmsOver parameter from guideParams)
 
         // ==================== Private Methods ====================
 
