@@ -100,6 +100,36 @@
                 "order":"05",
                 "value": false,
                 "hint": "True = West, False = East (pier side at time of calibration)"
+            },
+            "ccdOrientation": {
+                "type":"float",
+                "label": "CCD Orientation",
+                "order":"06",
+                "value": 0,
+                "format": "99.99",
+                "hint": "CCD rotation angle in degrees (from polynomial fit during calibration)"
+            },
+            "revRA": {
+                "type":"bool",
+                "label": "Reverse RA",
+                "order":"07",
+                "value": false,
+                "hint": "Reverse RA corrections (stored at calibration time)"
+            },
+            "revDE": {
+                "type":"bool",
+                "label": "Reverse DEC",
+                "order":"08",
+                "value": false,
+                "hint": "Reverse DEC corrections (stored at calibration time)"
+            },
+            "calMountDEC": {
+                "type":"float",
+                "label": "Calibration Mount DEC",
+                "order":"09",
+                "value": 0,
+                "format": "99.99",
+                "hint": "Mount declination at calibration time (for proper DEC compensation)"
             }
         }
     },

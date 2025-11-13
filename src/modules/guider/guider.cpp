@@ -634,6 +634,16 @@ void Guider::SMInitGuide()
     _calPulseS = getInt("calibrationvalues", "calPulseS");
     _calPulseE = getInt("calibrationvalues", "calPulseE");
     _calPulseW = getInt("calibrationvalues", "calPulseW");
+    _calCcdOrientation = getFloat("calibrationvalues", "ccdOrientation") * PI / 180.0;  // Convert degrees to radians
+    _calMountDEC = getFloat("calibrationvalues", "calMountDEC");  // DEC at calibration time
+
+    // Load and apply stored correction reversals from calibration
+    bool storedRevRA = getBool("calibrationvalues", "revRA");
+    bool storedRevDE = getBool("calibrationvalues", "revDE");
+    getEltBool("revCorrections", "revRA")->setValue(storedRevRA);
+    getEltBool("revCorrections", "revDE")->setValue(storedRevDE, true);
+    sendMessage("Applied stored corrections from calibration: revRA=" + QString(storedRevRA ? "true" : "false") +
+                ", revDE=" + QString(storedRevDE ? "true" : "false"));
 
     // Get CURRENT mount DEC (may differ from calibration time!)
     // This is needed because target position may have changed since calibration
@@ -642,6 +652,10 @@ void Guider::SMInitGuide()
         sendWarning("Could not read mount DEC, assuming DEC=0 (use with caution at high latitudes!)");
         _mountDEC = 0;  // Fallback - assumes equator
     }
+
+    // Show calibration reference information
+    sendMessage("Calibration performed at DEC: " + QString::number(_calMountDEC, 'f', 1) + "°");
+    sendMessage("Current target DEC: " + QString::number(_mountDEC, 'f', 1) + "°");
 
     // === PIER SIDE COMPENSATION CHECK ===
 
@@ -884,10 +898,15 @@ void Guider::SMComputeCal()
                             1) + "° factor=" + QString::number(decCompensation, 'f', 3));
             }
 
+            // Store all calibration values for persistent reuse
             getEltInt("calibrationvalues", "calPulseN")->setValue(_calPulseN);
             getEltInt("calibrationvalues", "calPulseS")->setValue(_calPulseS);
             getEltInt("calibrationvalues", "calPulseE")->setValue(_calPulseE);
-            getEltInt("calibrationvalues", "calPulseW")->setValue(_calPulseW, true);
+            getEltInt("calibrationvalues", "calPulseW")->setValue(_calPulseW);
+            getEltFloat("calibrationvalues", "ccdOrientation")->setValue(_calCcdOrientation * 180 / PI);
+            getEltFloat("calibrationvalues", "calMountDEC")->setValue(_calMountDEC);
+            getEltBool("calibrationvalues", "revRA")->setValue(getBool("revCorrections", "revRA"));
+            getEltBool("calibrationvalues", "revDE")->setValue(getBool("revCorrections", "revDE"), true);
             sendMessage("Calibration completed successfully");
             getProperty("actions")->setState(OST::Ok);
             emit CalibrationDone();
