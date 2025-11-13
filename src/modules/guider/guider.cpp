@@ -315,7 +315,6 @@ void Guider::newBLOB(INDI::PropertyBlob pblob)
         getEltImg("image", "image")->setValue(dta, true);
 
 
-        //BOOST_LOG_TRIVIAL(debug) << "Emit Exposure done";
         emit ExposureDone();
     }
 
@@ -711,48 +710,22 @@ void Guider::SMInitGuide()
     _dRAvector.clear();
     _dDEvector.clear();
 
-    //BOOST_LOG_TRIVIAL(debug) << "************************************************************";
-    //BOOST_LOG_TRIVIAL(debug) << "************************************************************";
-    //BOOST_LOG_TRIVIAL(debug) << "Guider module - Start guide with fllowing calibration data : ";
-    //BOOST_LOG_TRIVIAL(debug) << "*********************** cal CCD Orientation " << _calCcdOrientation * 180 / PI;
-    //BOOST_LOG_TRIVIAL(debug) << "*********************** cal moutn pointing west  " << _calMountPointingWest;
-    //BOOST_LOG_TRIVIAL(debug) << "*********************** cal W " << _calPulseW;
-    //BOOST_LOG_TRIVIAL(debug) << "*********************** cal E " << _calPulseE;
-    //BOOST_LOG_TRIVIAL(debug) << "*********************** cal N " << _calPulseN;
-    //BOOST_LOG_TRIVIAL(debug) << "*********************** cal S " << _calPulseS;
-    //BOOST_LOG_TRIVIAL(debug) << "************************************************************";
-    //BOOST_LOG_TRIVIAL(debug) << "************************************************************";
-    //_states->addLight(new LightValue("idle"  ,"Idle","hint",0));
-    //_states->addLight(new LightValue("cal"   ,"Calibrating","hint",0));
-    //_states->addLight(new LightValue("guide" ,"Guiding","hint",2));
-    //_states->addLight(new LightValue("error" ,"Error","hint",0));
-    //emit propertyUpdated(_states,&_modulename);
-    //_propertyStore.update(_states);
-
-    //_grid->clear();
-    //_propertyStore.update(_grid);
-    //emit propertyUpdated(_grid,&_modulename);
-
-    //BOOST_LOG_TRIVIAL(debug) << "SMInitGuideDone";
     emit InitGuideDone();
 }
 void Guider::SMRequestFrameReset()
 {
-    //BOOST_LOG_TRIVIAL(debug) << "SMRequestFrameReset";
     //sendMessage("SMRequestFrameReset");
     if (!frameReset(getString("devices", "camera")))
     {
         emit Abort();
         return;
     }
-    //BOOST_LOG_TRIVIAL(debug) << "SMRequestFrameResetDone";
     emit RequestFrameResetDone();
 }
 
 
 void Guider::SMRequestExposure()
 {
-    //BOOST_LOG_TRIVIAL(debug) << "SMRequestExposure";
     //sendMessage("SMRequestExposure");
     if (!requestCapture(getString("devices", "camera"), getFloat("parms", "exposure"), getInt("parms", "gain"), getInt("parms",
                         "offset")))
@@ -764,17 +737,8 @@ void Guider::SMRequestExposure()
 }
 void Guider::SMComputeFirst()
 {
-    //BOOST_LOG_TRIVIAL(debug) << "SMComputeFirst";
     _trigFirst.clear();
     buildIndexes(_solver, _trigFirst);
-    //BOOST_LOG_TRIVIAL(debug) << "******************************************************************** ";
-    //BOOST_LOG_TRIVIAL(debug) << "******************************************************************** ";
-    //BOOST_LOG_TRIVIAL(debug) << "************ Guider module - initialization : ";
-    //BOOST_LOG_TRIVIAL(debug) << "*********************** mount pointing west true/false  " << _mountPointingWest;
-    //BOOST_LOG_TRIVIAL(debug) << "*********************** actual RA  " << _mountRA;
-    //BOOST_LOG_TRIVIAL(debug) << "*********************** actual DEC " << _mountDEC;
-    //BOOST_LOG_TRIVIAL(debug) << "******************************************************************** ";
-    //BOOST_LOG_TRIVIAL(debug) << "******************************************************************** ";
 
 
     emit ComputeFirstDone();
@@ -794,7 +758,6 @@ void Guider::SMComputeCal()
         //_grid->append(_dxFirst,_dyFirst);
         //_propertyStore.update(_grid);
         //emit propertyAppended(_grid,&_modulename,0,_dxFirst,_dyFirst,0,0);
-        //BOOST_LOG_TRIVIAL(debug) << "DX DY // first =  " << _dxFirst << "-" << _dyFirst;
         _dxvector.push_back(_dxPrev);
         _dyvector.push_back(_dyPrev);
         /*if (_dxvector.size() > 1)
@@ -811,7 +774,6 @@ void Guider::SMComputeCal()
         emit abort();
         return;
     }
-    //BOOST_LOG_TRIVIAL(debug) << "Drifts // prev " << sqrt(square(_dxPrev) + square(_dyPrev));
     _trigPrev = _trigCurrent;
 
     /*if (_calState==0) {
@@ -848,9 +810,6 @@ void Guider::SMComputeCal()
         ddx = ddx / (_dxvector.size());
         ddy = ddy / (_dyvector.size());
         double a = atan(ddy / ddx);
-        //BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " DX drift " <<  ddx;
-        //BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " DY drift " <<  ddy;
-        //BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " Total drift " <<  sqrt(square(ddy) + square(
         //ddy));
         if (_calState == 0)
         {
@@ -864,11 +823,7 @@ void Guider::SMComputeCal()
                         2) + " ms/px (" + QString::number(_calPulseW / ech, 'f', 2) + " ms/arcsec, drift=" + QString::number(drift_arcsec, 'f',
                                 2) + "\")");
 
-            //BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " Drift orientation =  " << a * 180 / PI;
-            //BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " W drift (px) " <<  sqrt(square(ddy) + square(
             //                             ddy));
-            //BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " W drift ms/px " << _calPulseW;
-            //BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " W drift ms/'' " << (_pulse) / (sqrt(square(
             //ddy) + square(ddy))*_ccdSampling);
         }
         if (_calState == 1)
@@ -879,11 +834,7 @@ void Guider::SMComputeCal()
             sendMessage("East calibration complete: " + QString::number(_calPulseE, 'f',
                         2) + " ms/px (" + QString::number(_calPulseE / ech, 'f', 2) + " ms/arcsec, drift=" + QString::number(drift_arcsec, 'f',
                                 2) + "\")");
-            //BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " Drift orientation =  " << a * 180 / PI;
-            //BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " E drift (px) " <<  sqrt(square(ddy) + square(
             //                             ddy));
-            //BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " E drift ms/px " << _calPulseE;
-            //BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " E drift ms/'' " << (_pulse) / (sqrt(square(
             //ddy) + square(ddy))*_ccdSampling);
         }
         if (_calState == 2)
@@ -894,11 +845,7 @@ void Guider::SMComputeCal()
             sendMessage("North calibration complete: " + QString::number(_calPulseN, 'f',
                         2) + " ms/px (" + QString::number(_calPulseN / ech, 'f', 2) + " ms/arcsec, drift=" + QString::number(drift_arcsec, 'f',
                                 2) + "\")");
-            //BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " Drift orientation =  " << a * 180 / PI;
-            //BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " N drift (px) " <<  sqrt(square(ddy) + square(
             //                             ddy));
-            //BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " N drift ms/px " << _calPulseN;
-            //BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " N drift ms/'' " << (_pulse) / (sqrt(square(
             //ddy) + square(ddy))*_ccdSampling);
         }
         if (_calState == 3)
@@ -909,11 +856,7 @@ void Guider::SMComputeCal()
             sendMessage("South calibration complete: " + QString::number(_calPulseS, 'f',
                         2) + " ms/px (" + QString::number(_calPulseS / ech, 'f', 2) + " ms/arcsec, drift=" + QString::number(drift_arcsec, 'f',
                                 2) + "\")");
-            //BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " Drift orientation =  " << a * 180 / PI;
-            //BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " S drift (px) " <<  sqrt(square(ddy) + square(
             //                             ddy));
-            //BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " S drift ms/px " << _calPulseS;
-            //BOOST_LOG_TRIVIAL(debug) << "*********************** step " << _calState << " S drift ms/'' " << (_pulse) / (sqrt(square(
             //ddy) + square(ddy))*_ccdSampling);
         }
 
@@ -926,10 +869,6 @@ void Guider::SMComputeCal()
         //}
         if (_calState >= 4)
         {
-            //BOOST_LOG_TRIVIAL(debug) << "*********************** cal W " << _calPulseW;
-            //BOOST_LOG_TRIVIAL(debug) << "*********************** cal E " << _calPulseE;
-            //BOOST_LOG_TRIVIAL(debug) << "*********************** cal N " << _calPulseN;
-            //BOOST_LOG_TRIVIAL(debug) << "*********************** cal S " << _calPulseS;
 
             // Store calibration DEC for later compensation
             _calMountDEC = _mountDEC;
@@ -941,7 +880,8 @@ void Guider::SMComputeCal()
             {
                 _calPulseE = _calPulseE / decCompensation;
                 _calPulseW = _calPulseW / decCompensation;
-                sendMessage("DEC compensation applied: DEC=" + QString::number(_calMountDEC, 'f', 1) + "° factor=" + QString::number(decCompensation, 'f', 3));
+                sendMessage("DEC compensation applied: DEC=" + QString::number(_calMountDEC, 'f',
+                            1) + "° factor=" + QString::number(decCompensation, 'f', 3));
             }
 
             getEltInt("calibrationvalues", "calPulseN")->setValue(_calPulseN);
@@ -983,21 +923,12 @@ void Guider::SMComputeCal()
 }
 void Guider::SMComputeGuide()
 {
-    //_states->addLight(new LightValue("idle"  ,"Idle","hint",0));
-    //_states->addLight(new LightValue("cal"   ,"Calibrating","hint",1));
-    //_states->addLight(new LightValue("guide" ,"Guiding","hint",2));
-    //_states->addLight(new LightValue("error" ,"Error","hint",0));
-    //emit propertyUpdated(_states,&_modulename);
-    //_propertyStore.update(_states);
-
-    //BOOST_LOG_TRIVIAL(debug) << "SMComputeGuide " << _solver.stars.size();
     _pulseW = 0;
     _pulseE = 0;
     _pulseN = 0;
     _pulseS = 0;
     buildIndexes(_solver, _trigCurrent);
 
-    //BOOST_LOG_TRIVIAL(debug) << "Trig current size " << _trigCurrent.size();
     if (_trigCurrent.size() > 0)
     {
         matchIndexes(_trigFirst, _trigCurrent, _matchedCurFirst, _dxFirst, _dyFirst);
@@ -1005,10 +936,8 @@ void Guider::SMComputeGuide()
         //_propertyStore.update(_grid);
         //emit propertyAppended(_grid,&_modulename,0,_dxFirst,_dyFirst,0,0);
     }
-    double _driftRA =  _dxFirst * cos(_calCcdOrientation) + _dyFirst * sin(_calCcdOrientation);
-    double _driftDE = -_dxFirst * sin(_calCcdOrientation) + _dyFirst * cos(_calCcdOrientation);
-    //BOOST_LOG_TRIVIAL(debug) << "*********************** guide  RA drift (px) " << _driftRA;
-    //BOOST_LOG_TRIVIAL(debug) << "*********************** guide  DE drift (px) " << _driftDE;
+    double _driftRA = _dxFirst * cos(_calCcdOrientation) + _dyFirst * sin(_calCcdOrientation);
+    double _driftDE = _dxFirst * sin(_calCcdOrientation) + _dyFirst * cos(_calCcdOrientation);
 
     // Apply DEC compensation for current position
     // calPulseE/W are stored as "equatorial" (DEC=0), need to adjust for current DEC
@@ -1032,7 +961,6 @@ void Guider::SMComputeGuide()
         if (_pulseW < getInt("guideParams", "pulsemin")) _pulseW = 0;
     }
     else _pulseW = 0;
-    //if (_pulseW > 0) sendMessage("*********************** guide  W pulse " + QString::number(_pulseW));
 
     if (revRA * _driftRA < 0 && !disRAE)
     {
@@ -1041,7 +969,6 @@ void Guider::SMComputeGuide()
         if (_pulseE < getInt("guideParams", "pulsemin")) _pulseE = 0;
     }
     else _pulseE = 0;
-    //if (_pulseE > 0) sendMessage("*********************** guide  E pulse " + QString::number(_pulseE));
 
     if (revDE * _driftDE > 0 && !disDEN)
     {
@@ -1050,7 +977,6 @@ void Guider::SMComputeGuide()
         if (_pulseS < getInt("guideParams", "pulsemin")) _pulseS = 0;
     }
     else _pulseS = 0;
-    //if (_pulseS > 0) sendMessage("*********************** guide  S pulse " + QString::number(_pulseS));
 
     if (revDE * _driftDE < 0 && !disDES)
     {
@@ -1059,7 +985,6 @@ void Guider::SMComputeGuide()
         if (_pulseN < getInt("guideParams", "pulsemin")) _pulseN = 0;
     }
     else _pulseN = 0;
-    //if (_pulseN > 0) sendMessage("*********************** guide  N pulse " + QString::number(_pulseN));
 
     _itt++;
 
@@ -1107,7 +1032,6 @@ void Guider::SMComputeGuide()
     getEltFloat("drift", "DEC")->setValue(_driftDE * ech, true);
     getProperty("drift")->push();
 
-    //setOstElementValue("guiding", "time", QDateTime::currentDateTime().toString("dd/MM/yyyy hh:mm:ss zzz"), false);
     double tt = QDateTime::currentDateTime().toMSecsSinceEpoch();
     getEltFloat("guiding", "time")->setValue(tt);
     getEltFloat("guiding", "RA")->setValue(_driftRA * ech);
@@ -1190,13 +1114,10 @@ void Guider::SMRequestPulses()
         sendNewNumber(prop);
     }
 
-    //BOOST_LOG_TRIVIAL(debug) << "SMRequestPulses before";
     emit RequestPulsesDone();
-    //BOOST_LOG_TRIVIAL(debug) << "SMRequestPulses after";
 
     if ((_pulseN == 0) && (_pulseS == 0) && (_pulseE == 0) && (_pulseW == 0))
     {
-        //BOOST_LOG_TRIVIAL(debug) << "SMRequestPulses zéro";
         emit PulsesDone();
     }
 
@@ -1204,7 +1125,6 @@ void Guider::SMRequestPulses()
 
 void Guider::SMFindStars()
 {
-    //BOOST_LOG_TRIVIAL(debug) << "SMFindStars";
 
     //sendMessage("SMFindStars");
     stats = _image->getStats();
@@ -1216,7 +1136,6 @@ void Guider::SMFindStars()
 
 void Guider::OnSucessSEP()
 {
-    //BOOST_LOG_TRIVIAL(debug) << "OnSucessSEP";
     OST::ImgData dta = getEltImg("image", "image")->value();
     double ech = getSampling();
     dta.HFRavg = _solver.HFRavg * ech;
@@ -1225,7 +1144,6 @@ void Guider::OnSucessSEP()
 
     //sendMessage("SEP finished");
     disconnect(&_solver, &Solver::successSEP, this, &Guider::OnSucessSEP);
-    //BOOST_LOG_TRIVIAL(debug) << "********* SEP Finished";
     emit FindStarsDone();
 }
 
@@ -1240,14 +1158,6 @@ void Guider::SMAbort()
     _SMGuide.stop();
 
     emit AbortDone();
-
-    //_states->addLight(new LightValue("idle"  ,"Idle","hint",1));
-    //_states->addLight(new LightValue("cal"   ,"Calibrating","hint",0));
-    //_states->addLight(new LightValue("guide" ,"Guiding","hint",0));
-    //_states->addLight(new LightValue("error" ,"Error","hint",0));
-    //emit propertyUpdated(_states,&_modulename);
-    //_propertyStore.update(_states);
-
 
 }
 
@@ -1266,9 +1176,6 @@ void Guider::matchIndexes(QVector<Trig> ref, QVector<Trig> act, QVector<MatchedP
                 && (r.d23 < a.d23 * 1.001) && (r.d23 > a.d23 * 0.999)
             )
             {
-                //BOOST_LOG_TRIVIAL(debug) << "Matching " << r.ratio <<  " / " << a.ratio << " xr-yr=" << r.x1 << "-" << r.y1 << " xa-ya=" << a.x1 << "-" << a.y1 << " / dx1 =" << r.x1-a.x1 << " / dy1 =" << r.y1-a.y1 << " / dx2 =" << r.x2-a.x2 << " / dy2 =" << r.y2-a.y2 << " / dx3 =" << r.x3-a.x3 << " / dy3 =" << r.y3-a.y3;
-                //BOOST_LOG_TRIVIAL(debug) << "Matching " << r.x1 << " - " << r.d12 << " / " << a.d12 << " - " << r.d13 << " / " << a.d13 << " - " << r.d23 << " / " << a.d23;
-                //BOOST_LOG_TRIVIAL(debug) << "Matching dxy1= " << r.x1-a.x1 << "/" << r.y1-a.y1 << " - dxy2="  << r.x2-a.x2 << "/" << r.y2-a.y2 << " - dxy3="  << r.x3-a.x3 << "/" << r.y3-a.y3;
                 bool found;
                 found = false;
                 foreach (MatchedPair pair, pairs)
@@ -1326,7 +1233,6 @@ void Guider::buildIndexes(Solver &solver, QVector<Trig> &trig)
                 djk = sqrt(square(solver.stars[j].x - solver.stars[k].x) + square(solver.stars[j].y - solver.stars[k].y));
                 p = dij + dik + djk;
                 s = sqrt(p * (p - dij) * (p - dik) * (p - djk));
-                //BOOST_LOG_TRIVIAL(debug) << "Trig CURRENT" << " - " << i << " - " << j << " - " << k << " - p=  " << p << " - s=" << s << " - s/p=" << s/p;
                 trig.append(
                 {
                     solver.stars[i].x,
