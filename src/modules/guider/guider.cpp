@@ -578,6 +578,11 @@ void Guider::SMInitCal()
     getEltInt("calibrationvalues", "calPulseE")->setValue(_calPulseE);
     getEltInt("calibrationvalues", "calPulseW")->setValue(_calPulseW, true);
 
+    // Store current pier side at calibration time (for future pier-side compensation)
+    // True = West, False = East
+    _calMountPointingWest = _mountPointingWest;
+    getEltBool("calibrationvalues", "calPier")->setValue(_calMountPointingWest, true);
+
     // Reset pulse tracking (used in SMRequestPulses)
     _pulseN = 0;
     _pulseS = 0;
