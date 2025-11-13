@@ -285,6 +285,14 @@
                 "value":10,
                 "format": "99",
                 "hint": "Number of frames to calculate RMS drift"
+            },
+            "enablepiersidereverse": {
+                "type":"bool",
+                "autoupdate":true,
+                "label": "Enable pier side reverse",
+                "order":"06",
+                "value":false,
+                "hint": "Reverse corrections if calibration pier side differs from current pier side"
             }
         }
     },
