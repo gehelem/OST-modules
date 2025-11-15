@@ -77,6 +77,7 @@ Guider::Guider(QString name, QString label, QString profile, QVariantMap availab
     OST::PropertyMulti* pm = getProperty("actions");
     OST::ElementBool* b = new OST::ElementBool("Reset calibration", "guid10", "");
     b->setValue(false, false);
+    b->setPreIcon("block");
     pm->addElt("resetcalibration", b);
 }
 
@@ -165,6 +166,11 @@ void Guider::OnMyExternalEvent(const QString &eventType, const QString  &eventMo
                     {
                         if (getEltBool(keyprop, keyelt)->setValue(false))
                         {
+                            getEltBool("actions", "calibrate")->setValue(false, false);
+                            getEltBool("actions", "abortguider")->setValue(false, false);
+                            getEltBool("actions", "guide")->setValue(false, false);
+                            getEltBool("actions", "resetcalibration")->setValue(false, false);
+                            getEltBool("actions", "abortguider")->setValue(true, true);
                             getProperty(keyprop)->setState(OST::Ok);
                             sendMessage("Aborting guiding");
                             emit Abort();  // Triggers all state machines to abort state
@@ -563,6 +569,11 @@ void Guider::SMInitInit()
 void Guider::SMInitCal()
 {
     sendMessage("Initializing calibration sequence");
+    getEltBool("actions", "calibrate")->setValue(false, false);
+    getEltBool("actions", "abortguider")->setValue(false, false);
+    getEltBool("actions", "guide")->setValue(false, false);
+    getEltBool("actions", "resetcalibration")->setValue(false, false);
+    getEltBool("actions", "calibrate")->setValue(true, true);
 
     // Reset calibration loop counters
     _calState = 0;   // Calibration phase (0-2)
@@ -629,6 +640,12 @@ void Guider::SMInitCal()
  */
 void Guider::SMInitGuide()
 {
+    getEltBool("actions", "calibrate")->setValue(false, false);
+    getEltBool("actions", "abortguider")->setValue(false, false);
+    getEltBool("actions", "guide")->setValue(false, false);
+    getEltBool("actions", "resetcalibration")->setValue(false, false);
+    getEltBool("actions", "guide")->setValue(true, true);
+
     // Clear drift history from calibration phase
     getProperty("drift")->clearGrid();
     getProperty("guiding")->clearGrid();
