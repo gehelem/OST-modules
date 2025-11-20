@@ -17,7 +17,7 @@
     },
     "autoparms": {
         "devcat": "Parameters",
-        "group": "",
+        "group": "General",
         "order":"222Parms115",
         "permission": 2,
         "rule":2,
@@ -173,8 +173,8 @@
         }
     },
     "type": {
-        "devcat": "Schedule",
-        "group": "",
+        "devcat": "Parameters",
+        "group": "Schedule",
         "order":"BBBSchedule0",
         "permission": 2,
         "hasprofile":true,
@@ -205,8 +205,8 @@
         }
     },
     "daily": {
-        "devcat": "Schedule",
-        "group": "",
+        "devcat": "Parameters",
+        "group": "Schedule",
         "order":"BBBSchedule1",
         "permission": 2,
         "hasprofile":true,
@@ -229,8 +229,8 @@
         }
     },
     "coming": {
-        "devcat": "Schedule",
-        "group": "",
+        "devcat": "Parameters",
+        "group": "Schedule",
         "order":"BBBSchedule3",
         "permission": 0,
         "label": "Events to come",
@@ -248,8 +248,8 @@
         }
     },
     "geo": {
-        "devcat": "Schedule",
-        "group": "",
+        "devcat": "Parameters",
+        "group": "Schedule",
         "order":"BBBSchedule4",
         "permission": 2,
         "hasprofile":true,
@@ -285,8 +285,8 @@
         }
     },
     "gps": {
-        "devcat": "Schedule",
-        "group": "",
+        "devcat": "Parameters",
+        "group": "Schedule",
         "order":"BBBSchedule5",
         "permission": 2,
         "hasprofile":false,
@@ -303,8 +303,8 @@
         }
     },
     "geogps": {
-        "devcat": "Schedule",
-        "group": "",
+        "devcat": "Parameters",
+        "group": "Schedule",
         "order":"BBBSchedule6",
         "permission": 0,
         "hasprofile":false,
@@ -344,8 +344,8 @@
         }
     },
     "keepimages": {
-        "devcat": "Schedule",
-        "group": "",
+        "devcat": "Parameters",
+        "group": "Schedule",
         "order":"BBBSchedule6",
         "permission": 2,
         "hasprofile":true,
