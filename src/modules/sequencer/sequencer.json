@@ -136,7 +136,7 @@
     },
     "parameters": {
         "devcat": "Parameters",
-        "group": "",
+        "group": "General",
         "permission": 2,
         "order": 0,
         "hasprofile": true,

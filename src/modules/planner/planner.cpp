@@ -83,7 +83,8 @@ void Planner::OnMyExternalEvent(const QString &eventType, const QString &eventMo
     }
 
     // Check if this is a navigator completion event
-    if (eventType == "navigatordone" && mWaitingNavigator && getString("parms", "navigatormodule") == eventModule )
+    if (eventType == "navigatordone" && mIsRunning && mWaitingNavigator
+            && getString("parms", "navigatormodule") == eventModule )
     {
         navigatorComplete();
         return;
