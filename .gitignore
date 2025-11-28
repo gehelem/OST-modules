@@ -48,3 +48,8 @@ batch/
 
 debian/ostmodules/
 debian/.debhelper/
+debian/files
+debian/ostmodules.substvars
+obj-x86_64-linux-gnu
+
+debian/debhelper-build-stamp
