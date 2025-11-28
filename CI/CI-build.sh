@@ -4,15 +4,19 @@
 # 
 apt-get update
 apt-get clean
-apt-get install -y software-properties-common
+apt-get install -y software-properties-common curl jq unzip wget
 apt-add-repository ppa:mutlaqja/ppa
-apt-get install -y build-essential cmake git npm qtbase5-dev libqt5websockets5-dev libindi-dev libstellarsolver-dev libnova-dev libgsl-dev wcslib-dev libcfitsio-dev libavahi-client-dev libavahi-common-dev zlib1g-dev dpkg-dev qtdeclarative5-dev libqt5svg5-dev libkf5doctools-dev libkf5config-dev libkf5guiaddons-dev libkf5i18n-dev libkf5newstuff-dev libkf5notifications-dev libkf5xmlgui-dev libkf5plotting-dev libkf5crash-dev libkf5notifyconfig-dev libeigen3-dev libraw-dev libsecret-1-dev debhelper devscripts lintian autotools-dev intltool-debian extra-cmake-modules
-mkdir media
+apt-get update
+apt-get clean
+apt-get install -y autotools-dev build-essential cmake debhelper devscripts dpkg-dev extra-cmake-modules git intltool-debian libavahi-client-dev libavahi-common-dev libcfitsio-dev libeigen3-dev libgsl-dev libindi-dev libkf5config-dev libkf5crash-dev libkf5doctools-dev libkf5guiaddons-dev libkf5i18n-dev libkf5newstuff-dev libkf5notifications-dev libkf5notifyconfig-dev libkf5plotting-dev libkf5xmlgui-dev libnova-dev libopencv-dev libqt5scxml5-dev libqt5svg5-dev libqt5websockets5-dev libraw-dev libsecret-1-dev libstellarsolver-dev lintian npm qtbase5-dev qtdeclarative5-dev qtmultimedia5-dev wcslib-dev zlib1g-dev
+./CI/CI-download_ostserver.sh ${CI_API_V4_URL}
+apt install -y ./ostserver_latest_amd64.deb
 dpkg-buildpackage -us -uc 
-mv ../ostserver_0.0.0_amd64.deb  ./${DEB_FILE_LATEST}
-cp ${DEB_FILE_LATEST} ${DEB_FILE_TAG}
+cp ../ostmodules_0.0.0_amd64.deb  ./${DEB_FILE_LATEST}
+mv ../ostmodules_0.0.0_amd64.deb  ./${DEB_FILE_TAG}
 dpkg -i ${DEB_FILE_LATEST}
 echo "Quick test..."
+mkdir media
 export QT_QPA_PLATFORM=offscreen
 ostserver --webroot=media > server.log 2>&1 &
 SERVER_PID=$!

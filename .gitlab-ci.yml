@@ -13,30 +13,7 @@ build-job:
   stage: build
   image: ubuntu:24.04
   script:
-    - apt-get update
-    - apt-get clean
-    - apt-get install -y software-properties-common curl jq unzip wget
-    - apt-add-repository ppa:mutlaqja/ppa
-    - apt-get update
-    - apt-get clean
-    - apt-get install -y autotools-dev build-essential cmake debhelper devscripts dpkg-dev extra-cmake-modules git intltool-debian libavahi-client-dev libavahi-common-dev libcfitsio-dev libeigen3-dev libgsl-dev libindi-dev libkf5config-dev libkf5crash-dev libkf5doctools-dev libkf5guiaddons-dev libkf5i18n-dev libkf5newstuff-dev libkf5notifications-dev libkf5notifyconfig-dev libkf5plotting-dev libkf5xmlgui-dev libnova-dev libopencv-dev libqt5scxml5-dev libqt5svg5-dev libqt5websockets5-dev libraw-dev libsecret-1-dev libstellarsolver-dev lintian npm qtbase5-dev qtdeclarative5-dev qtmultimedia5-dev wcslib-dev zlib1g-dev
-    - ./download_ostserver.sh ${CI_API_V4_URL}
-    - apt install -y ./ostserver_latest_amd64.deb
-    - dpkg-buildpackage -us -uc 
-    - cp ../ostmodules_0.0.0_amd64.deb  ./${DEB_FILE_LATEST}
-    - mv ../ostmodules_0.0.0_amd64.deb  ./${DEB_FILE_TAG}
-    - dpkg -i ${DEB_FILE_LATEST}
-    - echo "Quick test..."
-    - mkdir media
-    - export QT_QPA_PLATFORM=offscreen
-    - ostserver --webroot=media > server.log 2>&1 &
-    - SERVER_PID=$!
-    - sleep 7
-    - ps aux | grep ostserver | grep -v grep
-    - node test-ws.js 2>&1 | tee ws.log
-    - echo "Server logs:"
-    - tail -50 server.log
-    - kill $SERVER_PID || true
+    - ./CI/CI-build.sh
   artifacts:
     paths:
       - ${DEB_FILE_LATEST}
@@ -48,51 +25,22 @@ build-job:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_DEFAULT_BRANCH'
     - if: '$CI_COMMIT_TAG =~ /^[0-9]+\.[0-9]+\.[0-9]+$/'
 
-upload-job-tag:
-  stage: upload
-  dependencies:
-    - build-job
-  image: curlimages/curl:latest
-  script:
-    - |
-      curl --location --header "JOB-TOKEN: ${CI_JOB_TOKEN}" --upload-file ${DEB_FILE_TAG} ${PACKAGE_REGISTRY_TAG}/${DEB_FILE_TAG}
-  rules:
-    - if: '$CI_COMMIT_TAG =~ /^[0-9]+\.[0-9]+\.[0-9]+$/'
-
-upload-job-latest:
-  stage: upload
-  dependencies:
-    - build-job
-  image: curlimages/curl:latest
-  script:
-    - |
-      curl --request DELETE --header "JOB-TOKEN: ${CI_JOB_TOKEN}" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/releases/latest"
-    - |
-      curl --location --header "JOB-TOKEN: ${CI_JOB_TOKEN}" --upload-file ${DEB_FILE_LATEST} ${PACKAGE_REGISTRY_LATEST}/${DEB_FILE_LATEST}
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_DEFAULT_BRANCH'
-
 release-job-tag:
   stage: release
   dependencies:
-    - upload-job-tag
+    - build-job
   image: registry.gitlab.com/gitlab-org/release-cli:latest
   script:
-    - |
-      release-cli create --name "Release $CI_COMMIT_TAG" --tag-name $CI_COMMIT_TAG \
-        --assets-link "{\"name\":\"${DEB_FILE_TAG}\",\"url\":\"${PACKAGE_REGISTRY_TAG}/${DEB_FILE_TAG}\"}" 
+    - sh ./CI/CI-upload-release-tag.sh
   rules:
       - if: '$CI_COMMIT_TAG =~ /^[0-9]+\.[0-9]+\.[0-9]+$/'
 
 release-job-latest:
   stage: release
   dependencies:
-    - upload-job-latest
+    - build-job
   image: registry.gitlab.com/gitlab-org/release-cli:latest
   script:
-    - |
-      release-cli create --name "latest" --tag-name latest \
-        --assets-link "{\"name\":\"${DEB_FILE_LATEST}\",\"url\":\"${PACKAGE_REGISTRY_LATEST}/${DEB_FILE_LATEST}\"}" 
+    - sh ./CI/CI-upload-release-latest.sh
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_DEFAULT_BRANCH'
-
