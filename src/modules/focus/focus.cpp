@@ -38,6 +38,8 @@ Focus::Focus(QString name, QString label, QString profile, QVariantMap available
     pMachine->connectToState("ComputeLoopFrame", QScxmlStateMachine::onEntry(this, &Focus::SMComputeLoopFrame));
     pMachine->connectToState("InitLoopFrame", QScxmlStateMachine::onEntry(this, &Focus::SMInitLoopFrame));
     pMachine->connectToState("FindStarsFinal", QScxmlStateMachine::onEntry(this, &Focus::SMFindStars));
+    pMachine->connectToState("Final_1", QScxmlStateMachine::onEntry(this, &Focus::SMAbort));
+
 
 
     _startpos =          getEltInt("parameters", "startpos")->value();
@@ -82,16 +84,18 @@ void Focus::OnMyExternalEvent(const QString &eventType, const QString  &eventMod
                 {
                     if (keyelt == "autofocus")
                     {
-                        if (getEltBool(keyprop, keyelt)->setValue(false))
+                        if (getEltBool(keyprop, keyelt)->setValue(true, true))
                         {
+                            getEltBool("actions", "abortfocus")->setValue(false, true);
                             getProperty(keyprop)->setState(OST::Busy);
                             startCoarse();
                         }
                     }
                     if (keyelt == "abortfocus")
                     {
-                        if (getEltBool(keyprop, keyelt)->setValue(false))
+                        if (getEltBool(keyprop, keyelt)->setValue(true, true))
                         {
+                            getEltBool("actions", "autofocus")->setValue(false, true);
                             getProperty(keyprop)->setState(OST::Ok);
                             getEltPrg("progress", "global")->setPrgValue(0, true);
                             getEltPrg("progress", "global")->setDynLabel("Aborted", true);
@@ -194,10 +198,14 @@ void Focus::newBLOB(INDI::PropertyBlob b)
 void Focus::SMAbort()
 {
     pMachine->stop();
+    getEltBool("actions", "autofocus")->setValue(false, false);
+    getEltBool("actions", "abortfocus")->setValue(false, true);
 }
 
 void Focus::startCoarse()
 {
+    getEltBool("actions", "autofocus")->setValue(true, false);
+    getEltBool("actions", "abortfocus")->setValue(false, true);
     getProperty("values")->clearGrid();
     getProperty("parms")->disable();
     getProperty("devices")->disable();
