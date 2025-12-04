@@ -38,6 +38,8 @@ Focus::Focus(QString name, QString label, QString profile, QVariantMap available
     pMachine->connectToState("ComputeLoopFrame", QScxmlStateMachine::onEntry(this, &Focus::SMComputeLoopFrame));
     pMachine->connectToState("InitLoopFrame", QScxmlStateMachine::onEntry(this, &Focus::SMInitLoopFrame));
     pMachine->connectToState("FindStarsFinal", QScxmlStateMachine::onEntry(this, &Focus::SMFindStars));
+    pMachine->connectToState("Final_1", QScxmlStateMachine::onEntry(this, &Focus::SMAbort));
+
 
 
     _startpos =          getEltInt("parameters", "startpos")->value();
