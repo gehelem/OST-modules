@@ -2,13 +2,15 @@
 #
 # CI - build job
 # 
+set -e
+
 apt-get update
 apt-get clean
-apt-get install -y software-properties-common curl jq unzip wget
+apt-get install -y software-properties-common curl jq unzip wget apt-utils
 apt-add-repository ppa:mutlaqja/ppa
 apt-get update
 apt-get clean
-apt-get install -y autotools-dev build-essential cmake debhelper devscripts dpkg-dev extra-cmake-modules git intltool-debian libavahi-client-dev libavahi-common-dev libcfitsio-dev libeigen3-dev libgsl-dev libindi-dev libkf5config-dev libkf5crash-dev libkf5doctools-dev libkf5guiaddons-dev libkf5i18n-dev libkf5newstuff-dev libkf5notifications-dev libkf5notifyconfig-dev libkf5plotting-dev libkf5xmlgui-dev libnova-dev libopencv-dev libqt5scxml5-dev libqt5svg5-dev libqt5websockets5-dev libraw-dev libsecret-1-dev libstellarsolver-dev lintian npm qtbase5-dev qtdeclarative5-dev qtmultimedia5-dev wcslib-dev zlib1g-dev
+apt-get install -y autotools-dev build-essential cmake debhelper devscripts dpkg-dev extra-cmake-modules git intltool-debian libavahi-client-dev libavahi-common-dev libcfitsio-dev libeigen3-dev libgsl-dev indi-bin libindi1 libindi-dev libkf5config-dev libkf5crash-dev libkf5doctools-dev libkf5guiaddons-dev libkf5i18n-dev libkf5newstuff-dev libkf5notifications-dev libkf5notifyconfig-dev libkf5plotting-dev libkf5xmlgui-dev libnova-dev libopencv-dev libqt5scxml5-dev libqt5svg5-dev libqt5websockets5-dev libraw-dev libsecret-1-dev libstellarsolver-dev lintian npm qtbase5-dev qtdeclarative5-dev qtmultimedia5-dev wcslib-dev zlib1g-dev
 ./CI/CI-download_ostserver.sh ${CI_API_V4_URL}
 apt install -y ./ostserver_latest_amd64.deb
 dpkg-buildpackage -us -uc 
