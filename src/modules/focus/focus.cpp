@@ -338,6 +338,13 @@ void Focus::OnSucessSEP()
     dta.HFRavg = _solver.HFRavg * ech;
     dta.starsCount = _solver.stars.size();
     getEltImg("image", "image")->setValue(dta, true);
+    if (_solver.stars.size() < 1 )
+    {
+        sendError("We need at least 1 stars to  focus - abort");
+        pMachine->submitEvent("abort");
+        return;
+    }
+
     pMachine->submitEvent("FindStarsDone");
 }
 

@@ -1191,6 +1191,13 @@ void Guider::OnSucessSEP()
     dta.starsCount = _solver.stars.size();
     getEltImg("image", "image")->setValue(dta, true);
 
+    if (_solver.stars.size() < 3 )
+    {
+        sendError("We need at least 3 stars to guide - abort");
+        emit Abort();
+        return;
+    }
+
     //sendMessage("SEP finished");
     disconnect(&_solver, &Solver::successSEP, this, &Guider::OnSucessSEP);
     emit FindStarsDone();
