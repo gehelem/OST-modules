@@ -3,6 +3,7 @@
 # Download ostserver debian file
 # Hardcoded repo 
 #
+set -e
 echo $1
 str='https://gitlab.ostserver.fr/api/v4'
 if [[ "$1" == "$str" ]]
