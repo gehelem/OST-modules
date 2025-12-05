@@ -166,13 +166,6 @@ void Guider::OnMyExternalEvent(const QString &eventType, const QString  &eventMo
                     {
                         if (getEltBool(keyprop, keyelt)->setValue(false))
                         {
-                            getEltBool("actions", "calibrate")->setValue(false, false);
-                            getEltBool("actions", "abortguider")->setValue(false, false);
-                            getEltBool("actions", "guide")->setValue(false, false);
-                            getEltBool("actions", "resetcalibration")->setValue(false, false);
-                            getEltBool("actions", "abortguider")->setValue(true, true);
-                            getProperty(keyprop)->setState(OST::Ok);
-                            sendMessage("Aborting guiding");
                             emit Abort();  // Triggers all state machines to abort state
                         }
                     }
@@ -1207,7 +1200,14 @@ void Guider::OnSucessSEP()
 
 void Guider::SMAbort()
 {
-    sendMessage("Guiding stopped");
+    sendMessage("Aborting guiding");
+    getEltBool("actions", "calibrate")->setValue(false, false);
+    getEltBool("actions", "abortguider")->setValue(false, false);
+    getEltBool("actions", "guide")->setValue(false, false);
+    getEltBool("actions", "resetcalibration")->setValue(false, false);
+    getEltBool("actions", "abortguider")->setValue(true, true);
+    getProperty("actions")->setState(OST::Ok);
+
 
     disconnect(&_SMInit,        &QStateMachine::finished, nullptr, nullptr);
     disconnect(&_SMCalibration, &QStateMachine::finished, nullptr, nullptr);
@@ -1216,6 +1216,7 @@ void Guider::SMAbort()
     _SMGuide.stop();
 
     emit AbortDone();
+    sendMessage("Guiding aborted");
 
 }
 
