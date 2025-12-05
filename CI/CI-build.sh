@@ -6,7 +6,7 @@ set -e
 
 apt-get update
 apt-get clean
-apt-get install -y software-properties-common curl jq unzip wget
+apt-get install -y software-properties-common curl jq unzip wget apt-utils
 apt-add-repository ppa:mutlaqja/ppa
 apt-get update
 apt-get clean
