@@ -489,6 +489,8 @@ void Guider::SMInitInit()
         setBLOBMode(B_ALSO, getString("devices", "camera").toStdString().c_str(), nullptr);  // Receive BLOBs
         enableDirectBlobAccess(getString("devices", "camera").toStdString().c_str(), nullptr); // Direct access
         frameReset(getString("devices", "camera"));  // Reset frame to clear any previous capture
+        setFocalLengthAndDiameter(); // Mandatory for simulators to work
+
 
         // For simulator, speed up exposure time
         if (getString("devices", "camera") == "CCD Simulator")

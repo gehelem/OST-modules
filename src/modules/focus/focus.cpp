@@ -219,6 +219,7 @@ void Focus::startCoarse()
     {
         //sendModNewNumber(getString("devices", "camera"), "SIMULATOR_SETTINGS", "SIM_TIME_FACTOR", 0.01 );
     }
+    setFocalLengthAndDiameter(); // Mandatory for simulators to work
     enableDirectBlobAccess(getString("devices", "camera").toStdString().c_str(), nullptr);
 
     _posvector.clear();
