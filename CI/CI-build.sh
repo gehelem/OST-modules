@@ -12,6 +12,10 @@ apt-get install -y autotools-dev build-essential cmake debhelper devscripts dpkg
 ./CI/CI-download_ostserver.sh ${CI_API_V4_URL}
 apt install -y ./ostserver_latest_amd64.deb
 dpkg-buildpackage -us -uc 
+if [[ ! $? -eq 0 ]]; then
+    print_error "Build failed"
+    exit 1
+fi
 cp ../ostmodules_0.0.0_amd64.deb  ./${DEB_FILE_LATEST}
 mv ../ostmodules_0.0.0_amd64.deb  ./${DEB_FILE_TAG}
 dpkg -i ${DEB_FILE_LATEST}
